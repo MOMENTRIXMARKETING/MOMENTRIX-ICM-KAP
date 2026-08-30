@@ -1,0 +1,71 @@
+<!-- ICM Layer 3 rule book. Emitted as _config/conventions.md.
+     A rule book is reference: it says what is true and what is allowed here. It never
+     says what to do next, and it is never called a skill.
+     Budget: budgets."rulebook.md" in icm.defaults.json.
+     RE-EXPORT: if conventions already live somewhere canonical, keep the blockquote
+     below, keep Quick Reference, and delete every section after it, replacing them
+     with the link out. Otherwise delete the blockquote and write the real thing.
+     Delete these comments before saving. -->
+
+# Conventions
+
+> Canonical source: `{{CANONICAL_PATH}}`. That file wins. This one is a pointer plus a summary. If the two disagree, the canonical file is right and this file is stale. Fix it here, do not fork it.
+
+## Quick Reference
+
+| Thing | Convention |
+|---|---|
+| Folders and files | lowercase-with-hyphens, no spaces |
+| Stage folders | zero-padded number prefix: `01-`, `02-`, `03-` |
+| Output artifacts | `[topic-slug]-[artifact-type].md` |
+| Raw files | `YYYY-MM-DD-descriptive-slug.md`, slug max 60 characters |
+| Placeholders | double-brace SCREAMING_SNAKE, see `spec/placeholder-syntax.md` |
+| Routing files | `CONTEXT.md`, one per folder that needs routing |
+| Rule books | `_config/*.md`, reference only |
+| Never edited | `raw/`, and anything under {{DO_NOT_EDIT_PATHS}} |
+
+## Folder Layout
+
+```
+{{PROJECT_SLUG}}/
+├── IDENTITY.md      # layer 0
+├── CONTEXT.md       # layer 1
+├── _config/         # layer 3 rule books
+├── raw/             # layer 4a, immutable
+├── wiki/            # layer 4b, compiled
+└── _log/            # ledger, run logs, proposals
+```
+
+Layers 1 to 3 recurse. A folder that holds sub-areas repeats the same shape inside itself: its own `CONTEXT.md`, its own `_config/` if it has rules of its own.
+
+## File Shapes
+
+Each file type has one shape and it does not drift.
+
+- Layer 0 `IDENTITY.md`: blockquote purpose, Workspace Map, optional Raw Sources, Rules.
+- Layer 1 root `CONTEXT.md`: Routing, Session Start, Rule Books, optional Pipeline.
+- Layer 2 job card: Purpose, Inputs, Process, Outputs, Routing. Nothing else.
+- Layer 3 rule book: this shape. Quick Reference first, detail after.
+
+Required sections and size ceilings are in `icm.defaults.json`. Do not restate a number from that file in prose here; cite the file.
+
+## Cross-References
+
+Every folder points outward at what it needs. Nothing points back. Before adding a reference, check whether the target already references you. If it does, restructure rather than closing the loop.
+
+## One Home Per Fact
+
+Every fact has exactly one home. Other files link to it. If the same sentence is authoritative in two places, one of them becomes a pointer. Search for a phrase: if it appears twice and both copies claim to be right, that is the bug.
+
+## Project Specific
+
+<!-- Three to six conventions that only apply here. Delete the section if there
+     are none rather than padding it with generic advice. -->
+
+- {{PROJECT_CONVENTION_1}}
+- {{PROJECT_CONVENTION_2}}
+- {{PROJECT_CONVENTION_3}}
+
+## Full Detail
+
+See `{{CANONICAL_PATH}}`.

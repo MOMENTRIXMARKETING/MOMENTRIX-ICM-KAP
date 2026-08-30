@@ -1,0 +1,28 @@
+<!-- Layer 4b global index. Written to wiki/index.md.
+     Ported unchanged from karpathy-llm-wiki, references/index-template.md
+     (Yuhan Lei, MIT). See NOTICE.md.
+     Single braces {like this} are compile-time fill instructions for the model,
+     not onboarding placeholders. Leave the braces alone.
+     One row per article, grouped by topic. Updated is when the article's knowledge
+     content last changed, not the file system timestamp. Archive pages carry an
+     [Archived] prefix in the Summary column. Keeping this file in sync with the
+     files on disk is a safe fix: lint repairs it without asking. -->
+
+# Knowledge Base Index
+
+## {topic-name}
+
+{One-line description of this topic.}
+
+| Article | Summary | Updated |
+|---------|---------|---------|
+| [{Article Title}]({topic-name}/{article}.md) | {One-line summary} | {YYYY-MM-DD} |
+| [{Archived Article}]({topic-name}/{archived}.md) | [Archived] {One-line summary} | {YYYY-MM-DD} |
+
+## {another-topic}
+
+{One-line description of this topic.}
+
+| Article | Summary | Updated |
+|---------|---------|---------|
+| [{Article Title}]({another-topic}/{article}.md) | {One-line summary} | {YYYY-MM-DD} |

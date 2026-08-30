@@ -1,0 +1,53 @@
+# momentrix-icm-kap-toolkit - Identity
+
+> The toolkit that drops an ICM context layer onto someone else's project. This repo is the tool, not a workspace built with the tool.
+
+Layer 0. Read this before anything else, every session.
+
+## Workspace Map
+
+```
+momentrix-icm-kap-toolkit/
+├── IDENTITY.md              # layer 0, you are here: where am I
+├── CONTEXT.md               # layer 1: where do I go
+├── CLAUDE.md                # adapter, aliases IDENTITY.md
+├── BUILD-CONTRACT.md        # layer 3 rule book: the non-negotiables
+├── icm.defaults.json        # every budget, skip glob, required-section list
+├── README.md                # the front door a user reads first
+├── NOTICE.md                # provenance: three upstreams, what was vendored
+├── LICENSE                  # MIT
+├── .gitignore               # keeps the toolkit's scratch folder out of git
+├── .claude-plugin/          # marketplace.json, plugin.json: the install path
+├── scripts/                 # POSIX sh: check, plan, apply, rollback, icm_lib
+├── skills/                  # the eight icm-* skills, one SKILL.md per folder
+├── spec/                    # layer 3 rule books: layers, budgets, conventions
+├── interview-templates/     # .tmpl material filled in with a human; no script reads it
+├── docs/                    # methodology, retrofit, deck copy, the paper
+├── examples/                # one worked raw-and-article pair, the demo
+└── tests/                   # run-tests.sh, the POSIX harness, plus the python one
+```
+
+## Layers
+
+| Layer | Where | Question it answers |
+|---|---|---|
+| 0 | `IDENTITY.md` | Where am I? |
+| 1 | `CONTEXT.md` | Where do I go? |
+| 2 | a folder's CONTEXT.md, the job card | What do I do here? |
+| 3 | rule books | What rules apply? |
+| 4a | immutable sources | What is true? |
+| 4b | compiled knowledge and output | What do we know, what did we make? |
+
+## Why layers 2, 4a and 4b are absent
+
+The toolkit ships every layer and runs 0, 1 and 3 on itself. No stage folders, no `raw/`, no `wiki/`: this repo makes a toolkit, not compiled knowledge. `examples/` holds one worked pair instead. The checker calls the rest absent out loud rather than failing: report the gap, never paper over it.
+
+## Rules
+
+1. Every script is POSIX `sh`. No bashisms, no python, no node. `sh -n` and the checker's bashism sweep gate every change, and the tests stay green before anything ships.
+2. Numbers live in one file, `icm.defaults.json`. Prose cites it, and never restates a budget, a ceiling or a skip glob as a literal.
+3. Rule books are rule books. "Skill" means a SKILL.md under `skills/` and nothing else. A folder's own CONTEXT.md is a job card.
+4. A user's file is never rewritten. `CLAUDE.md` and `.gitignore` get a marked block appended, backed up first. Anything else that exists is parked in `.icm/proposed/`.
+5. Every path written into a document exists on disk. A path that does not resolve is a failure, not a typo.
+6. Test fixtures carry a space in their path on purpose. Quote every path variable, every time.
+7. When the map stops matching the disk, the map is wrong. Fix the map.

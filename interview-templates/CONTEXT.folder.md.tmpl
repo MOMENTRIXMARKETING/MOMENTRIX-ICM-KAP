@@ -1,0 +1,42 @@
+<!-- Folder routing file for a folder that is not a pipeline stage. Emitted as
+     CONTEXT.md inside that folder. A stage folder uses CONTEXT.stage.md.tmpl
+     instead. Budget: budgets."CONTEXT.folder.md" in icm.defaults.json.
+     Routing only. No rules, no definitions, no examples: those live in _config/
+     or in the files this one points at. Delete these comments before saving. -->
+
+# {{FOLDER_NAME}}
+
+> {{ONE_SENTENCE_WHAT_LIVES_HERE}}
+
+## Contents
+
+<!-- One comment per row, real entries only. Skip anything matching
+     spec/excluded-folders.md. -->
+
+```
+{{FOLDER_NAME}}/
+├── CONTEXT.md          # you are here
+├── {{ENTRY_1}}         # {{ENTRY_1_ROLE}}
+├── {{ENTRY_2}}         # {{ENTRY_2_ROLE}}
+└── {{ENTRY_3}}/        # {{ENTRY_3_ROLE}}
+```
+
+## Routing
+
+<!-- Three to five rows covering the tasks people actually bring to this folder. -->
+
+| Task | Go to | Load first |
+|---|---|---|
+| {{TASK_1}} | `{{TASK_1_DEST}}` | `{{TASK_1_LOAD}}` |
+| {{TASK_2}} | `{{TASK_2_DEST}}` | `{{TASK_2_LOAD}}` |
+| {{TASK_3}} | `{{TASK_3_DEST}}` | - |
+| Something not listed here | root `CONTEXT.md` | `IDENTITY.md` |
+
+## Notes
+
+- Written by: {{WHO_OR_WHAT_WRITES_HERE}}.
+- Read by: {{WHO_READS_HERE}}.
+- {{FOLDER_SPECIFIC_CAUTION}}
+
+<!-- One-way references: this file points outward at what it needs. Nothing it
+     points at should point back here. -->

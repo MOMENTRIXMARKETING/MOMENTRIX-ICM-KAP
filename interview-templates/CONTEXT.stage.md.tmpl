@@ -1,0 +1,46 @@
+<!-- ICM Layer 2 job card. Emitted as CONTEXT.md inside a stage folder.
+     Purpose, Inputs, Process, Outputs and Routing are required. Budget and
+     required sections: icm.defaults.json. Delete these comments before saving. -->
+
+# {{STAGE_NAME}}
+
+## Purpose
+
+{{ONE_SENTENCE_WHAT_THIS_STAGE_DOES}}
+
+## Inputs
+
+<!-- Name the scope, not just the file. "Full file" only when it is really needed. -->
+
+| Source | File | Scope | Why |
+|---|---|---|---|
+| Previous stage | `{{PREV_OUTPUT_PATH}}` | full file | {{PREV_WHY}} |
+| Raw | `raw/{{RAW_TOPIC}}/` | {{RAW_SCOPE}} | the evidence this stage cites |
+| Rule book | `_config/{{RULEBOOK}}.md` | "{{RULEBOOK_SECTION}}" | {{RULEBOOK_WHY}} |
+
+Load these. Load nothing else.
+
+## Process
+
+Compile, do not explore. Read the named inputs, produce the named artifact, stop.
+
+1. Read every row of the Inputs table at the stated scope. Do not go hunting for more.
+2. {{STEP_2}}
+3. {{STEP_3}}
+4. Before writing any number, date or quote, find it verbatim in the raw file you will cite.
+5. Write the Outputs, then append the close line to `_log/LOOP-LEDGER.md`.
+
+## Outputs
+
+| Artifact | Location | Format |
+|---|---|---|
+| {{ARTIFACT_NAME}} | `output/{{SLUG}}-{{ARTIFACT_TYPE}}.md` | {{ARTIFACT_FORMAT}} |
+
+## Routing
+
+| Condition | Go to |
+|---|---|
+| Done | `{{NEXT_STAGE_PATH}}` |
+| Input missing or empty | `{{PREV_STAGE_PATH}}`, that stage has not run yet |
+| A fact will not ground in raw | stop, log the hole, do not write the claim |
+| Scope looks wrong | root `CONTEXT.md`, re-route before working |

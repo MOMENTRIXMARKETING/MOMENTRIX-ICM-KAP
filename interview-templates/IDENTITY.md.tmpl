@@ -1,0 +1,72 @@
+<!-- ICM Layer 0. Emitted as IDENTITY.md at the project root by skills/icm-scaffold.
+     Layer 0 answers one question: where am I. It is a map, not a manual.
+     Fill every {{PLACEHOLDER}}. Delete any conditional block you do not use, opening and
+     closing marker together. Delete these comments before saving.
+     Size budget: budgets."IDENTITY.md" in icm.defaults.json.
+     Required sections: required_sections."IDENTITY.md" in the same file. -->
+
+# {{PROJECT_NAME}}
+
+> {{ONE_SENTENCE_PURPOSE}}
+
+## Workspace Map
+
+<!-- Every row gets one comment. Note the ICM layer on rows that carry one.
+     Real folders only, as they exist on disk. Skip anything matching
+     spec/excluded-folders.md. Add rows, delete rows, keep the comments. -->
+
+```
+{{PROJECT_SLUG}}/
+├── IDENTITY.md              # layer 0, you are here: where am I
+├── CONTEXT.md               # layer 1: where do I go
+├── _config/                 # layer 3 rule books: {{RULEBOOK_NAMES}}
+├── raw/                     # layer 4a: immutable sources, never edited
+│   └── {{RAW_TOPIC}}/       # {{RAW_TOPIC_CONTENTS}}
+├── wiki/                    # layer 4b: compiled articles, plus index.md and log.md
+├── {{WORK_FOLDER}}/         # {{WORK_FOLDER_ROLE}}
+│   ├── CONTEXT.md           # layer 2 job card: what do I do here
+│   └── output/              # layer 4b: what this folder produced
+├── {{OTHER_FOLDER}}/        # {{OTHER_FOLDER_ROLE}}
+└── _log/                    # loop ledger, run logs, forge proposals
+```
+
+{{?RAW_SOURCES}}
+
+## Raw Sources
+
+<!-- Folders, exports and feeds that live outside this repo and supply raw/.
+     Delete this whole section if every source already sits inside the workspace. -->
+
+| Source | Path | Contents |
+|---|---|---|
+| {{SOURCE_1_NAME}} | `{{SOURCE_1_PATH}}` | {{SOURCE_1_CONTENTS}} |
+| {{SOURCE_2_NAME}} | `{{SOURCE_2_PATH}}` | {{SOURCE_2_CONTENTS}} |
+
+{{/RAW_SOURCES}}
+
+{{?RELATED}}
+
+## Related
+
+<!-- Sibling repos and external dependencies an agent will hit while working here. -->
+
+| Repo or dependency | Where | Why it matters here |
+|---|---|---|
+| {{RELATED_1_NAME}} | `{{RELATED_1_PATH}}` | {{RELATED_1_WHY}} |
+
+{{/RELATED}}
+
+## Rules
+
+<!-- Between 3 and 7 rules, every one specific to this project. Generic advice
+     ("write clean code") does not belong in layer 0. The first three slots are
+     mandatory: where output is written, what must never be edited, and the
+     evidence standard. Fill the rest with what actually bites people here. -->
+
+1. Compiled output is written to `{{OUTPUT_PATH}}`. Nothing else writes there, and nothing there is hand-edited without also fixing the source it came from.
+2. Never edit `raw/`. It is the evidence. A correction goes in the article that cites the raw file, never in the raw file itself.
+3. Every load-bearing fact in `{{WIKI_PATH}}`, meaning every number, date and quote, appears verbatim in a `raw/` file that the article names in its Raw line.
+4. {{RULE_4}}
+5. {{RULE_5}}
+
+<!-- Optional slots 6 and 7. Delete if unused. -->

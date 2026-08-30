@@ -1,0 +1,64 @@
+<!-- ICM Layer 3 rule book. Emitted as _config/voice.md.
+     Voice is what the writing sounds like and what it is allowed to claim.
+     Formatting mechanics live in _config/style.md, not here.
+     Budget: budgets."rulebook.md" in icm.defaults.json.
+     RE-EXPORT: if a canonical voice guide already exists, keep the blockquote
+     below, keep Quick Reference, delete the rest and link out.
+     Delete these comments before saving. -->
+
+# Voice
+
+> Canonical source: `{{CANONICAL_PATH}}`. That file wins. This one is a pointer plus a summary. If the two disagree, the canonical file is right and this file is stale.
+
+## Quick Reference
+
+| Question | Answer |
+|---|---|
+| Who reads this | {{AUDIENCE}} |
+| What they already know | {{AUDIENCE_KNOWLEDGE}} |
+| Tone | {{TONE}} |
+| Person | {{PERSON}} |
+| Sentence length | short declaratives, one idea each |
+| Evidence standard | every number, date and quote traces to a linked raw file |
+
+## Sounds Right
+
+> {{SOUNDS_RIGHT_EXAMPLE}}
+
+Why it works: {{SOUNDS_RIGHT_REASON}}
+
+## Sounds Wrong
+
+> {{SOUNDS_WRONG_EXAMPLE}}
+
+Why it fails: {{SOUNDS_WRONG_REASON}}
+
+<!-- Examples beat descriptions. A model can pattern-match a sentence; it has to
+     interpret an adjective. Add a pair here every time a draft comes back wrong,
+     rather than adding another adjective above. -->
+
+## Hard Constraints
+
+These are not preferences. A draft that breaks one gets revised before it ships.
+
+1. No claim without a source. If it cannot be traced to a raw file, it does not go in.
+2. No invented numbers, prices, dates or customer quotes. Ever. A missing number is reported as missing.
+3. {{HARD_CONSTRAINT_3}}
+4. {{HARD_CONSTRAINT_4}}
+
+## Banned Words
+
+<!-- Words and phrases that mark the writing as generic or overclaimed here.
+     Keep the list short enough that it is actually checked. -->
+
+{{BANNED_WORDS}}
+
+## What The Voice Is Not
+
+- Not {{NOT_1}}.
+- Not {{NOT_2}}.
+- Not padded. If a sentence can be deleted without losing a fact, delete it.
+
+## Full Detail
+
+See `{{CANONICAL_PATH}}`.

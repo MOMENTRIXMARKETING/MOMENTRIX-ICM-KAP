@@ -1,0 +1,29 @@
+{
+  "name": "momentrix-icm-kap-toolkit",
+  "version": "1.0.0",
+  "description": "Drop a verifiable context layer onto any project. Scaffolds or retrofits the ICM five-layer folder architecture (IDENTITY.md, routing CONTEXT.md, _config rule books, numbered stage job cards), adds a Karpathy-style raw/ and wiki/ knowledge pair where every fact traces back to a source, and keeps all of it honest with POSIX sh scripts that never delete or rewrite anything you wrote.",
+  "author": {
+    "name": "Momentrix Marketing",
+    "url": "https://github.com/MOMENTRIXMARKETING"
+  },
+  "homepage": "https://github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit",
+  "repository": "https://github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "icm",
+    "interpretable-context-methodology",
+    "mwp",
+    "context-engineering",
+    "karpathy",
+    "wiki",
+    "knowledge-base",
+    "grounding",
+    "scaffold",
+    "retrofit",
+    "agent-architecture",
+    "posix-sh",
+    "zero-dependency",
+    "momentrix"
+  ],
+  "skills": "./skills"
+}

@@ -1,0 +1,43 @@
+<!-- Layer 4b operation log. Written to wiki/log.md. The path is log.wiki_log in
+     icm.defaults.json.
+     Single braces {like this} are compile-time fill instructions for the model,
+     not onboarding placeholders. The setup questionnaire never touches them and
+     the double-brace scan at the end of setup does not see them. Leave them alone.
+     Append only. Never rewrite an entry. A correction is a new entry.
+     The heading shape is machine readable: skills/icm-wiki/SKILL.md and
+     scripts/check_evidence.py both parse it, so do not restyle it.
+     Emit this file with the heading and the two paragraphs below and nothing
+     else. The entry shapes are here to be copied, not to be shipped as content.
+     Delete these comments before saving. -->
+
+# Wiki Log
+
+<!-- Format: ## [YYYY-MM-DD] action | subject. Actions: ingest, query, lint. Ingest entries record Disposition and Raw. Cascade updates use "- Updated:" sub-items. Append only. -->
+
+Append only. Never rewrite an entry. A correction is a new entry.
+
+No entries yet.
+
+<!-- Entry shapes, for reference while writing. Not part of the emitted file.
+
+Ingest:
+
+## [{YYYY-MM-DD}] ingest | {primary article title}
+- Disposition: {New; Update; Disputed}
+- Raw: {raw file path}
+- Updated: {cascade-updated article title}
+
+Ingest that yielded nothing:
+
+## [{YYYY-MM-DD}] ingest | no material: {project-root-relative raw path}
+- Disposition: No material
+
+Query archived as a page:
+
+## [{YYYY-MM-DD}] query | Archived: {page title}
+
+Lint:
+
+## [{YYYY-MM-DD}] lint | {N} issues found, {M} auto-fixed
+
+-->

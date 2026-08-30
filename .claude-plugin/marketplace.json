@@ -1,0 +1,36 @@
+{
+  "name": "momentrix-icm-kap-toolkit",
+  "owner": {
+    "name": "Momentrix Marketing",
+    "url": "https://github.com/MOMENTRIXMARKETING"
+  },
+  "metadata": {
+    "description": "Momentrix's single-plugin marketplace for the ICM KAP Toolkit: ICM context layers plus a Karpathy-style evidence-checked wiki, with zero runtime dependencies.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "momentrix-icm-kap-toolkit",
+      "source": "./",
+      "description": "Scaffold a new project's context layer or retrofit a live one without deleting or rewriting anything you wrote, then keep both honest with POSIX sh checks and an evidence-grounded raw/ and wiki/ knowledge pair.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Momentrix Marketing",
+        "url": "https://github.com/MOMENTRIXMARKETING"
+      },
+      "homepage": "https://github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit",
+      "repository": "https://github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit",
+      "license": "MIT",
+      "category": "workflow",
+      "keywords": [
+        "icm",
+        "context-engineering",
+        "knowledge-base",
+        "wiki",
+        "scaffold",
+        "retrofit",
+        "zero-dependency"
+      ]
+    }
+  ]
+}

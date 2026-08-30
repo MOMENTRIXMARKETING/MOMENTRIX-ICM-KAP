@@ -1,0 +1,95 @@
+<!-- ICM Layer 1. Emitted as CONTEXT.md at the project root by skills/icm-scaffold.
+     Layer 1 answers one question: where do I go. It routes and it never holds the
+     rules themselves; those live in _config/ at layer 3.
+     Fill every {{PLACEHOLDER}}. Delete any conditional block you do not use, opening and
+     closing marker together. Delete these comments before saving.
+     Size budget: budgets."CONTEXT.root.md" in icm.defaults.json.
+     Required sections: required_sections."CONTEXT.root.md" in the same file. -->
+
+# {{PROJECT_NAME}} routing
+
+> Layer 1. Find your task, go to the destination, load only what the destination names.
+
+## Routing
+
+<!-- Every common task gets a row. At minimum cover: the primary workflow, adding new
+     source material, reviewing or checking work, and understanding the workspace.
+     "Load first" is the smallest set that makes the destination legible. Use a dash
+     when nothing needs preloading. -->
+
+| Task | Where | Load first |
+|---|---|---|
+| {{PRIMARY_TASK}} | `{{PRIMARY_TASK_DEST}}` | `IDENTITY.md` |
+| Add new source material | `raw/` | `_config/conventions.md` |
+| {{COMPILE_TASK}} | `{{COMPILE_TASK_DEST}}` | `_config/voice.md`, `_config/style.md` |
+| Review or check compiled work | `{{REVIEW_DEST}}` | `_config/conventions.md` |
+| {{EXTRA_TASK}} | `{{EXTRA_TASK_DEST}}` | `{{EXTRA_TASK_LOAD}}` |
+| Understand the workspace | `IDENTITY.md` | - |
+
+## Session Start
+
+1. Read `IDENTITY.md`. That is layer 0 and it is the map of this workspace.
+2. Find your task in the Routing table above. If no row fits, ask before improvising one.
+3. Open the job card at that destination and read its Inputs table.
+4. Load exactly what the Inputs table names, at the scope it names. Nothing else. Loading more does not make the output better.
+5. Pull only the rule books the job card lists, from `_config/`.
+6. Do the work. Write to the locations in the job card's Outputs table.
+7. Close against the job card, then append the line to `_log/LOOP-LEDGER.md`.
+
+## Rule Books
+
+`_config/` holds the rule books. A rule book is reference material: it says what is true and what is allowed here. It never says what to do next, and it is never called a skill. Pull one only when a job card names it.
+
+| Rule book | Holds | Pulled when |
+|---|---|---|
+| `_config/conventions.md` | naming, folder layout, file shapes, layer discipline | creating, moving or renaming any file |
+| `_config/glossary.md` | this project's terms and the one meaning each carries | any wording decision, any new term |
+| `_config/voice.md` | audience, tone, vocabulary, evidence standard | writing anything a human will read |
+| `_config/style.md` | formatting mechanics: headings, tables, links, dates, numbers | writing or editing markdown |
+| `_config/{{EXTRA_RULEBOOK}}.md` | {{EXTRA_RULEBOOK_HOLDS}} | {{EXTRA_RULEBOOK_WHEN}} |
+
+Rule books are edited by a human. Agents propose changes into `_log/FORGE-PROPOSALS.md` and wait.
+
+{{?PIPELINE}}
+
+## Pipeline
+
+<!-- Keep this section only for projects that compile something in stages.
+     Stages can be virtual (defined here, no new folders) or physical (a folder per
+     stage, each with its own layer 2 job card). Prefer virtual on an existing
+     project: do not restructure what already works. -->
+
+The model is a compiler here, not a chatbot. Each stage takes named inputs and writes a named artifact. Conversation belongs at the review gate, not inside a stage.
+
+```
+{{STAGE_1}} -> {{STAGE_2}} -> {{STAGE_3}} -> {{STAGE_4}}
+```
+
+| Stage | Job card | Reads | Writes |
+|---|---|---|---|
+| {{STAGE_1}} | `{{STAGE_1_CARD}}` | {{STAGE_1_READS}} | {{STAGE_1_WRITES}} |
+| {{STAGE_2}} | `{{STAGE_2_CARD}}` | {{STAGE_2_READS}} | {{STAGE_2_WRITES}} |
+| {{STAGE_3}} | `{{STAGE_3_CARD}}` | {{STAGE_3_READS}} | {{STAGE_3_WRITES}} |
+| {{STAGE_4}} | `{{STAGE_4_CARD}}` | {{STAGE_4_READS}} | {{STAGE_4_WRITES}} |
+
+A stage hands off through files. Stage N writes to its `output/`, stage N+1 reads from there. A human can open that file, edit it, and the next stage picks up the edit. There is no other state.
+
+{{/PIPELINE}}
+
+{{?SECTION_TO_SOURCE}}
+
+## Section To Source
+
+<!-- Keep this section only for compile projects. It is the lookup an agent runs
+     before writing: which raw folders feed this output section, and which rule
+     books govern it. One row per section of the compiled artifact. -->
+
+| Output section | Raw sources that feed it | Rule books that govern it |
+|---|---|---|
+| {{SECTION_1}} | `raw/{{SECTION_1_SOURCE}}/` | `_config/{{SECTION_1_RULEBOOK}}.md` |
+| {{SECTION_2}} | `raw/{{SECTION_2_SOURCE}}/` | `_config/{{SECTION_2_RULEBOOK}}.md` |
+| {{SECTION_3}} | `raw/{{SECTION_3_SOURCE}}/` | `_config/{{SECTION_3_RULEBOOK}}.md` |
+
+If a section has no raw source, it does not get written. An unsourced section is a hole to report, not a gap to fill from memory.
+
+{{/SECTION_TO_SOURCE}}

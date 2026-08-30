@@ -1,0 +1,62 @@
+<!-- ICM Layer 3 rule book. Emitted as _config/glossary.md.
+     One term, one meaning. The glossary settles wording arguments; it does not
+     teach the domain. Budget: budgets."rulebook.md" in icm.defaults.json.
+     RE-EXPORT: if a canonical glossary already exists, keep the blockquote below,
+     keep Quick Reference, delete the rest and link out.
+     Delete these comments before saving. -->
+
+# Glossary
+
+> Canonical source: `{{CANONICAL_PATH}}`. That file wins. This one is a pointer plus a summary. If the two disagree, the canonical file is right and this file is stale.
+
+## Quick Reference
+
+The terms that get misused most often here, and what they are not.
+
+| Term | Means here | Not to be confused with |
+|---|---|---|
+| {{TERM_1}} | {{TERM_1_MEANS}} | {{TERM_1_NOT}} |
+| {{TERM_2}} | {{TERM_2_MEANS}} | {{TERM_2_NOT}} |
+| {{TERM_3}} | {{TERM_3_MEANS}} | {{TERM_3_NOT}} |
+
+## Workspace Vocabulary
+
+These are fixed. They mean the same thing in every ICM workspace and they are not up for local redefinition.
+
+| Term | Means |
+|---|---|
+| rule book | a file in `_config/`. Reference material: what is true and what is allowed. Never called a skill. |
+| skill | only a `skills/<name>/SKILL.md`. Procedure the model runs. |
+| job card | a stage or folder `CONTEXT.md` at layer 2. Purpose, Inputs, Process, Outputs, Routing. |
+| layer | one of the numbered ICM levels, 0 through 4b. Defined in `spec/layers.md`. |
+| raw | layer 4a. Immutable source material. Never edited, never rewritten. |
+| wiki | layer 4b. Compiled articles, each grounded in raw. |
+| load-bearing fact | a number, a date or a quote. The kind of claim that must exist verbatim in raw. |
+| ledger | `_log/LOOP-LEDGER.md`. Append only, one line per closed task. |
+| forge | the loop that proposes rule book changes. It proposes; it never edits. |
+
+## Domain Terms
+
+<!-- The project's own vocabulary. One row per term that an outsider would get
+     wrong. Add a row the first time a term causes a misunderstanding, not before.
+     If a term needs a paragraph, it is not a glossary entry: give it a file and
+     link to it from the Means column. -->
+
+| Term | Means | Source |
+|---|---|---|
+| {{DOMAIN_TERM_1}} | {{DOMAIN_TERM_1_MEANS}} | `{{DOMAIN_TERM_1_SOURCE}}` |
+| {{DOMAIN_TERM_2}} | {{DOMAIN_TERM_2_MEANS}} | `{{DOMAIN_TERM_2_SOURCE}}` |
+
+## Banned Synonyms
+
+<!-- Pairs where two words are used for one thing. Pick the survivor and say so.
+     Delete the section if there are none. -->
+
+| Do not write | Write instead | Why |
+|---|---|---|
+| {{BANNED_SYNONYM_1}} | {{PREFERRED_TERM_1}} | {{SYNONYM_1_REASON}} |
+| {{BANNED_SYNONYM_2}} | {{PREFERRED_TERM_2}} | {{SYNONYM_2_REASON}} |
+
+## Full Detail
+
+See `{{CANONICAL_PATH}}`.

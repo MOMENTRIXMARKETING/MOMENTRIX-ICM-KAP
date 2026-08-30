@@ -1,0 +1,67 @@
+<!-- Emitted as _log/LOOP-LEDGER.md.
+     Formats are the out-of-the-loop skill's, references/ledger.md. Do not invent
+     columns, do not reorder them, do not rename them. Tiers (1 to 4) and triggers
+     (T1 to T5) are defined in that skill; this file records, it does not define.
+     Headings are spelled exactly as icm_body_ledger writes them in
+     scripts/icm_lib.sh: "## Task lines", "## Call lines", "## Weekly review".
+     One heading set, one consumer. Do not retitle them here.
+     Append only. Never rewrite a line that is already here.
+     The example rows below sit inside comments so the tables start empty.
+     Delete these comments before saving. -->
+
+# LOOP LEDGER
+
+Workspace: {{PROJECT_NAME}}
+
+Append only, never rewrite history. One line per closed task, one line per call fired, one block per weekly review. If the run log and the ledger disagree, the run log is the record and this file is the summary that got it wrong.
+
+## Run logs
+
+One file per task: `_log/LOOP-RUNLOG-<task>.md`. Append only, one line per event, timestamped:
+
+```
+| Time | Loop | Event | Detail |
+```
+
+Loop is which part of the graph wrote the line: run, workaround, hunt, review, tier check, call, rollback. At close the run log compresses into one task line below. Tasks below the small task floor skip the run log; their ledger line is the whole record.
+
+## Task lines
+
+| Date | Task | Tier | Anchor | Verify cycles | Holes: plan/hunt/review/audit | Workarounds | Call fired | Artifact |
+|---|---|---|---|---|---|---|---|---|
+
+<!-- Example of a filled line:
+| 2026-08-10 | MCK outreach batch 03 | 3 | Cash | 1 | 1/2/1/0 | 1 (API limit, batched sends) | T5 (approved default) | batch-03.md |
+-->
+
+## Call lines
+
+| Date | Trigger | What fired it | Decision | Was the call necessary (filled at weekly review) |
+|---|---|---|---|---|
+
+<!-- Necessary means the human changed something because of it. A call approved
+     unchanged is logged as unnecessary, and that is not a failure of the agent, it
+     is tuning data: enough unnecessary calls on one trigger and the threshold
+     loosens. Leave the last column blank until the weekly review fills it. -->
+
+## Weekly review
+
+Append one block per review, newest at the bottom, in exactly this shape:
+
+```
+Week of: <date>
+Calls fired: <n> Necessary: <n>
+Pre-mortem catches: <n> Hunt catches: <n> Review catches: <n> Audit catches: <n>
+Workarounds taken: <n> Recurring blocker: <none, or the blocker and the proposed system fix>
+Anchor decay check: <pass or what drifted>
+Floor misses: <n tasks with more process lines than output>
+Threshold proposals: <none, or the proposal and the operator's decision>
+```
+
+The trendline to watch: review and audit catches falling while pre-mortem and hunt catches hold. That is the graph learning, holes dying earlier where they are cheapest. Review catches rising means the hunt questions have gone stale, so update them with the patterns that slipped through. A blocker appearing twice in the workaround column is a system hole: build the fix once as its own task, stop paying the toll.
+
+Anything the review wants changed in a rule book goes to `_log/FORGE-PROPOSALS.md` as a proposal. It does not get edited into `_config/` from here.
+
+### Reviews
+
+<!-- Filled blocks go below this line, oldest first. -->

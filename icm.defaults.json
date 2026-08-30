@@ -1,0 +1,64 @@
+{
+  "toolkit": "Momentrix ICM KAP Toolkit",
+  "slug": "momentrix-icm-kap-toolkit",
+  "version": "1.0.0",
+  "budgets": {
+    "IDENTITY.md":        { "target_chars": 3200, "ceiling_chars": 6000 },
+    "CONTEXT.root.md":    { "target_chars": 3200, "ceiling_chars": 8000 },
+    "CONTEXT.stage.md":   { "target_chars": 1200, "ceiling_chars": 2000, "ceiling_lines": 80 },
+    "CONTEXT.folder.md":  { "target_chars": 1200, "ceiling_chars": 2000 },
+    "rulebook.md":        { "target_chars": 2000, "ceiling_chars": 4000 },
+    "wiki_article.md":    { "target_chars": 8000, "ceiling_chars": 16000 }
+  },
+  "loading_budget": {
+    "note": "Chars, not tokens. 4 chars ~= 1 token. Layers 0+1+2+3 are the fixed cost.",
+    "layer0_identity": 3200,
+    "layer1_context": 3200,
+    "layer2_stage": 1200,
+    "layer3_rulebooks": 4000,
+    "fixed_total": 11600,
+    "layer4_varies": true
+  },
+  "excluded_globs": [
+    ".git", ".github", ".claude", ".icm",
+    "node_modules", "venv", ".venv", "__pycache__", ".pytest_cache",
+    "dist", "build", "out", ".next", ".nuxt", ".cache",
+    "vendor", "target", ".terraform", "coverage", ".DS_Store"
+  ],
+  "never_write": [
+    ".git", "node_modules", "venv", ".venv", "__pycache__",
+    "dist", "build", ".next", ".claude"
+  ],
+  "asset_extensions": [
+    "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp", "tif", "tiff",
+    "mp3", "wav", "m4a", "mp4", "mov", "avi", "webm",
+    "zip", "gz", "tgz", "bz2", "7z", "rar",
+    "ttf", "otf", "woff", "woff2", "eot",
+    "psd", "ai", "sketch", "fig", "dmg", "iso", "bin", "exe"
+  ],
+  "required_sections": {
+    "IDENTITY.md":     ["## Workspace Map", "## Rules"],
+    "CONTEXT.root.md": ["## Routing", "## Session Start", "## Rule Books"],
+    "CONTEXT.stage.md":["## Purpose", "## Inputs", "## Process", "## Outputs", "## Routing"],
+    "_config/conventions.md":     ["## Quick Reference", "## One Home Per Fact", "## When a rule is wrong"],
+    "_config/glossary.md":        ["## Workspace Vocabulary", "## Domain Terms", "## When a rule is wrong"],
+    "_config/voice.md":           ["## Voice", "## Honesty", "## Hard Constraints", "## When a rule is wrong"],
+    "_config/style.md":           ["## Quick Reference", "## Structure", "## Code Fences", "## When a rule is wrong"],
+    "_config/grounding.md":       ["## The invariant", "## The rules", "## Article shape", "## What enforces this", "## When a rule is wrong"],
+    "wiki/index.md":              ["## How a row gets here", "## Article shape"],
+    "wiki/log.md":                ["## Format", "## Entries"],
+    "_log/LOOP-LEDGER.md":        ["## Task lines", "## Call lines", "## Weekly review"],
+    "_log/FORGE-PROPOSALS.md":    ["## Proposals", "## Authority"]
+  },
+  "frontmatter": {
+    "required_keys": ["name", "description"],
+    "banned_keys": ["user_invocable", "allowed_tools"],
+    "name_must_equal_dirname": true
+  },
+  "log": {
+    "ledger": "_log/LOOP-LEDGER.md",
+    "runlog": "_log/LOOP-RUNLOG-<task>.md",
+    "wiki_log": "wiki/log.md",
+    "forge_proposals": "_log/FORGE-PROPOSALS.md"
+  }
+}

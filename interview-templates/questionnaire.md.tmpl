@@ -1,0 +1,125 @@
+<!-- Setup questionnaire. Emitted as setup/questionnaire.md.
+     Ported from Model Workspace Protocol, _core/templates/questionnaire-template.md
+     (Van Clief & McDermott, MIT). See NOTICE.md. Adapted for ICM layers 0 to 3. -->
+
+# Setup Questionnaire
+
+<!-- Agent instructions: read this file when the user types "setup". Ask ALL questions
+     in a single conversational pass. The user should be able to answer everything in
+     one message. Collect answers. Replace placeholders across the files each question
+     names. After all replacements, scan the workspace for any remaining {{ pattern.
+     If any remain, ask for the missing information. Setup is complete only when zero
+     placeholders remain. Never overwrite a file the user already wrote: if a target
+     file exists and differs, write your version to .icm/proposed/ and say so. -->
+
+<!-- Questionnaire design rules:
+     1. FLAT STRUCTURE. No category groupings. One numbered list.
+     2. ALL AT ONCE. Every question appears in one pass.
+     3. SYSTEM LEVEL ONLY. These configure the workspace, not one run. Per-run details
+        (topic, scope, deadline) are collected by the entry stage at run time.
+     4. DERIVE, DO NOT ASK. If a field follows from another answer, fill it in and list
+        it as a derived field under the question it depends on.
+     5. SENSIBLE DEFAULTS. Every question carries a default so it can be skipped.
+     6. ASK ONCE, NEVER AGAIN. Answers are baked into the files permanently.
+     7. EXAMPLES OVER DESCRIPTIONS. For voice and style, ask for real sentences that
+        sound right and real sentences that sound wrong. Examples are matchable,
+        descriptions are not. -->
+
+### Q1: What is this project called, and what does it do in one sentence?
+
+- Placeholder: `{{PROJECT_NAME}}`, `{{ONE_SENTENCE_PURPOSE}}`
+- Files: `IDENTITY.md`, `CONTEXT.md`, `_log/LOOP-LEDGER.md`
+- Type: free text
+- Derived: `{{PROJECT_SLUG}}`, the folder name lowercased with hyphens.
+
+### Q2: Which folders already exist, and what does each one hold?
+
+- Placeholder: `{{WORK_FOLDER}}`, `{{WORK_FOLDER_ROLE}}`, `{{OTHER_FOLDER}}`, `{{OTHER_FOLDER_ROLE}}`
+- Files: `IDENTITY.md`
+- Type: free text, or say "scan it" and the agent lists the tree and proposes comments
+- Default: scan the directory, skipping everything in `spec/excluded-folders.md`.
+
+### Q3: Where do raw sources come from?
+
+- Placeholder: `{{RAW_TOPIC}}`, `{{RAW_TOPIC_CONTENTS}}`, `{{SOURCE_1_NAME}}`, `{{SOURCE_1_PATH}}`, `{{SOURCE_1_CONTENTS}}`
+- Files: `IDENTITY.md`
+- Type: free text
+- Default: `raw/` inside the workspace, one subfolder per topic.
+- If every source already lives inside the workspace, delete the Raw Sources section from `IDENTITY.md`.
+
+### Q4: Where does finished work get written, and what must never be hand-edited?
+
+- Placeholder: `{{OUTPUT_PATH}}`, `{{WIKI_PATH}}`
+- Files: `IDENTITY.md`, stage `CONTEXT.md` files
+- Type: free text
+- Default: output to `wiki/`, never edit `raw/`.
+
+### Q5: What are the three to five tasks people actually bring to this workspace?
+
+- Placeholder: `{{PRIMARY_TASK}}`, `{{PRIMARY_TASK_DEST}}`, `{{COMPILE_TASK}}`, `{{COMPILE_TASK_DEST}}`, `{{REVIEW_DEST}}`, `{{EXTRA_TASK}}`, `{{EXTRA_TASK_DEST}}`, `{{EXTRA_TASK_LOAD}}`
+- Files: `CONTEXT.md`
+- Type: free text
+- Default: add source, compile it, review the compile, ask the workspace a question.
+
+### Q6: Does this project compile something in stages?
+
+- Type: yes/no
+- If NO: delete the Pipeline and Section To Source sections from `CONTEXT.md`.
+- If YES: `{{STAGE_1}}` to `{{STAGE_4}}` and their card, reads and writes columns in `CONTEXT.md`.
+- Default: yes, using ingest, compile, review, publish.
+
+### Q7: Virtual stages or physical stage folders?
+
+- Files: `CONTEXT.md`, `stages/*/CONTEXT.md`
+- Type: selection
+- Options: virtual (stages are sections in `CONTEXT.md`, no new folders), physical (one folder per stage, each with its own job card)
+- Default: virtual on an existing project. Do not restructure what already works.
+
+### Q8: Which output sections exist, and which raw folders feed each one?
+
+- Placeholder: `{{SECTION_1}}`, `{{SECTION_1_SOURCE}}`, `{{SECTION_1_RULEBOOK}}` and the same for sections 2 and 3
+- Files: `CONTEXT.md`
+- Type: free text
+- Default: skip if Q6 was no.
+
+### Q9: Do conventions, a glossary, a voice guide or a style guide already exist somewhere?
+
+- Placeholder: `{{CANONICAL_PATH}}` in each rule book
+- Files: `_config/conventions.md`, `_config/glossary.md`, `_config/voice.md`, `_config/style.md`
+- Type: free text, one path per rule book, or "none"
+- Default: none, write originals.
+- For each path given, the rule book becomes a re-export: canonical path in a blockquote at the top, a Quick Reference summary, and a link out. Do not copy the content across.
+
+### Q10: Who reads the output, and what should it sound like?
+
+- Placeholder: `{{AUDIENCE}}`, `{{TONE}}`, `{{SOUNDS_RIGHT_EXAMPLE}}`, `{{SOUNDS_WRONG_EXAMPLE}}`, `{{BANNED_WORDS}}`
+- Files: `_config/voice.md`
+- Type: free text. Give one sentence that sounds right and one that sounds wrong.
+- Default: the project's existing writing, if any exists to read.
+
+### Q11: What terms mean something specific here that an outsider would get wrong?
+
+- Placeholder: `{{TERM_1}}`, `{{TERM_1_MEANS}}`, `{{TERM_1_NOT}}` and the same for terms 2 and 3
+- Files: `_config/glossary.md`
+- Type: free text
+- Default: none, the glossary ships with the ICM terms only and grows as terms come up.
+
+### Q12: Is there a fifth rule book this project needs?
+
+- Placeholder: `{{EXTRA_RULEBOOK}}`, `{{EXTRA_RULEBOOK_HOLDS}}`, `{{EXTRA_RULEBOOK_WHEN}}`
+- Files: `CONTEXT.md`, `_config/`
+- Type: free text or "no"
+- Default: no. Four rule books cover most projects. Earn the fifth.
+
+---
+
+## After Onboarding
+
+Tell the user, in this order:
+
+1. What was written, file by file, and what was left as a proposal in `.icm/proposed/` because a file already existed.
+2. Where to start: read `IDENTITY.md`, then `CONTEXT.md`, then the job card for the task.
+3. What was not automated. Rule books are the usual answer: they hold real content only after a human puts it there.
+4. That rule books are edited by a human. Agents write proposals into `_log/FORGE-PROPOSALS.md` and wait.
+
+Then scan the whole workspace for remaining `{{` patterns. If any remain, ask for the missing information and finish the substitution before calling setup done.

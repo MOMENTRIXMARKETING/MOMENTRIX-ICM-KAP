@@ -1,0 +1,63 @@
+<!-- ICM Layer 3 rule book. Emitted as _config/style.md.
+     Style is how the page is assembled: headings, tables, links, dates, fences.
+     What the writing sounds like lives in _config/voice.md, not here.
+     Budget: budgets."rulebook.md" in icm.defaults.json.
+     RE-EXPORT: if a canonical style guide already exists, keep the blockquote
+     below, keep Quick Reference, delete the rest and link out.
+     Delete these comments before saving. -->
+
+# Style
+
+> Canonical source: `{{CANONICAL_PATH}}`. That file wins. This one is a pointer plus a summary. If the two disagree, the canonical file is right and this file is stale.
+
+## Quick Reference
+
+| Element | Rule |
+|---|---|
+| Headings | sentence case, `##` for sections, `###` sparingly, never skip a level |
+| Tables | header row plus separator row, pipes at both ends, no blank cells |
+| Links | relative. Same folder: `file.md`. Sibling folder: `../other/file.md` |
+| Dates | ISO, `YYYY-MM-DD`, always |
+| Numbers | as written in the source, units attached, no rounding without saying so |
+| Emphasis | bold for the one word that carries the row, italics almost never |
+| Lists | hyphen bullets, numbers only when order matters |
+| Line length | one sentence per line in prose files, so diffs stay readable |
+| Em dashes | {{EM_DASH_RULE}} |
+
+## Code Fences
+
+Three backticks for a normal block. Name the language when it is code.
+
+A block that contains another fenced block uses **four** backticks on the outside and three on the inside. Without this the inner fence closes the outer block early and everything after it renders as prose. This is the single most common formatting bug in template files, so it gets its own rule:
+
+````markdown
+## Contents
+
+```
+folder/
+└── file.md
+```
+````
+
+Count the fences in a file before saving. An odd number means one is unclosed.
+
+## Metadata Headers
+
+Files that carry provenance open with a blockquote header before the first section. Field order does not vary: source, then dates, then anything else. Formats for raw files, articles, archive pages and the index are in `templates/wiki/`. Do not invent a fourth variant.
+
+## Tables Over Prose
+
+If a paragraph is really three parallel facts, make it a table. Routing, inputs, outputs, terms and rules are all tables. Prose is for the sentence that explains why the table looks like that.
+
+## Project Specific
+
+<!-- Formatting rules that only apply here. Delete the section rather than
+     padding it. -->
+
+- {{STYLE_RULE_1}}
+- {{STYLE_RULE_2}}
+- {{STYLE_RULE_3}}
+
+## Full Detail
+
+See `{{CANONICAL_PATH}}`.
