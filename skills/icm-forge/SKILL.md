@@ -205,7 +205,7 @@ A rejection reason is not optional. It is what stops next week's forge writing t
 sh "$ICM_HOME/scripts/icm-check.sh" --budgets --fences --placeholders .
 ```
 
-Exit 0 clean, 1 findings, 2 usage or environment error. There is no `--only` flag; pass each check's own flag as above.
+Exit 0 clean, 1 findings, 2 usage or environment error. `--only <id>` selects one check by its id, and is the same thing as passing that check's own flag.
 
 7. **Log the change.** One line to the ledger recording that the rule book moved, so the next forge run can tell a book that was fixed from a book that has always been wrong.
 

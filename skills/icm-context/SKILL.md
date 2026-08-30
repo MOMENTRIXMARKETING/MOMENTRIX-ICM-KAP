@@ -148,7 +148,7 @@ In `create` mode, after writing:
 sh "$ICM_HOME/scripts/icm-check.sh" .
 ```
 
-Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify one fix, pass that check's own flag, for example `--sections` or `--routes`. There is no `--only` flag; passing one exits 2.
+Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify one fix, pass that check's own flag, for example `--sections` or `--routes`, or select it by id with `--only routes`.
 
 Every card you just wrote must pass. A card that fails its own check is a bug, not a warning: fix it and re-run. Findings against files you did not write are open work and you say so explicitly rather than letting them sit in the same list.
 
@@ -214,7 +214,7 @@ Cards created goes in the artifact column. Needs-classification folders are hole
 
 ## Machine-enforced vs model judgment
 
-Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against `scripts/icm-check.sh` in this checkout. Each check has a flag of the same name, and there is no `--only`.
+Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against `scripts/icm-check.sh` in this checkout. Each check has a flag of the same name, and `--only <id>` selects one by id.
 
 **Machine-enforced.** `scripts/icm-check.sh` decides, and its verdict on a card you wrote is final.
 
@@ -223,6 +223,7 @@ Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against `s
 | Required sections | `sections` | Every file named `CONTEXT.md` other than the root one carries the headings listed under `required_sections["CONTEXT.stage.md"]` in `icm.defaults.json` |
 | Character budgets | `budgets` | Every non-root `CONTEXT.md` against the `CONTEXT.stage.md` character ceiling and line ceiling in `icm.defaults.json`. Over target warns, over ceiling fails |
 | Routing targets | `routes` | Every path-shaped token, backticked or in a markdown link, inside every `CONTEXT.md`, resolves relative to the card or to the root |
+| Relative links | `links` | Every markdown link target in every `.md` under the target, `CONTEXT.md` or not, resolves on disk |
 | Placeholders | `placeholders` | No unfilled double-brace placeholder survives in live prose, outside any `*.tmpl` file and outside code fences and backticks |
 | Code fences | `fences` | The card's backtick and tilde fence counts are even |
 | Workspace map drift | `drift` | Every folder that holds a job card is named in the fenced workspace map in `IDENTITY.md` |
@@ -230,7 +231,7 @@ Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against `s
 **Not checked by anything.** The overwrite ban is one of these, so state it as instruction and not as machinery.
 
 - The ban on overwriting an existing `CONTEXT.md` is enforced by this file and by your own step 7 refusal. No script stands between you and that file, because no script writes job cards at all.
-- A dead relative link outside a `CONTEXT.md`. `routes` only walks files named `CONTEXT.md`.
+- A dead relative link written inside a code fence or inline backticks. `links` skips both on purpose.
 - A write proposed inside a `never_write` glob or an excluded folder. That refusal lives in `icm-plan.sh` and `icm-apply.sh`, never in the checker, which is report-only and never proposes a write. Your step 4 exclusions are the enforcement here.
 
 **Model judgment.** No script can answer these. They are yours, and the ambiguous ones become questions rather than decisions.

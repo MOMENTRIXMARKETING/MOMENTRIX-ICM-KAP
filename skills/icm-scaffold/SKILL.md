@@ -183,7 +183,7 @@ From the project root you just wrote into:
 sh "$ICM_HOME/scripts/icm-check.sh" .
 ```
 
-Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify a single fix, pass that check's own flag, for example `--sections` or `--adapters`. There is no `--only` flag; passing one exits 2.
+Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify a single fix, pass that check's own flag, for example `--sections` or `--adapters`, or select it by id with `--only sections`.
 
 **A scaffold that fails its own check is a bug, not a warning.** Do not report success with findings attached. Fix what you wrote, re-run, and only then report. The fix direction is fixed:
 
@@ -250,7 +250,7 @@ Do not invent a different shape. Verify cycles is how many times you had to re-r
 
 Per `$ICM_HOME/spec/authority-model.md`. Know which half of this list you are allowed to argue with.
 
-**Machine-enforced.** `scripts/icm-check.sh` decides. Its verdict is not an opinion and you do not talk it down. Every row below was verified against the script; each check has a flag of the same name, and there is no `--only`.
+**Machine-enforced.** `scripts/icm-check.sh` decides. Its verdict is not an opinion and you do not talk it down. Every row below was verified against the script; each check has a flag of the same name, and `--only <id>` selects one by id. There are eleven ids and no others.
 
 | Check | check-id | What it actually verifies |
 |---|---|---|
@@ -260,6 +260,7 @@ Per `$ICM_HOME/spec/authority-model.md`. Know which half of this list you are al
 | Adapter shape | `adapters` | `CLAUDE.md` contains `@IDENTITY.md` and is not a copy of the `IDENTITY.md` body; the four loose adapters are warned about if they exist and never mention `IDENTITY.md` |
 | Workspace map drift | `drift` | Every top-level entry on disk, and every job card folder, appears in the fenced map in `IDENTITY.md` |
 | Routing targets | `routes` | Inside files named `CONTEXT.md` only, every path-shaped token resolves on disk |
+| Relative links | `links` | Every `.md` under the target: every markdown link target that is not `http`, `mailto` or a bare anchor resolves on disk |
 | Placeholders | `placeholders` | No unfilled double-brace placeholder in live prose, outside any `*.tmpl` file and outside code fences and backticks |
 | Code fences | `fences` | Backtick and tilde fence counts are even in every `.md` |
 | Shell and defaults self-test | `self` | Defaults parse, every `.sh` passes `sh -n`, the bashism sweep is clean, no `.md` carries a banned frontmatter key |
@@ -267,7 +268,7 @@ Per `$ICM_HOME/spec/authority-model.md`. Know which half of this list you are al
 
 **Not checked by anything.** Do not describe these as machine-enforced.
 
-- A dead relative link outside a `CONTEXT.md`. `routes` walks only files named `CONTEXT.md`, so a broken link in your `README.md` or a rule book is caught by you or by nobody.
+- A dead relative link written inside a code fence or inline backticks. `links` skips both on purpose, because a backticked link is documentation quoting the syntax.
 - A write proposed inside a `never_write` glob or an excluded folder. That refusal lives in `icm-plan.sh` and `icm-apply.sh`. The checker never proposes a write, so it cannot refuse one. Your step 3 preflight is the enforcement here.
 - Whether `wiki/index.md` agrees with the files on disk. Nothing in `scripts/` reads it.
 

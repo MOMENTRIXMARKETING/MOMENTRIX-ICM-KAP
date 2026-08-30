@@ -10,7 +10,7 @@ set -e
 
 usage() {
     cat <<'ICM_USAGE'
-usage: icm-check.sh [checks...] [target-dir]
+usage: icm-check.sh [--only ID]... [checks...] [--all] [-h|--help] [target-dir]
 
 Verifies an ICM workspace against icm.defaults.json. Report only, never writes.
 target-dir defaults to the current directory.
@@ -23,11 +23,17 @@ Checks (pass none, or --all, to run every one):
   --drift         the workspace map in IDENTITY.md covers the real tree
   --sections      required sections per icm.defaults.json
   --routes        every routing-table target in a CONTEXT.md exists on disk
+  --links         every relative markdown link in every .md resolves on disk
   --fences        markdown code fences are balanced
   --placeholders  no unfilled {{ }} placeholders survive
   --evidence      deep grounding sweep (needs python3 and wiki/; part of --all)
   --all           everything above (the default)
   -h, --help      this text
+
+  --only ID       select one check by its id. Repeatable. Same effect as that
+                  check's own flag. The eleven ids are:
+                  self frontmatter budgets adapters drift sections routes
+                  links fences placeholders evidence
 
 Exit: 0 clean, 1 findings, 2 usage or environment error.
 ICM_USAGE
@@ -40,7 +46,37 @@ ICM_HOME=$(cd "$ICM_SELF/.." && pwd)
 TARGET=""
 SEL=0
 D_SELF=0; D_FM=0; D_BUD=0; D_ADP=0; D_DRIFT=0
-D_SEC=0; D_ROUTE=0; D_FENCE=0; D_PLACE=0; D_EVID=0
+D_SEC=0; D_ROUTE=0; D_LINK=0; D_FENCE=0; D_PLACE=0; D_EVID=0
+
+# The complete list. CLI-CONTRACT section 3.2 owns it. There are no others.
+ICM_CHECK_IDS='self frontmatter budgets adapters drift sections routes links fences placeholders evidence'
+
+# only_id <id> - select one check by name. Never runs in a subshell, because it
+# sets the D_* flags the run block reads. An unrecognised id names the id, not
+# the flag, and lists the valid ones.
+only_id() {
+    case "$1" in
+        self)         D_SELF=1 ;;
+        frontmatter)  D_FM=1 ;;
+        budgets)      D_BUD=1 ;;
+        adapters)     D_ADP=1 ;;
+        drift)        D_DRIFT=1 ;;
+        sections)     D_SEC=1 ;;
+        routes)       D_ROUTE=1 ;;
+        links)        D_LINK=1 ;;
+        fences)       D_FENCE=1 ;;
+        placeholders) D_PLACE=1 ;;
+        evidence)     D_EVID=1 ;;
+        *)
+            printf 'FAIL unknown check id: %s\n' "$1" >&2
+            printf 'note the eleven check ids are:\n' >&2
+            for _oi in $ICM_CHECK_IDS; do printf 'note   %s\n' "$_oi" >&2; done
+            printf 'note each one also has a flag of the same name, for example --routes\n' >&2
+            exit 2
+            ;;
+    esac
+    SEL=1
+}
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -51,9 +87,19 @@ while [ $# -gt 0 ]; do
         --drift)        D_DRIFT=1; SEL=1 ;;
         --sections)     D_SEC=1;   SEL=1 ;;
         --routes)       D_ROUTE=1; SEL=1 ;;
+        --links)        D_LINK=1;  SEL=1 ;;
         --fences)       D_FENCE=1; SEL=1 ;;
         --placeholders) D_PLACE=1; SEL=1 ;;
         --evidence)     D_EVID=1;  SEL=1 ;;
+        --only)
+            [ $# -ge 2 ] || {
+                printf 'FAIL --only needs a check id\n' >&2
+                printf 'note the eleven check ids are: %s\n' "$ICM_CHECK_IDS" >&2
+                exit 2
+            }
+            only_id "$2"
+            shift ;;
+        --only=*)       only_id "${1#--only=}" ;;
         --all)          SEL=0 ;;
         -h|--help)      usage; exit 0 ;;
         --*)            printf 'FAIL unknown flag: %s\n' "$1" >&2; usage >&2; exit 2 ;;
@@ -74,7 +120,7 @@ TARGET=$(icm_abspath "$TARGET")
 
 if [ "$SEL" -eq 0 ]; then
     D_SELF=1; D_FM=1; D_BUD=1; D_ADP=1; D_DRIFT=1
-    D_SEC=1; D_ROUTE=1; D_FENCE=1; D_PLACE=1; D_EVID=1
+    D_SEC=1; D_ROUTE=1; D_LINK=1; D_FENCE=1; D_PLACE=1; D_EVID=1
 fi
 
 icm_init "$TARGET"
@@ -174,6 +220,36 @@ route_tokens() {
                 if (b == 0) { break }
                 print substr(rest, 1, b - 1)
                 l2 = substr(rest, b + 1)
+            }
+        }
+    ' "$1"
+}
+
+# Markdown link targets only, out of one file. Fenced blocks are skipped, and
+# so is anything inside an inline code span, because a backticked
+# `[Title](wiki/topic/article.md)` is documentation quoting the syntax, not a
+# claim that the path exists.
+link_tokens() {
+    awk '
+        /^ *```/ { inf = 1 - inf; next }
+        inf == 1 { next }
+        {
+            line = $0
+            out = ""
+            while ((a = index(line, "`")) > 0) {
+                out = out substr(line, 1, a - 1)
+                rest = substr(line, a + 1)
+                b = index(rest, "`")
+                if (b == 0) { line = ""; break }
+                line = substr(rest, b + 1)
+            }
+            out = out line
+            while ((a = index(out, "](")) > 0) {
+                rest = substr(out, a + 2)
+                b = index(rest, ")")
+                if (b == 0) { break }
+                print substr(rest, 1, b - 1)
+                out = substr(rest, b + 1)
             }
         }
     ' "$1"
@@ -499,6 +575,49 @@ c_routes() {
     fi
 }
 
+c_links() {
+    printf '%s\n' '-- links --'
+    _lk_md="$ICM_TMPDIR/lkmd"
+    icm_walk_md "$TARGET" > "$_lk_md"
+    if [ ! -s "$_lk_md" ]; then
+        icm_note "no markdown under the target, link check skipped"
+        return 0
+    fi
+    _lk_bad=0
+    _lk_n=0
+    while IFS= read -r _lk_r; do
+        [ -n "$_lk_r" ] || continue
+        case "$_lk_r" in
+            *.tmpl|*.md.tmpl) continue ;;
+        esac
+        _lk_file="$TARGET/$_lk_r"
+        _lk_dir=$(dirname "$_lk_file")
+        link_tokens "$_lk_file" > "$ICM_TMPDIR/ltok"
+        while IFS= read -r _lk_t; do
+            case "$_lk_t" in
+                ''|http:*|https:*|mailto:*|ftp:*|'#'*) continue ;;
+            esac
+            # a placeholder, a glob or a shell expansion is not a path claim
+            case "$_lk_t" in
+                *'{{'*|*'*'*|*'<'*|*'$'*|*'|'*) continue ;;
+            esac
+            _lk_p=${_lk_t%%#*}
+            _lk_p=${_lk_p#./}
+            [ -n "$_lk_p" ] || continue
+            _lk_n=$((_lk_n + 1))
+            if [ -e "$_lk_dir/$_lk_p" ] || [ -e "$TARGET/$_lk_p" ]; then
+                :
+            else
+                icm_fail "$_lk_r links to a path that does not exist: $_lk_t"
+                _lk_bad=1
+            fi
+        done < "$ICM_TMPDIR/ltok"
+    done < "$_lk_md"
+    if [ "$_lk_bad" -eq 0 ]; then
+        icm_ok "every relative markdown link resolves on disk ($_lk_n checked)"
+    fi
+}
+
 c_fences() {
     printf '%s\n' '-- fences --'
     _fe_md="$ICM_TMPDIR/femd"
@@ -604,6 +723,7 @@ if [ "$D_ADP"   -eq 1 ]; then c_adapters;     fi
 if [ "$D_DRIFT" -eq 1 ]; then c_drift;        fi
 if [ "$D_SEC"   -eq 1 ]; then c_sections;     fi
 if [ "$D_ROUTE" -eq 1 ]; then c_routes;       fi
+if [ "$D_LINK"  -eq 1 ]; then c_links;        fi
 if [ "$D_FENCE" -eq 1 ]; then c_fences;       fi
 if [ "$D_PLACE" -eq 1 ]; then c_placeholders; fi
 if [ "$D_EVID"  -eq 1 ]; then c_evidence;     fi

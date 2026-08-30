@@ -62,13 +62,14 @@ Read the report, do not re-derive it. If you disagree with a finding, that disag
 
 ### Running one check
 
-`icm-check.sh` takes one flag per check. Pass the flag for the check you want:
+`icm-check.sh` takes one flag per check, and `--only <id>` selects the same check by its id. These two lines are equivalent:
 
 ```sh
 sh "$ICM_HOME/scripts/icm-check.sh" --routes .
+sh "$ICM_HOME/scripts/icm-check.sh" --only routes .
 ```
 
-**There is no `--only` flag.** Passing one prints `FAIL unknown flag: --only` and exits 2. Pass the check's own flag, or pass nothing and run everything. Flags can be combined and the positional target can appear in any order.
+`--only` takes exactly one id and may be repeated. An id that is not one of the eleven prints `FAIL unknown check id: <id>`, lists all eleven, and exits 2. Flags can be combined and the positional target can appear in any order.
 
 The report is never writable. `icm-check.sh` writes nothing inside the target, ever, in any mode. Everything in tier 1 below is applied by **you**, with your own edits, and then reported.
 
@@ -218,7 +219,7 @@ Do not invent a third log format. Two exist and both are already specified.
 
 Per `$ICM_HOME/spec/authority-model.md`. This is the full check table the rest of the toolkit refers back to, and every row was verified against `scripts/icm-check.sh` in this checkout.
 
-**Machine-enforced.** `scripts/icm-check.sh` finds these. There are ten check ids and no others. Each one has a flag of the same name; there is no `--only`.
+**Machine-enforced.** `scripts/icm-check.sh` finds these. There are eleven check ids and no others. Each one has a flag of the same name, and `--only <id>` selects one by id.
 
 | Check | check-id | What the script actually verifies | Tier of the fix |
 |---|---|---|---|
@@ -229,6 +230,7 @@ Per `$ICM_HOME/spec/authority-model.md`. This is the full check table the rest o
 | Workspace map drift | `drift` | Every top-level entry on disk, and every folder holding a job card, appears in the fenced workspace map in `IDENTITY.md`. A mapped path that is not on disk is a warn | 1, safe |
 | Required sections | `sections` | `IDENTITY.md`, the root `CONTEXT.md` and every other `CONTEXT.md` carry the headings listed for their kind under `required_sections` in `icm.defaults.json` | 2, mechanical |
 | Routing targets | `routes` | Inside files literally named `CONTEXT.md` only: every backticked token and every markdown link target that looks like a path resolves on disk, relative to the file or to the root | 1 when exactly one match exists, 2 otherwise |
+| Relative links | `links` | Every `.md` under the target, not just `CONTEXT.md`: every markdown link target that is not `http`, `mailto` or a bare anchor resolves on disk. A `*.tmpl` file is exempt, and so is a link inside a code fence or inline backticks, which is documentation quoting the syntax | 1 when exactly one match exists, 2 otherwise |
 | Code fences | `fences` | Every `.md` under the target has an even number of backtick fence lines and an even number of tilde fence lines | 2, mechanical |
 | Placeholders | `placeholders` | No unfilled double-brace placeholder survives in live prose in any `.md` under the target. Any `*.tmpl` file is exempt, because it is interview material a human fills in, and so is anything inside a code fence or backticks, which is documentation quoting the syntax | 2, mechanical |
 | Grounding invariant, optional | `evidence` | Runs `scripts/check_evidence.py` when both `python3` and a `wiki/` directory exist, and relays its report. Skipped otherwise, and the skip is always printed rather than counted as a pass | 2, mechanical |
@@ -237,7 +239,7 @@ Per `$ICM_HOME/spec/authority-model.md`. This is the full check table the rest o
 
 | Concern | Who actually covers it |
 |---|---|
-| A dead relative link outside a `CONTEXT.md` | Nobody. `routes` walks only files named `CONTEXT.md`, so a dead link in `README.md`, in a doc, in a spec or in a `SKILL.md` is found by you or by nothing. Treat it as a tier 1 fix when exactly one candidate exists and a tier 2 report otherwise. |
+| A dead relative link inside a code fence or inline backticks | Nobody, deliberately. `links` skips both, because a backticked `[Title](wiki/topic/article.md)` is documentation quoting the syntax, not a claim that the path exists. If you meant it as a real link, unquote it and `links` will grade it. |
 | A write proposed inside a `never_write` glob or an excluded folder | `scripts/icm-plan.sh` and `scripts/icm-apply.sh`, never the checker. `icm-check.sh` is report-only by contract and never proposes a write, so it cannot have an opinion about one. |
 | `wiki/index.md` disagreeing with the files on disk | You, in tier 1 above. Nothing in `scripts/` reads `wiki/index.md`, and `check_evidence.py` deliberately skips `index.md` and `log.md`. |
 | Whether an applied plan was stale | Nobody. `icm-apply.sh` re-classifies and warns; it does not refuse. |

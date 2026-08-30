@@ -199,7 +199,7 @@ Exit 0 clean, 1 findings, 2 usage or environment error. To narrow it to one conc
 sh "$ICM_HOME/scripts/icm-check.sh" --sections --budgets .
 ```
 
-There is no `--only` flag; passing one prints `FAIL unknown flag: --only` and exits 2.
+`--only <id>` selects one check by its id, and is the same thing as that check's own flag. An id that is not one of the eleven exits 2 and lists them.
 
 If you want the raw numbers behind the budget row before you run the checker:
 
@@ -247,6 +247,7 @@ The authority model is in `$ICM_HOME/spec/authority-model.md`. Three tiers, and 
 | Required sections | `sections` | The headings under `required_sections["CONTEXT.stage.md"]` are all present |
 | Character and line budget | `budgets` | The card is inside the `CONTEXT.stage.md` character ceiling and line ceiling |
 | Routing targets | `routes` | Every path-shaped token in the card resolves on disk |
+| Relative links | `links` | Every markdown link target in every `.md` under the target resolves on disk |
 | Placeholders | `placeholders` | No unfilled double-brace placeholder in live prose |
 | Code fences | `fences` | Backtick and tilde fence counts are even |
 | Workspace map drift | `drift` | The folder holding this card is named in the fenced map in `IDENTITY.md` |

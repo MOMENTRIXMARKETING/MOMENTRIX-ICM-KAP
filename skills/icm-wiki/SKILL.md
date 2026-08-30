@@ -283,7 +283,7 @@ Add `, deep check skipped (no python3)` to that line when it applies.
 
 Authority model: `$ICM_HOME/spec/authority-model.md`. Every row below was verified against the scripts in this checkout.
 
-**Machine-enforced by `scripts/icm-check.sh`.** Each check has a flag of the same name, and there is no `--only` flag; passing one exits 2.
+**Machine-enforced by `scripts/icm-check.sh`.** Each check has a flag of the same name, and `--only <id>` selects one by id.
 
 | Check | check-id | What it verifies in a wiki workspace |
 |---|---|---|

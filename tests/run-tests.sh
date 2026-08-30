@@ -848,29 +848,48 @@ assert_not_out "--list does not offer a run that --stamp would refuse" "ok   202
 
 # Ctrl-C. CLI-CONTRACT 5.4: a trap handler that does not exit returns to the
 # script, so SIGINT has to stop the run, not just delete its work directory.
-D=$(fixture "t-sigint")
-printf '# Acme\n\nrules\n' > "$D/CLAUDE.md"
-run "$SCRIPTS/icm-plan.sh" "$D" --quiet
 INTOUT="$WORK/sigint.out"
-: > "$INTOUT"
 # POSIX: a non-interactive shell sets INT and QUIT to SIG_IGN for every job in
 # an asynchronous list while job control is off, and a script cannot trap a
-# signal that was ignored on entry. Without job control this launch makes the
-# child deaf to SIGINT and the test measures the harness, not the toolkit.
-set -m
-"$SCRIPTS/icm-apply.sh" "$D" > "$INTOUT" 2>&1 &
-IPID=$!
-set +m
-II=0
-while [ "$II" -lt 400 ]; do
-    if grep -q 'stamp:' "$INTOUT" 2>/dev/null; then break; fi
-    if [ -d "$D/.icm/backup" ]; then break; fi
-    II=$((II + 1))
+# signal that was ignored on entry. `set -m` fixes that in some shells and does
+# nothing in dash, which has no job control, so launching apply with & measures
+# the harness rather than the toolkit and the result differs by shell.
+#
+# So apply is run in the FOREGROUND of a wrapper, where nothing has ignored INT
+# for it, and a watcher inside that wrapper signals it once the run has taken
+# its stamp. `$$` keeps the wrapper's pid inside the subshell, and `exec` gives
+# that pid to apply, so the signal lands on the run itself.
+INTWRAP="$WORK/sigint-wrapper.sh"
+cat > "$INTWRAP" <<'ICM_INTWRAP'
+OUTF=$1
+TGT=$2
+APPLY=$3
+(
+    _n=0
+    while [ "$_n" -lt 20000000 ]; do
+        [ -d "$TGT/.icm/backup" ] && break
+        _n=$((_n + 1))
+    done
+    kill -INT $$ 2>/dev/null
+) &
+exec "$APPLY" "$TGT" > "$OUTF" 2>&1
+ICM_INTWRAP
+# The watcher and the run race, and on a loaded machine the run can finish
+# first. That is a slow machine, not a passing toolkit, so retry rather than
+# weaken the assertion. The wiki archetype is used because it has the most
+# writes, which is the widest window to land the signal in.
+INTTRY=0
+while [ "$INTTRY" -lt 5 ]; do
+    INTTRY=$((INTTRY + 1))
+    D=$(fixture "t-sigint")
+    printf '# Acme\n\nrules\n' > "$D/CLAUDE.md"
+    run "$SCRIPTS/icm-plan.sh" --archetype wiki "$D" --quiet
+    : > "$INTOUT"
+    sh "$INTWRAP" "$INTOUT" "$D" "$SCRIPTS/icm-apply.sh"
+    RC=$?
+    OUT=$(cat "$INTOUT" 2>/dev/null)
+    [ "$RC" -eq 130 ] && break
 done
-kill -INT "$IPID" 2>/dev/null || true
-wait "$IPID" 2>/dev/null
-RC=$?
-OUT=$(cat "$INTOUT" 2>/dev/null)
 assert_rc "SIGINT stops apply with the conventional 130" 130
 assert_not_out "an interrupted apply never claims it finished clean" "result: clean"
 
@@ -1401,6 +1420,117 @@ if command -v git >/dev/null 2>&1; then
 else
     printf 'note git is not on PATH, the plan trace test was skipped\n'
 fi
+
+# ------------------------------------------------------ 29 check ids CLI 3.2 --
+#
+# CLI-CONTRACT 3.2 fixes the check-id set at eleven and requires --only <id>.
+# These assertions are what stops a phantom id or a phantom flag growing back
+# into a SKILL.md, which is the defect class the hunt logged as
+# only-flag-and-phantom-check-ids.
+
+printf '\n%s\n' '-- check ids --'
+
+ICM_IDS='self frontmatter budgets adapters drift sections routes links fences placeholders evidence'
+
+for ID in $ICM_IDS; do
+    run "$SCRIPTS/icm-check.sh" --only "$ID" "$ROOT"
+    if [ "$RC" -eq 0 ] || [ "$RC" -eq 1 ]; then
+        t_pass "--only $ID is accepted by icm-check.sh"
+    else
+        t_fail "--only $ID is accepted by icm-check.sh" "exit $RC
+$OUT"
+    fi
+    run "$SCRIPTS/icm-check.sh" "--$ID" "$ROOT"
+    if [ "$RC" -eq 0 ] || [ "$RC" -eq 1 ]; then
+        t_pass "--$ID is accepted by icm-check.sh"
+    else
+        t_fail "--$ID is accepted by icm-check.sh" "exit $RC
+$OUT"
+    fi
+done
+
+run "$SCRIPTS/icm-check.sh" --only no-such-id "$ROOT"
+assert_rc "an unknown check id is refused with exit 2" 2
+assert_out "the refusal names the id, not the flag" "unknown check id: no-such-id"
+assert_out "the refusal lists a valid id" "placeholders"
+
+run "$SCRIPTS/icm-check.sh" --only
+assert_rc "--only with no value is refused with exit 2" 2
+
+# Every id in the check-id column of every check table in every SKILL.md must be
+# one the script accepts. The table is found by its own header row, so an
+# archetype name or a survey verdict elsewhere in the file is not mistaken for a
+# check id.
+IDBAD="$WORK/idbad.txt"
+: > "$IDBAD"
+for F in "$ROOT"/skills/*/SKILL.md; do
+    awk '
+        /^\| *Check *\| *check-id *\|/ { t = 1; next }
+        t == 1 && /^\|[ :|-]*$/        { next }
+        t == 1 && /^\|/ {
+            n = split($0, f, "|")
+            if (n >= 3) {
+                id = f[3]
+                gsub(/[ `]/, "", id)
+                if (id != "") { print id }
+            }
+            next
+        }
+        { t = 0 }
+    ' "$F" | sort -u | while IFS= read -r CID; do
+            [ -n "$CID" ] || continue
+            case " $ICM_IDS " in
+                *" $CID "*) continue ;;
+            esac
+            printf '%s names a check id the script does not accept: %s\n' \
+                "${F#"$ROOT"/}" "$CID" >> "$IDBAD"
+        done
+done
+if [ -s "$IDBAD" ]; then
+    t_fail "every check id named in a SKILL.md is one the script accepts" "$(cat "$IDBAD")"
+else
+    t_pass "every check id named in a SKILL.md is one the script accepts"
+fi
+
+# The retired ids must not come back.
+IDPH="$WORK/idph.txt"
+: > "$IDPH"
+for PH in map paths index; do
+    grep -rn "\`$PH\`" "$ROOT"/skills/*/SKILL.md 2>/dev/null \
+        | grep -E '^\S+: *\| ' >> "$IDPH" || true
+done
+if [ -s "$IDPH" ]; then
+    t_fail "the retired check ids map, paths and index are named in no check table" "$(cat "$IDPH")"
+else
+    t_pass "the retired check ids map, paths and index are named in no check table"
+fi
+
+# ------------------------------------------------------- 30 the links check --
+
+printf '\n%s\n' '-- links --'
+
+D=$(fixture "t-links dead")
+printf '# X\n\nSee [the plan](docs/nope.md) and [this one](real.md).\n' > "$D/README.md"
+printf 'real\n' > "$D/real.md"
+run "$SCRIPTS/icm-check.sh" --only links "$D"
+assert_rc "a dead relative link in a plain .md fails the links check" 1
+assert_out "the dead link is named in the report" "docs/nope.md"
+
+D=$(fixture "t-links quoted")
+printf '# X\n\nCite with `[Title](wiki/topic/article.md)`, project-root-relative.\n' \
+    > "$D/README.md"
+printf '# Y\n\n```\n[a](nowhere/at/all.md)\n```\n' > "$D/other.md"
+run "$SCRIPTS/icm-check.sh" --only links "$D"
+assert_rc "a link inside backticks or a fence is not graded" 0
+
+D=$(fixture "t-links external")
+printf '# X\n\n[home](https://example.com/a.md) [anchor](#section) [mail](mailto:a@b.c)\n' \
+    > "$D/README.md"
+run "$SCRIPTS/icm-check.sh" --only links "$D"
+assert_rc "http, anchor and mailto targets are skipped" 0
+
+run "$SCRIPTS/icm-check.sh" --only links "$ROOT"
+assert_rc "the toolkit's own markdown has no dead relative link" 0
 
 # ---------------------------------------------------------------- the tally --
 
