@@ -50,11 +50,13 @@ The subject matter is illustrative. The source rows in the brief name the kind o
 
 ## Running the checker
 
-From the repo root, one example at a time:
+Stand in the repo root and point `ICM_HOME` at it, the same way `README.md` does for the
+toolkit's own self-check. Then one example at a time:
 
 ```sh
-sh scripts/icm-check.sh examples/architect-company
-sh scripts/icm-check.sh examples/content-pipeline
+ICM_HOME=$(pwd)
+sh "$ICM_HOME/scripts/icm-check.sh" examples/architect-company
+sh "$ICM_HOME/scripts/icm-check.sh" examples/content-pipeline
 ```
 
 Both report `result: clean` with no warnings. Add `--only <id>` to run one check, for example `--only routes`.
@@ -62,7 +64,7 @@ Both report `result: clean` with no warnings. Add `--only <id>` to run one check
 The evidence pair is checked as part of the repo itself, because `raw/` and `wiki/` here are folders of this repo rather than a workspace root of their own:
 
 ```sh
-sh scripts/icm-check.sh .
+sh "$ICM_HOME/scripts/icm-check.sh" .
 ```
 
 A worked example is a test. If you change the shape the specs describe, one of these stops being clean, and that is the point of shipping them.

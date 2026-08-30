@@ -1569,6 +1569,184 @@ assert_rc "http, anchor and mailto targets are skipped" 0
 run "$SCRIPTS/icm-check.sh" --only links "$ROOT"
 assert_rc "the toolkit's own markdown has no dead relative link" 0
 
+# ------------------------------------------- 31 script resolution CONTRACT --
+# spec/CLI-CONTRACT.md section 13.2: "script resolution" and "no bare
+# invocation". Both were specified and neither was ever implemented, which is
+# how three bare `sh scripts/icm-check.sh` lines shipped in examples/README.md.
+
+printf '\n%s\n' '-- script resolution --'
+
+PREAMBLE='ICM_HOME="${ICM_HOME:-${CLAUDE_PLUGIN_ROOT:-$HOME/src/momentrix-icm-kap-toolkit}}"'
+
+MISSPRE="$WORK/preamble.bad"
+: > "$MISSPRE"
+for SKF in "$ROOT"/skills/*/SKILL.md; do
+    [ -f "$SKF" ] || continue
+    if grep -q -F 'scripts/icm-' "$SKF"; then
+        if ! grep -q -F -- "$PREAMBLE" "$SKF"; then
+            printf '%s\n' "$SKF" >> "$MISSPRE"
+        fi
+    fi
+done
+if [ -s "$MISSPRE" ]; then
+    t_fail "every SKILL.md that names a script carries the resolution preamble" \
+        "$(cat "$MISSPRE")"
+else
+    t_pass "every SKILL.md that names a script carries the resolution preamble"
+fi
+
+# No .md or .tmpl anywhere may invoke a script by a bare relative path. The
+# contract file itself is exempt: it quotes the banned form in order to ban it.
+BAREINV="$WORK/bare.bad"
+: > "$BAREINV"
+find "$ROOT" -name '.git' -prune -o \( -name '*.md' -o -name '*.tmpl' \) -print 2>/dev/null \
+    | grep -v '/spec/CLI-CONTRACT.md$' \
+    | while IFS= read -r BNF; do
+          if grep -n -F 'sh scripts/icm-' "$BNF" 2>/dev/null | grep -q -v 'ICM_HOME'; then
+              grep -n -F 'sh scripts/icm-' "$BNF" 2>/dev/null \
+                  | grep -v 'ICM_HOME' \
+                  | sed "s|^|$BNF:|"
+          fi
+      done > "$BAREINV"
+if [ -s "$BAREINV" ]; then
+    t_fail "no document invokes a script by a bare relative path" "$(cat "$BAREINV")"
+else
+    t_pass "no document invokes a script by a bare relative path"
+fi
+
+
+# ------------------------------------------------- CLI-CONTRACT section 13.2 --
+# The conformance guards. Every one of these exists because the scripts, the
+# skills and the docs once described three different programs. They are cheap
+# and they are the only thing that stops that coming back.
+
+printf '\n%s\n' '-- conformance: naming --'
+
+# plan artifact name: one name only, .icm/plan.txt
+# spec/CLI-CONTRACT.md and this harness name the banned spellings on purpose,
+# because they are what forbids them. Everything else must say plan.txt.
+BADPLAN=$(grep -rIn -- '\.icm/plan\.' "$ROOT" \
+    --include='*.md' --include='*.tmpl' --include='*.sh' 2>/dev/null \
+    | grep -v '\.icm/plan\.txt' \
+    | grep -v 'spec/CLI-CONTRACT\.md' \
+    | grep -v 'tests/run-tests\.sh' || true)
+if [ -z "$BADPLAN" ]; then
+    t_pass "the plan artifact is only ever called .icm/plan.txt"
+else
+    t_fail "the plan artifact is only ever called .icm/plan.txt" "$BADPLAN"
+fi
+
+# template demotion: no script may reach into the interview material
+BADTPL=$(grep -rIn -- 'interview-templates' "$ROOT/scripts" 2>/dev/null || true)
+if [ -z "$BADTPL" ]; then
+    t_pass "no script reads interview-templates/"
+else
+    t_fail "no script reads interview-templates/" "$BADTPL"
+fi
+
+printf '\n%s\n' '-- conformance: vocabulary --'
+
+# disposition vocabulary: only the six words, nothing invented
+BADDISP=""
+for f in "$ROOT"/docs/retrofit.md "$ROOT"/docs/deck-boards.md "$ROOT"/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    for w in $(grep -v 'There is no' "$f" \
+            | grep -v 'not a disposition' \
+            | grep -oE '\b(CREATE|ADOPT|COLLIDE|SKIP|REFUSE|SURVEY|PRESENT|MERGE|REPLACE|OVERWRITE)\b' 2>/dev/null | sort -u); do
+        case "$w" in
+            CREATE|ADOPT|COLLIDE|SKIP|REFUSE|SURVEY) ;;
+            *) BADDISP="$BADDISP
+$f: $w" ;;
+        esac
+    done
+done
+if [ -z "$BADDISP" ]; then
+    t_pass "every disposition word in the docs is one of the six"
+else
+    t_fail "every disposition word in the docs is one of the six" "$BADDISP"
+fi
+
+printf '\n%s\n' '-- conformance: flags --'
+
+# flag existence: every --flag a doc shows for a script is in that script's usage
+BADFLAG=""
+for s in icm-check icm-plan icm-apply icm-rollback; do
+    USAGE=$("$SCRIPTS/$s.sh" --help 2>&1 || true)
+    for fl in $(grep -rhoE "$s\.sh[^\`\"]*" "$ROOT"/skills/*/SKILL.md "$ROOT"/docs/*.md "$ROOT"/README.md "$ROOT"/QUICKSTART.md 2>/dev/null \
+            | grep -oE '\-\-[a-z][a-z-]*' | sort -u); do
+        printf '%s\n' "$USAGE" | grep -q -- "$fl" || BADFLAG="$BADFLAG
+$s.sh does not accept $fl"
+    done
+done
+if [ -z "$BADFLAG" ]; then
+    t_pass "every documented flag exists on the script that is shown running it"
+else
+    t_fail "every documented flag exists on the script that is shown running it" "$BADFLAG"
+fi
+
+printf '\n%s\n' '-- conformance: the checker itself --'
+
+# byte count: the checker counts bytes, not characters, so multibyte is honest
+BC=$(fixture "bytecount")
+printf 'caf\303\251 \342\200\224 \360\237\223\201\n' > "$BC/probe.md"
+REALBYTES=$(wc -c < "$BC/probe.md" | tr -d ' ')
+LIBBYTES=$(. "$SCRIPTS/icm_lib.sh" >/dev/null 2>&1; icm_chars "$BC/probe.md")
+assert_eq "the checker counts bytes, not characters, on multibyte input" "$LIBBYTES" "$REALBYTES"
+
+# adapter shape: the adapter icm-scaffold documents must pass --adapters
+AD=$(fixture "adaptershape")
+run "$SCRIPTS/icm-plan.sh" --quiet "$AD"
+run "$SCRIPTS/icm-apply.sh" "$AD"
+run "$SCRIPTS/icm-check.sh" --only adapters "$AD"
+assert_rc "the adapter this toolkit generates passes its own --adapters check" 0
+
+printf '\n%s\n' '-- conformance: spaces inside the workspace --'
+
+# A space in the fixture ROOT is already covered. This covers a space in a
+# folder INSIDE the workspace, which is the case a real user actually hits.
+SP=$(fixture "innerspace")
+run "$SCRIPTS/icm-plan.sh" --quiet "$SP"
+run "$SCRIPTS/icm-apply.sh" "$SP"
+mkdir -p "$SP/01 - research notes" "$SP/02_plain"
+printf 'a note\n' > "$SP/01 - research notes/note.md"
+printf 'plain\n' > "$SP/02_plain/note.md"
+run "$SCRIPTS/icm-check.sh" --only drift "$SP"
+
+# Drift is right to flag both: they were added after the map was written. The
+# bug this guards is word splitting, which would shred the spaced name into
+# "01", "-", "research" and "notes" and report four phantom paths.
+if printf '%s\n' "$OUT" | grep -q -F '01 - research notes'; then
+    t_pass "a folder name with spaces survives the drift walk as one path"
+else
+    t_fail "a folder name with spaces survives the drift walk as one path" "$OUT"
+fi
+for frag in ': 01$' ': research$' ': notes$' ': -$'; do
+    if printf '%s\n' "$OUT" | grep -qE "$frag"; then
+        t_fail "the spaced folder name is not split into fragments" "$OUT"
+        break
+    fi
+done
+printf '%s\n' "$OUT" | grep -qE ': 01$|: research$|: notes$|: -$' \
+    || t_pass "the spaced folder name is not split into fragments"
+
+SPACED_N=$(printf '%s\n' "$OUT" | grep -c -F '01 - research notes' || true)
+PLAIN_N=$(printf '%s\n' "$OUT" | grep -c -F '02_plain' || true)
+assert_eq "a spaced folder is reported exactly as often as a plain one" "$SPACED_N" "$PLAIN_N"
+
+printf '\n%s\n' '-- conformance: malformed block --'
+
+# A CLAUDE.md whose end marker was hand-deleted must COLLIDE and lose nothing.
+MB=$(fixture "malformed")
+{
+    printf '# Acme\n\nHand written rules that must survive.\n\n'
+    printf '<!-- icm:begin -->\nsomething that looks managed\n'
+} > "$MB/CLAUDE.md"
+cp "$MB/CLAUDE.md" "$MB.pre"
+run "$SCRIPTS/icm-plan.sh" --quiet "$MB"
+assert_out "a CLAUDE.md missing its end marker is classified COLLIDE" "COLLIDE"
+run "$SCRIPTS/icm-apply.sh" "$MB"
+assert_same "a malformed block loses not one line of the user's file" "$MB/CLAUDE.md" "$MB.pre"
+
 # ---------------------------------------------------------------- the tally --
 
 printf '\n%s\n' '-- summary --'
