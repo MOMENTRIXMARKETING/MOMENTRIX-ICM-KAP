@@ -11,11 +11,15 @@ learned from your sources, and every fact it writes has to exist in a source fir
 Nothing here is a framework. It is markdown files, POSIX `sh` scripts, and eight skills that
 know how to write and check both.
 
+**In a hurry?** [`QUICKSTART.md`](QUICKSTART.md) is the sixty-second path for all three ways in,
+with the real output of every command beside it.
+
 ---
 
 ## The three ways in
 
-Pick the one that matches what you are standing in front of.
+Pick the one that matches what you are standing in front of. Copy-pasteable commands and what
+they actually print: [`QUICKSTART.md`](QUICKSTART.md).
 
 ### NEW: scaffold from scratch
 
@@ -172,15 +176,17 @@ There is no `bin/icm`, no PATH install and no wrapper. One resolution mechanism,
 |---|---|---|
 | `icm-scaffold` | You are starting fresh and want the layers written for you | `quick` (default), `full`, `wiki` |
 | `icm-retrofit` | The project already exists and you want to see the diff first | `plan` (default), `apply`, `rollback` |
-| `icm-context` | A folder does real work and has no job card | `one <folder>`, `all` |
-| `icm-stage` | You want another numbered stage in the pipeline | `add <name>`, `check` |
+| `icm-context` | A folder does real work and has no job card | `report` (default), `create` |
+| `icm-stage` | You want another numbered stage in the pipeline | `<stage-name>`, `<stage-name> after:NN` |
 | `icm-sync` | The folder map has gone stale, or routing points at nothing | `lint` (default), `update` |
-| `icm-wiki` | You have sources to turn into knowledge the model can reuse | `ingest`, `query`, `lint` |
-| `icm-log` | Something missed and you want it on the record in ten seconds | `add`, `close` |
-| `icm-forge` | It is review day and you want the misses turned into proposals | `propose` (default), `check` |
+| `icm-wiki` | You have sources to turn into knowledge the model can reuse | `ingest <url\|path>`, `query <question>`, `lint` |
+| `icm-log` | Something missed and you want it on the record in ten seconds | `miss`, `close`, `show` |
+| `icm-forge` | It is review day and you want the misses turned into proposals | `run`, `show`, `approve <id>` |
 
-Run any skill with no argument to get its default mode. Every skill's frontmatter contract is
-in [`docs/skill-authoring.md`](docs/skill-authoring.md).
+Run a skill with no argument to get its default mode, which is always the one that reports
+before it writes. Each skill's own `argument-hint` is the authority on its modes, and the
+frontmatter contract every skill meets is in
+[`docs/skill-authoring.md`](docs/skill-authoring.md).
 
 ### The archetypes
 
@@ -197,13 +203,45 @@ interview; `icm-plan.sh --archetype ID` picks one on the retrofit path.
 `architect` is a workspace **shape**, not a fourth install manifest.
 `icm-plan.sh --archetype` takes `quick`, `full` and `wiki` only. You build the architect shape
 on top of a `full` install, one department at a time, with `/icm-context` and `/icm-stage add`.
-It is Pattern 24 in [`spec/CONVENTIONS.md`](spec/CONVENTIONS.md), and
-[`docs/methodology.md`](docs/methodology.md) says why it works.
+It is Pattern 24 in [`spec/CONVENTIONS.md`](spec/CONVENTIONS.md).
+[`docs/architect.md`](docs/architect.md) says why it works and where the obvious version of it
+goes wrong, and [`examples/architect-company/`](examples/architect-company) is a worked tree.
 
 Two of these are the loop that keeps the rest honest. `icm-log` writes to
 `_log/LOOP-LEDGER.md` and never judges. `icm-forge` reads that ledger, finds where the same
 rule book failed twice, and writes proposals to `_log/FORGE-PROPOSALS.md`. It never edits a
 rule book. You hold the only pen that touches those.
+
+### The weekly forge cron
+
+The forge is the one skill worth putting on a schedule, because its input accumulates whether
+anyone is watching or not. Set it up once, in the workspace you want reviewed, with Claude
+Code's `/schedule`:
+
+- **Cadence: weekly.** The threshold for a hole is two misses on the same rule book, and two
+  misses take about a week to arrive. A daily run mostly reports nothing, and a report that is
+  usually empty trains you to skip it.
+- **The routine's prompt is exactly `/icm-forge run`.** Nothing else. No extra instructions, no
+  "and fix what you find".
+
+What the run does: reads `_log/LOOP-LEDGER.md`, counts the misses per rule book, names the holes
+that cleared the threshold, and appends one proposal block per hole to
+`_log/FORGE-PROPOSALS.md`, each quoting the ledger lines that justify it. It also appends the
+weekly review block to the ledger. That is the whole of it.
+
+**The cron only runs the forge. Approval always stays with the human.** A scheduled run cannot
+approve anything, because approval is defined as a human in the turn naming a proposal by its
+id, and there is no human in a scheduled turn. So a run that finds five holes writes five
+proposals and stops. Proposals from an unattended run are written
+`Status: proposed (unattended run)`, so nobody later reads silence as consent, and the "was the
+call necessary" column is left blank rather than guessed.
+
+The output is a queue, not a decision. You read it when you sit down, with `/icm-forge show`,
+and act on it with `/icm-forge approve <id>`, which is the only mode in which a rule book
+changes. The schedule changes when the forge looks. It changes nothing about who decides.
+
+Full behaviour, including the ladder of smallest edits and every refusal:
+[`skills/icm-forge/SKILL.md`](skills/icm-forge/SKILL.md).
 
 ---
 
@@ -321,13 +359,18 @@ If a number appears in two files and both look authoritative, one of them is a b
 
 ## Docs
 
+- [`QUICKSTART.md`](QUICKSTART.md) - the sixty-second path for NEW, OVER and TRANSFER, with the real output of every command
 - [`BUILD-CONTRACT.md`](BUILD-CONTRACT.md) - the non-negotiables, read before writing any file here
 - [`docs/methodology.md`](docs/methodology.md) - why the five layers, why the recursion, why the split
+- [`docs/architect.md`](docs/architect.md) - folders as agents, why the shape survives a model swap
 - [`docs/skill-authoring.md`](docs/skill-authoring.md) - the SKILL.md contract, read before you write one
 - [`docs/retrofit.md`](docs/retrofit.md) - the retrofit flow, step by step
 - [`docs/deck-boards.md`](docs/deck-boards.md) - the print deck copy
 - [`docs/paper/Interpretable-Context-Methodology.pdf`](docs/paper/Interpretable-Context-Methodology.pdf) - the paper
-- [`examples/`](examples) - one worked pair: a raw capture and the article compiled from it
+- [`examples/`](examples) - worked examples you can read end to end:
+  - [`examples/raw/`](examples/raw) and [`examples/wiki/`](examples/wiki) - a source capture and the article compiled from it, the grounding invariant end to end
+  - [`examples/architect-company/`](examples/architect-company) - the Pattern 24 company tree, with the file bodies an agent reads when it walks in
+  - [`examples/content-pipeline/`](examples/content-pipeline) - a numbered stage pipeline, job card by job card
 
 ---
 

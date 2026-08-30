@@ -1248,6 +1248,43 @@ assert_not_out "the drift check never reports a folder name truncated at its fir
 assert_not_out "the drift check never reports a truncated capitalised folder name" \
     "not on disk: FINAL"
 
+# ------------------------------------------ 24b a workspace nested in a repo --
+
+# A folder that carries its own IDENTITY.md is a workspace root in its own
+# right. Its CONTEXT.md is layer 1, not a job card, and its tree is mapped by
+# its own IDENTITY.md. Without that the toolkit could not ship the worked
+# example workspaces under examples/ and still grade itself clean.
+
+printf '\n%s\n' '-- nested workspace roots --'
+
+D=$(fixture "t-nested root")
+mkdir -p "$D/inner"
+run "$SCRIPTS/icm-plan.sh" "$D" --quiet
+run "$SCRIPTS/icm-apply.sh" "$D"
+run "$SCRIPTS/icm-plan.sh" "$D/inner" --quiet
+run "$SCRIPTS/icm-apply.sh" "$D/inner"
+
+# The job card folder is created after the inner apply, so the inner map does
+# not document it yet and the outer map never should.
+mkdir -p "$D/inner/01-stage"
+{
+    printf '# 01 stage\n\n## Purpose\n\nA job card.\n\n## Inputs\n\n- none\n'
+    printf '\n## Process\n\n1. Do it.\n\n## Outputs\n\n- none\n\n## Routing\n\n- done\n'
+} > "$D/inner/01-stage/CONTEXT.md"
+
+run "$SCRIPTS/icm-check.sh" --only sections "$D"
+assert_rc "the nested root CONTEXT.md is graded as layer 1, not as a job card" 0
+assert_not_out "the nested root CONTEXT.md is not asked for a Purpose section" \
+    "inner/CONTEXT.md is missing"
+
+run "$SCRIPTS/icm-check.sh" --only drift "$D"
+assert_rc "the outer map is not asked to document a nested root's job cards" 0
+assert_out "the drift check says the nested root grades itself" "nested workspace root"
+
+run "$SCRIPTS/icm-check.sh" --only drift "$D/inner"
+assert_rc "the nested root's own map must still cover its own job card folders" 1
+assert_out "the nested root names its own undocumented job card folder" "01-stage"
+
 # --------------------------------------- 25 the built-in bodies win TPL-1/7 --
 
 printf '\n%s\n' '-- bodies --'

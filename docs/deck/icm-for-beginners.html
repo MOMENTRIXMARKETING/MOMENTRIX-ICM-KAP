@@ -1,0 +1,792 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ICM FOR BEGINNERS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap">
+<style>
+html, body { margin:0; padding:0; font-family:'Space Grotesk','Trebuchet MS',sans-serif; background:#222; }
+.sheet { width:1440px; height:810px; overflow:hidden; page-break-after:always; break-after:page; margin:0 auto; }
+@media screen { .sheet { margin-bottom:24px; } }
+@page { size:1440px 810px; margin:0; }
+
+    .zz-ignore { margin: 0; font-family: 'Space Grotesk', 'Trebuchet MS', sans-serif; }
+    a { color: #F35A28; } a:hover { color: #FEFEFB; }
+  
+    .zz-ignore { margin: 0; font-family: 'Space Grotesk', 'Trebuchet MS', sans-serif; }
+    a { color: #F35A28; } a:hover { color: #333333; }
+  
+    .zz-ignore { margin: 0; font-family: 'Space Grotesk', 'Trebuchet MS', sans-serif; }
+    a { color: #F35A28; } a:hover { color: #FEFEFB; }
+    .dept { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .chip { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 12px; padding: 12px 8px; }
+    .stem { width: 1px; height: 14px; background: rgba(254,254,251,0.25); margin: 0 auto; }
+    .drop { background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+    .row { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .nm { font-weight: 600; font-size: 13px; white-space: nowrap; }
+    .nt { font-size: 11px; font-weight: 300; color: rgba(254,254,251,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub { margin-left: 21px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 10px; font-size: 11px; font-weight: 300; color: rgba(254,254,251,0.6); line-height: 1.45; }
+    .fsvg { flex-shrink: 0; }
+  
+</style></head><body>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #333333; color: #FEFEFB; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 28px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMyIgZGF0YS1uYW1lPSJMYXllciAzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogI2ZmZmZmYzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(254,254,251,0.55)">ICM FOR BEGINNERS 1 OF 9</div>
+  </div>
+
+  <div style="display: flex; flex-grow: 1; gap: 48px; padding: 20px 56px 0 56px; align-items: center">
+
+    <div style="width: 400px; display: flex; flex-direction: column; gap: 18px">
+      <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">NO CODE JUST FOLDERS</div>
+      <div style="font-size: 50px; line-height: 1.02; font-weight: 700; letter-spacing: 0.5px">THE FOLDER STRUCTURE</div>
+      <div style="font-size: 17px; line-height: 1.55; font-weight: 300; color: rgba(254,254,251,0.85)">ICM stands for Interpretable Context Methodology. Big name, simple idea: you organise your AI's work the way you'd organise a filing cabinet, and the structure itself tells the AI what to do.</div>
+      <div style="font-size: 17px; line-height: 1.55; font-weight: 300; color: rgba(254,254,251,0.85)">Numbered folders set the order of work. A short instruction file sits in each one. That's the whole system.</div>
+    </div>
+
+    <div style="flex-grow: 1; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 16px; padding: 26px 30px; display: flex; flex-direction: column; gap: 8px; font-size: 15px">
+
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+        <span style="font-weight: 600">my workspace</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">one folder holds the whole operation</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7z"></path><path d="M14 3v4h4"></path></svg>
+        <span style="font-weight: 400">IDENTITY.md</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">tells the AI where it is and what this workspace does</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7z"></path><path d="M14 3v4h4"></path></svg>
+        <span style="font-weight: 400">CONTEXT.md</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">the routing table, which folder handles which kind of task</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7z"></path><path d="M14 3v4h4"></path></svg>
+        <span style="font-weight: 400">ARCHITECT.md</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">the chair: whichever AI reads this runs the workspace (page 9)</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7z"></path><path d="M14 3v4h4"></path></svg>
+        <span style="font-weight: 400">status.md</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">the rollup: one line per area, the state of play</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px; background: rgba(243,90,40,0.12); border-radius: 8px; padding-top: 5px; padding-bottom: 5px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F35A28" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+        <span style="font-weight: 600; color: #F35A28">_config</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.75)">the rule books: voice, style, conventions (board 2 covers this)</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+        <span style="font-weight: 600">01_research</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">stage one, gathers the facts</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 56px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7z"></path><path d="M14 3v4h4"></path></svg>
+        <span style="font-weight: 400">CONTEXT.md</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">this stage's contract: what comes in, what must go out</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 56px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7z"></path><path d="M14 3v4h4"></path></svg>
+        <span style="font-weight: 400">output/</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">the results, which become stage two's input</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+        <span style="font-weight: 600">02_script</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">stage two, turns research into a draft (same two files inside)</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; margin-left: 28px; border-left: 1px solid rgba(254,254,251,0.12); padding-left: 16px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+        <span style="font-weight: 600">03_production</span>
+        <span style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.6)">stage three, polishes the final piece</span>
+      </div>
+
+      <div style="margin-top: 6px; padding-top: 12px; border-top: 1px solid rgba(254,254,251,0.12); font-size: 14px; font-weight: 300; color: rgba(254,254,251,0.7)">The numbers are the schedule. 01 runs before 02 runs before 03. Between each stage you read the output and edit anything you like. The next stage uses your version.</div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 56px 24px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(254,254,251,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(254,254,251,0.4)">THE FOLDER STRUCTURE</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #FEFEFB; color: #333333; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 28px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogIzMzMzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(51,51,51,0.55)">ICM FOR BEGINNERS 2 OF 9</div>
+  </div>
+
+  <div style="display: flex; flex-grow: 1; gap: 48px; padding: 20px 56px 0 56px; align-items: center">
+
+    <div style="width: 470px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px">
+      <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">THE RULE BOOKS</div>
+      <div style="font-size: 44px; line-height: 1.05; font-weight: 700; letter-spacing: 0.5px">WHERE THE RULE BOOKS LIVE</div>
+      <div style="font-size: 17px; line-height: 1.55; font-weight: 300; color: rgba(51,51,51,0.85)">Rule books are just reference files: how we sound, how things should look, what our words mean. They all live in one place, the _config folder. You write them once.</div>
+      <div style="font-size: 17px; line-height: 1.55; font-weight: 300; color: rgba(51,51,51,0.85)">Here's the clever part: rule books don't travel down the line. Each stage's instruction file names exactly which rule books it needs, and pulls only those.</div>
+    </div>
+
+    <div style="flex-grow: 1; display: flex; gap: 28px; align-items: stretch">
+
+      <div style="width: 240px; background: rgba(243,90,40,0.08); border: 1px solid #F35A28; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+        <div style="font-size: 13px; letter-spacing: 2px; font-weight: 600; color: #F35A28">CONFIG</div>
+        <div style="font-weight: 600; font-size: 17px; letter-spacing: 1px">THE RULE BOOKS</div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 400">voice.md<div style="font-size: 12px; font-weight: 300; color: rgba(51,51,51,0.6)">how we sound</div></div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 400">style.md<div style="font-size: 12px; font-weight: 300; color: rgba(51,51,51,0.6)">how things look</div></div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 400">glossary.md<div style="font-size: 12px; font-weight: 300; color: rgba(51,51,51,0.6)">what our words mean</div></div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.7); margin-top: auto">Written once during setup. Every future run reads from here.</div>
+      </div>
+
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 14px; justify-content: center">
+
+        <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 18px 22px; display: flex; align-items: center; gap: 18px">
+          <div style="display: flex; flex-direction: column; gap: 3px; width: 200px">
+            <div style="font-weight: 600; font-size: 16px; letter-spacing: 1px">01 RESEARCH</div>
+            <div style="font-size: 13px; font-weight: 300; color: rgba(51,51,51,0.65)">gathers the facts</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; border: 1px solid rgba(51,51,51,0.3); border-radius: 8px; padding: 5px 10px; color: rgba(51,51,51,0.7)">PULLS glossary.md</div>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 18px 22px; display: flex; align-items: center; gap: 18px">
+          <div style="display: flex; flex-direction: column; gap: 3px; width: 200px">
+            <div style="font-weight: 600; font-size: 16px; letter-spacing: 1px">02 SCRIPT</div>
+            <div style="font-size: 13px; font-weight: 300; color: rgba(51,51,51,0.65)">writes the draft</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; background: #F35A28; border-radius: 8px; padding: 5px 10px; color: #FEFEFB">PULLS voice.md</div>
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; border: 1px solid rgba(51,51,51,0.3); border-radius: 8px; padding: 5px 10px; color: rgba(51,51,51,0.7)">PULLS glossary.md</div>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 18px 22px; display: flex; align-items: center; gap: 18px">
+          <div style="display: flex; flex-direction: column; gap: 3px; width: 200px">
+            <div style="font-weight: 600; font-size: 16px; letter-spacing: 1px">03 PRODUCTION</div>
+            <div style="font-size: 13px; font-weight: 300; color: rgba(51,51,51,0.65)">polishes the final piece</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; border: 1px solid rgba(51,51,51,0.3); border-radius: 8px; padding: 5px 10px; color: rgba(51,51,51,0.7)">PULLS style.md</div>
+          </div>
+        </div>
+
+        <div style="border: 1px dashed rgba(51,51,51,0.25); border-radius: 12px; padding: 14px 20px; font-size: 14px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.75)">Why it matters: the AI only carries what the current stage needs, a few thousand words instead of a phone book. Focused context means fewer mistakes. And when the output keeps drifting off brand, you fix one rule book and every future run inherits the fix.</div>
+
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 56px 24px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(51,51,51,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(51,51,51,0.4)">WHERE THE RULE BOOKS LIVE</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #333333; color: #FEFEFB; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 28px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMyIgZGF0YS1uYW1lPSJMYXllciAzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogI2ZmZmZmYzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(254,254,251,0.55)">ICM FOR BEGINNERS 3 OF 9</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px 56px 0 56px">
+    <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">FOLDERS AS AGENTS</div>
+    <div style="font-size: 50px; line-height: 1.02; font-weight: 700; letter-spacing: 0.5px">CODE VS ICM</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; gap: 28px; padding: 22px 56px 0 56px; align-items: stretch">
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-size: 13px; letter-spacing: 2px; font-weight: 600; color: rgba(254,254,251,0.6)">THE OLD WAY AN AGENT SYSTEM</div>
+      <div style="background: #FEFEFB; border-radius: 14px; padding: 20px 24px; flex-grow: 1">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; margin-bottom: 10px">PYTHON FRAMEWORK CODE</div>
+        <pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 15px; line-height: 1.6; color: #333333; white-space: pre-wrap">researcher = Agent(role, goal, llm)
+writer = Agent(role, goal, llm)
+editor = Agent(role, goal, llm)
+
+crew = Crew(
+  agents=[researcher, writer, editor],
+  tasks=[task1, task2, task3],
+  process=Process.sequential)
+
+result = crew.kickoff()</pre>
+      </div>
+      <div style="font-size: 14px; font-weight: 300; line-height: 1.55; color: rgba(254,254,251,0.7)">Wired in code. Invisible thinking. Any change needs a programmer.</div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-size: 13px; letter-spacing: 2px; font-weight: 600; color: #F35A28">THE ICM WAY FOLDERS AS AGENTS</div>
+      <div style="background: rgba(254,254,251,0.05); border: 1px solid #F35A28; border-radius: 14px; padding: 20px 24px; flex-grow: 1; box-shadow: 0 0 24px rgba(243,90,40,0.2)">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; margin-bottom: 10px">JUST A FOLDER TREE</div>
+        <pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 15px; line-height: 1.6; color: #FEFEFB; white-space: pre-wrap">my workspace
+  IDENTITY.md    (the name tag)
+  CONTEXT.md     (the map)
+  ARCHITECT.md   (the chair)
+  status.md      (the rollup)
+  _config        (the rule books)
+
+  01_research    CONTEXT.md + output/
+  02_script      CONTEXT.md + output/
+  03_production  CONTEXT.md + output/</pre>
+      </div>
+      <div style="font-size: 14px; font-weight: 300; line-height: 1.55; color: rgba(254,254,251,0.8)">Everything readable. Any change is a text edit. No programmer.</div>
+    </div>
+
+  </div>
+
+  <div style="margin: 20px 56px 0 56px; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 14px; padding: 16px 24px; display: flex; gap: 20px; align-items: center">
+    <div style="width: 5px; align-self: stretch; border-radius: 3px; background: linear-gradient(180deg, #F35A28 0%, #D1543C 16.7%, #B04F4F 33.3%, #904A65 50%, #704579 66.7%, #4F408D 83.3%, #2E3BA1 100%)"></div>
+    <div style="font-size: 16px; font-weight: 300; line-height: 1.55; color: rgba(254,254,251,0.9)">In old AI systems, one agent holds everything in its head and code decides what it does. In ICM, each folder IS an agent: its job card is the brain, its files are the memory, its output is the handoff. No code, no framework. The filing cabinet does the thinking.</div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 56px 24px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(254,254,251,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(254,254,251,0.4)">CODE VS ICM</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #FEFEFB; color: #333333; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 28px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogIzMzMzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(51,51,51,0.55)">ICM FOR BEGINNERS 4 OF 9</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px; padding: 22px 56px 0 56px">
+    <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">WHY BOTHER</div>
+    <div style="font-size: 50px; line-height: 1.02; font-weight: 700; letter-spacing: 0.5px">THE PAYOFF</div>
+  </div>
+
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding: 24px 56px 0 56px">
+
+    <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-weight: 600; font-size: 17px; letter-spacing: 1.5px">YOU STAY IN CONTROL</div>
+      <div style="font-size: 15px; font-weight: 300; line-height: 1.55; color: rgba(51,51,51,0.72)">The AI stops between stages. You read the output like a normal document, change anything you disagree with, and the next stage builds on your version. No black box, no surprises at the end.</div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-weight: 600; font-size: 17px; letter-spacing: 1.5px">FIX ONCE IMPROVE FOREVER</div>
+      <div style="font-size: 15px; font-weight: 300; line-height: 1.55; color: rgba(51,51,51,0.72)">Output keeps missing your tone? Don't fix the output, fix voice.md in the rule books. One edit and every run from tomorrow onward comes out right. The system compounds instead of repeating mistakes.</div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-weight: 600; font-size: 17px; letter-spacing: 1.5px">NO PROGRAMMER REQUIRED</div>
+      <div style="font-size: 15px; font-weight: 300; line-height: 1.55; color: rgba(51,51,51,0.72)">Everything is folders and plain text files. If you can organise a filing cabinet and edit a document, you can build, run, repair and improve the whole system yourself.</div>
+    </div>
+
+    <div style="background: rgba(243,90,40,0.08); border: 1px solid #F35A28; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 0 24px rgba(243,90,40,0.15)">
+      <div style="font-weight: 600; font-size: 17px; letter-spacing: 1.5px; color: #F35A28">START SMALL TODAY</div>
+      <div style="font-size: 15px; font-weight: 300; line-height: 1.55; color: rgba(51,51,51,0.8)">Make one folder. Put three numbered folders inside it. Write one instruction file per folder saying what comes in and what should go out. Add a _config folder with one rule book. Run it. That's ICM.</div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 56px 24px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(51,51,51,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(51,51,51,0.4)">THE PAYOFF</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #333333; color: #FEFEFB; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 26px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMyIgZGF0YS1uYW1lPSJMYXllciAzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogI2ZmZmZmYzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(254,254,251,0.55)">ICM FOR BEGINNERS 5 OF 9</div>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; gap: 40px; padding: 12px 56px 0 56px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">ONE PATTERN ANY SIZE</div>
+      <div style="font-size: 44px; line-height: 1.02; font-weight: 700; letter-spacing: 0.5px">THE BUSINESS STRUCTURE</div>
+    </div>
+    <div style="font-size: 15px; line-height: 1.5; font-weight: 300; color: rgba(254,254,251,0.8); max-width: 560px; padding-bottom: 4px">Departments are top level folders. Every one drops down into the same ICM pattern: rule books first, then numbered stages. Small business or enterprise, only the count changes.</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; gap: 14px; padding: 18px 56px 0 56px; align-items: stretch">
+
+    <div class="dept">
+      <div class="chip"><svg class="fsvg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg><span style="font-weight: 600; font-size: 12px; letter-spacing: 0.5px">THE TOP FOLDER</span></div>
+      <div class="stem"></div>
+      <div class="drop">
+        <div class="sub" style="margin-left: 0; border-left: none; padding-left: 0; color: rgba(254,254,251,0.5)">not a department, the roof over all of them</div>
+        <div class="row"><span class="nm" style="color: rgba(254,254,251,0.85)">IDENTITY.md</span></div>
+        <div class="sub">who we are, the name tag</div>
+        <div class="row"><span class="nm" style="color: rgba(254,254,251,0.85)">CONTEXT.md</span></div>
+        <div class="sub">the map, routes every task</div>
+        <div class="row"><span class="nm" style="color: rgba(254,254,251,0.85)">ARCHITECT.md</span></div>
+        <div class="sub">the lead architect's job card</div>
+        <div class="row"><span class="nm" style="color: rgba(254,254,251,0.85)">status.md</span></div>
+        <div class="sub">rollup, one line per department</div>
+        <div class="row"><span class="nm" style="color: #F35A28">_config</span></div>
+        <div class="sub">company rule books<br>brand-voice.md<br>policies.md<br>templates.md</div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="chip" style="background: rgba(243,90,40,0.12); border-color: #F35A28; box-shadow: 0 0 18px rgba(243,90,40,0.25)"><svg class="fsvg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F35A28" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg><span style="font-weight: 600; font-size: 12px; letter-spacing: 0.5px; color: #F35A28">FINANCE</span></div>
+      <div class="stem" style="background: #F35A28"></div>
+      <div class="drop" style="border-color: #F35A28; background: rgba(243,90,40,0.08)">
+        <div class="row"><span class="nm" style="color: #F35A28">_config</span></div>
+        <div class="sub">payment-terms.md<br>invoice-template.md<br>chase-tone.md</div>
+        <div class="row"><span class="nm">01_invoicing</span></div>
+        <div class="sub">raise and send</div>
+        <div class="row"><span class="nm">02_recovery</span></div>
+        <div class="sub">chase overdue money</div>
+        <div class="row"><span class="nm">03_reporting</span></div>
+        <div class="sub">weekly cash summary</div>
+        <div class="row"><span class="nm">status.md</span></div>
+        <div class="sub">reports up to the architect</div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="chip"><svg class="fsvg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg><span style="font-weight: 600; font-size: 12px; letter-spacing: 0.5px">CUSTOMERS</span></div>
+      <div class="stem"></div>
+      <div class="drop">
+        <div class="row"><span class="nm" style="color: #F35A28">_config</span></div>
+        <div class="sub">service-tone.md<br>refund-rules.md</div>
+        <div class="row"><span class="nm">01_enquiries</span></div>
+        <div class="sub">answer and route</div>
+        <div class="row"><span class="nm">02_support</span></div>
+        <div class="sub">fix the problem</div>
+        <div class="row"><span class="nm">03_feedback</span></div>
+        <div class="sub">learn and improve</div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="chip"><svg class="fsvg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg><span style="font-weight: 600; font-size: 12px; letter-spacing: 0.5px">HR</span></div>
+      <div class="stem"></div>
+      <div class="drop">
+        <div class="row"><span class="nm" style="color: #F35A28">_config</span></div>
+        <div class="sub">contracts.md<br>policies.md</div>
+        <div class="row"><span class="nm">01_hiring</span></div>
+        <div class="sub">post, interview, offer</div>
+        <div class="row"><span class="nm">02_onboarding</span></div>
+        <div class="sub">first ninety days</div>
+        <div class="row"><span class="nm">03_reviews</span></div>
+        <div class="sub">performance cycle</div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="chip"><svg class="fsvg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg><span style="font-weight: 600; font-size: 12px; letter-spacing: 0.5px">MARKETING</span></div>
+      <div class="stem"></div>
+      <div class="drop">
+        <div class="row"><span class="nm" style="color: #F35A28">_config</span></div>
+        <div class="sub">voice.md<br>offers.md</div>
+        <div class="row"><span class="nm">01_strategy</span></div>
+        <div class="sub">what to push</div>
+        <div class="row"><span class="nm">02_content</span></div>
+        <div class="sub">make the assets</div>
+        <div class="row"><span class="nm">03_distribution</span></div>
+        <div class="sub">post and send</div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="chip"><svg class="fsvg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FEFEFB" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg><span style="font-weight: 600; font-size: 12px; letter-spacing: 0.5px">SALES</span></div>
+      <div class="stem"></div>
+      <div class="drop">
+        <div class="row"><span class="nm" style="color: #F35A28">_config</span></div>
+        <div class="sub">pricing.md<br>objections.md</div>
+        <div class="row"><span class="nm">01_leads</span></div>
+        <div class="sub">score and rank</div>
+        <div class="row"><span class="nm">02_quotes</span></div>
+        <div class="sub">price and send</div>
+        <div class="row"><span class="nm">03_followup</span></div>
+        <div class="sub">chase and close</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin: 16px 56px 0 56px; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 12px; padding: 12px 20px; display: flex; align-items: center; gap: 16px">
+    <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; flex-shrink: 0">THE AGENT READS</div>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.8); white-space: nowrap">1 company map</div>
+    <svg class="fsvg" width="24" height="12" viewBox="0 0 24 12"><path d="M2 6h16m0 0l-5-4m5 4l-5 4" stroke="rgba(254,254,251,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"></path></svg>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.8); white-space: nowrap">2 company rule books</div>
+    <svg class="fsvg" width="24" height="12" viewBox="0 0 24 12"><path d="M2 6h16m0 0l-5-4m5 4l-5 4" stroke="rgba(254,254,251,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"></path></svg>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.8); white-space: nowrap">3 department rule books</div>
+    <svg class="fsvg" width="24" height="12" viewBox="0 0 24 12"><path d="M2 6h16m0 0l-5-4m5 4l-5 4" stroke="rgba(254,254,251,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"></path></svg>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.8); white-space: nowrap">4 stage job card</div>
+    <svg class="fsvg" width="24" height="12" viewBox="0 0 24 12"><path d="M2 6h16m0 0l-5-4m5 4l-5 4" stroke="#F35A28" stroke-width="1.5" fill="none" stroke-linecap="round"></path></svg>
+    <div style="font-size: 13px; font-weight: 600; color: #F35A28; white-space: nowrap">then it works</div>
+    <div style="font-size: 12px; font-weight: 300; color: rgba(254,254,251,0.55); margin-left: auto; white-space: nowrap">Four short reads, never the whole cabinet</div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 56px 22px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(254,254,251,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(254,254,251,0.4)">THE BUSINESS STRUCTURE</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #FEFEFB; color: #333333; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 26px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogIzMzMzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(51,51,51,0.55)">ICM FOR BEGINNERS 6 OF 9</div>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; gap: 40px; padding: 14px 56px 0 56px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">THE SYSTEM THAT FIXES ITSELF</div>
+      <div style="font-size: 44px; line-height: 1.02; font-weight: 700; letter-spacing: 0.5px">THE SKILL FORGE LOOP</div>
+    </div>
+    <div style="font-size: 15px; line-height: 1.5; font-weight: 300; color: rgba(51,51,51,0.8); max-width: 560px; padding-bottom: 4px">Every miss during the week becomes one logged line. Once a week the forge reads the log, finds the holes in the rule books and proposes fixes. You approve, the rule books improve, the loop closes.</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 10px 56px 0 56px">
+
+    <div style="display: flex; align-items: center; gap: 0">
+      <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px">1 WORK ALL WEEK</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.65)">Agents run the folders as normal</div>
+      </div>
+      <svg width="40" height="20" viewBox="0 0 40 20" style="flex-shrink: 0"><path d="M4 10h28m0 0l-7-6m7 6l-7 6" stroke="rgba(51,51,51,0.45)" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>
+      <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px">2 A MISS HAPPENS</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.65)">You correct tone, a number, a format</div>
+      </div>
+      <svg width="40" height="20" viewBox="0 0 40 20" style="flex-shrink: 0"><path d="M4 10h28m0 0l-7-6m7 6l-7 6" stroke="rgba(51,51,51,0.45)" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>
+      <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px">3 LOG ONE LINE</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.65)">Which rule book, what missed, the fix. Ten seconds</div>
+      </div>
+      <svg width="40" height="20" viewBox="0 0 40 20" style="flex-shrink: 0"><path d="M4 10h28m0 0l-7-6m7 6l-7 6" stroke="rgba(51,51,51,0.45)" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>
+      <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px">4 SUNDAY FIRES</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.65)">The weekly schedule wakes the forge agent</div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 100px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="20" height="56" viewBox="0 0 20 56"><path d="M10 50V8m0 0l-6 7m6-7l6 7" stroke="#F35A28" stroke-width="2.5" fill="none" stroke-linecap="round"></path></svg>
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">RULE BOOKS UPDATED<br>THE LOOP CLOSES</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: rgba(51,51,51,0.55); text-align: right">THE LOG GOES<br>TO THE FORGE</div>
+        <svg width="20" height="56" viewBox="0 0 20 56"><path d="M10 6v42m0 0l-6-7m6 7l6-7" stroke="rgba(51,51,51,0.45)" stroke-width="2.5" fill="none" stroke-linecap="round"></path></svg>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0">
+      <div style="flex: 1; background: rgba(243,90,40,0.08); border: 1px solid #F35A28; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 0 18px rgba(243,90,40,0.15)">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px; color: #F35A28">8 YOU APPROVE</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.75)">The human gate. The forge never edits rule books itself</div>
+      </div>
+      <svg width="40" height="20" viewBox="0 0 40 20" style="flex-shrink: 0"><path d="M36 10H8m0 0l7-6m-7 6l7 6" stroke="rgba(51,51,51,0.45)" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>
+      <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px">7 PROPOSES FIXES</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.65)">Smallest edit that would have prevented each miss</div>
+      </div>
+      <svg width="40" height="20" viewBox="0 0 40 20" style="flex-shrink: 0"><path d="M36 10H8m0 0l7-6m-7 6l7 6" stroke="rgba(51,51,51,0.45)" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>
+      <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px">6 FINDS THE HOLES</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.65)">Same rule book corrected twice is a hole. Repeated no rule book entries mean a missing rule book</div>
+      </div>
+      <svg width="40" height="20" viewBox="0 0 40 20" style="flex-shrink: 0"><path d="M36 10H8m0 0l7-6m-7 6l7 6" stroke="rgba(51,51,51,0.45)" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>
+      <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 5px">
+        <div style="font-weight: 600; font-size: 14px; letter-spacing: 1px">5 FORGE READS LOG</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.65)">Runs under out of the loop discipline, evidence only</div>
+      </div>
+    </div>
+
+    <div style="border: 1px dashed rgba(51,51,51,0.25); border-radius: 12px; padding: 12px 20px; margin-top: 10px; font-size: 14px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.75)">Why loops watch loops: an agent that grades its own work optimises the grade, not the outcome. So the logger never judges, the forge never edits, and you hold the only pen that touches the rule books. The factory now improves its own factory, one approved fix a week.</div>
+
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 56px 22px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(51,51,51,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(51,51,51,0.4)">THE SKILL FORGE LOOP</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #333333; color: #FEFEFB; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 26px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMyIgZGF0YS1uYW1lPSJMYXllciAzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogI2ZmZmZmYzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(254,254,251,0.55)">ICM FOR BEGINNERS 7 OF 9</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; gap: 26px; padding: 18px 56px 14px 56px; align-items: stretch">
+
+    <div style="width: 340px; display: flex; flex-direction: column; gap: 14px; flex-shrink: 0">
+      <div style="font-size: 14px; letter-spacing: 1.8px; font-weight: 600; color: #F35A28; white-space: nowrap">RAW WIKI AND WHAT THE AI KNOWS</div>
+      <div style="font-size: 44px; line-height: 1.02; font-weight: 700; letter-spacing: 0.5px">THE KNOWLEDGE LAYER</div>
+      <div style="font-size: 16px; line-height: 1.55; font-weight: 300; color: rgba(254,254,251,0.85)">Rule books tell the AI how to work. They don't tell it what's true.</div>
+      <div style="font-size: 16px; line-height: 1.55; font-weight: 300; color: rgba(254,254,251,0.85)">That's the second half, and it comes from Andrej Karpathy: the AI reads your source material and writes up what it learned, and the write up gets better every time you add to it. Two folders do it.</div>
+      <div style="margin-top: auto; background: rgba(243,90,40,0.12); border: 1px solid #F35A28; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 0 24px rgba(243,90,40,0.2)">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">THE ONE RULE THAT MAKES IT TRUSTWORTHY</div>
+        <div style="font-size: 13.5px; font-weight: 300; line-height: 1.5; color: rgba(254,254,251,0.85)">Every fact in the wiki has to appear word for word in a raw file it links to. No number, no date, no quote goes in unless the AI found it in a source first. That single rule is the difference between a knowledge base and a pile of confident guesses.</div>
+      </div>
+    </div>
+
+    <div style="flex: 1.2; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 16px; padding: 22px 26px; display: flex; flex-direction: column">
+      <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; margin-bottom: 12px">THE FOLDERS</div>
+      <pre style="font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.95; margin: auto 0; color: #FEFEFB; white-space: pre-wrap">my workspace
+  _config        the rule books: how we sound,
+                 how things look
+  raw            source material, exactly as it
+                 arrived: transcripts, articles,
+                 reports, notes
+                 you add to it, nobody edits it, ever
+  wiki           what the AI worked out from raw
+    index.md     the contents page, one line
+                 per article
+    log.md       what was added and when, append only
+    topic/       the write ups, each one citing
+                 the sources it came from
+  01_research    the stages carry on exactly
+  02_script      as before
+  03_production</pre>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+
+      <div style="flex: 1; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 11px; justify-content: center">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">THE THREE WAY SPLIT</div>
+        <div style="display: flex; gap: 10px; align-items: baseline">
+          <div style="width: 62px; font-family: 'Courier New', monospace; font-size: 13px; flex-shrink: 0">_config</div>
+          <div style="width: 106px; font-weight: 600; font-size: 11.5px; letter-spacing: 1px; flex-shrink: 0">HOW WE WORK</div>
+          <div style="font-size: 12.5px; font-weight: 300; color: rgba(254,254,251,0.7)">you write it, once</div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: baseline">
+          <div style="width: 62px; font-family: 'Courier New', monospace; font-size: 13px; flex-shrink: 0">raw</div>
+          <div style="width: 106px; font-weight: 600; font-size: 11.5px; letter-spacing: 1px; flex-shrink: 0">WHAT IS TRUE</div>
+          <div style="font-size: 12.5px; font-weight: 300; color: rgba(254,254,251,0.7)">you collect it, never edit it</div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: baseline">
+          <div style="width: 62px; font-family: 'Courier New', monospace; font-size: 13px; flex-shrink: 0; color: #F35A28">wiki</div>
+          <div style="width: 106px; font-weight: 600; font-size: 11.5px; letter-spacing: 1px; flex-shrink: 0; color: #F35A28">WHAT WE KNOW</div>
+          <div style="font-size: 12.5px; font-weight: 300; color: rgba(254,254,251,0.7)">the AI writes it, only from raw</div>
+        </div>
+      </div>
+
+      <div style="flex: 1; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; justify-content: center">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">WHERE THE CAPACITY GOES</div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.5; color: rgba(254,254,251,0.75)">The AI never reads the whole wiki. It reads index.md, picks the two or three articles that matter, and opens only those. Same saving as the rule books, same reason: structure, not cleverness. A wiki of four hundred articles costs the same to consult as a wiki of four.</div>
+      </div>
+
+      <div style="flex: 1; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 14px; padding: 16px 20px; display: flex; gap: 14px; align-items: center">
+        <div style="width: 5px; align-self: stretch; border-radius: 3px; background: linear-gradient(180deg, #F35A28 0%, #D1543C 16.7%, #B04F4F 33.3%, #904A65 50%, #704579 66.7%, #4F408D 83.3%, #2E3BA1 100%)"></div>
+        <div style="font-size: 13px; font-weight: 300; line-height: 1.5; color: rgba(254,254,251,0.85)">Why it matters: the rule books stop the AI sounding wrong. The wiki stops it being wrong. Add a source on Monday and every run from Tuesday already knows it. Nothing gets relearned, nothing gets lost, and every claim traces back to the file it came from.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 56px 22px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(254,254,251,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(254,254,251,0.4)">THE KNOWLEDGE LAYER</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #FEFEFB; color: #333333; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogIzMzMzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(51,51,51,0.55)">ICM FOR BEGINNERS 8 OF 9</div>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; gap: 40px; padding: 10px 56px 0 56px">
+    <div style="width: 470px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">NOTHING MOVES NOTHING BREAKS</div>
+      <div style="font-size: 40px; line-height: 1.02; font-weight: 700; letter-spacing: 0.5px">DROP IT ON WHAT YOU ALREADY HAVE</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; max-width: 620px; padding-bottom: 4px">
+      <div style="font-size: 14.5px; line-height: 1.5; font-weight: 300; color: rgba(51,51,51,0.8)">You don't restructure your business to use ICM. You lay a few files on top of what's already there.</div>
+      <div style="font-size: 14.5px; line-height: 1.5; font-weight: 300; color: rgba(51,51,51,0.8)">It shows you the whole change before it makes any of it, it never writes over anything you wrote, and one command puts it all back.</div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; gap: 22px; padding: 12px 56px 0 56px; align-items: stretch">
+
+    <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 18px 22px; display: flex; flex-direction: column">
+      <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; margin-bottom: 10px">YOUR BUSINESS AFTER THE RETROFIT</div>
+      <pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.85; color: #333333; white-space: pre-wrap">your business
+  IDENTITY.md      added, the name tag
+  CONTEXT.md       added, the map
+  _config          added, the rule books
+  .icm             added, the plan and the backup
+                   hidden, out of your way
+
+  finance          already there, untouched
+  customers        already there, untouched
+  marketing        already there, untouched
+  sales            already there, untouched</pre>
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(51,51,51,0.14); font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.7)">Files added, zero files moved. Any agent that walks in reads the name tag and the map and knows the whole building.</div>
+    </div>
+
+    <div style="flex: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">THE DRY RUN COMES FIRST</div>
+      <div style="font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.75)">You ask it to plan. It reads your folders and writes nothing. Then it hands you four lists.</div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <div style="width: 24px; height: 24px; border-radius: 6px; background: #F35A28; color: #FEFEFB; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0">1</div>
+        <div style="width: 78px; flex-shrink: 0; font-weight: 600; font-size: 12.5px; letter-spacing: 1px; padding-top: 4px">CREATE</div>
+        <div style="font-size: 12px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.72); padding-top: 4px">doesn't exist yet, this is what gets added</div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <div style="width: 24px; height: 24px; border-radius: 6px; background: #F35A28; color: #FEFEFB; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0">2</div>
+        <div style="width: 78px; flex-shrink: 0; font-weight: 600; font-size: 12.5px; letter-spacing: 1px; padding-top: 4px">ADOPT</div>
+        <div style="font-size: 12px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.72); padding-top: 4px">already there. Yours is kept, one marked block is added at the end</div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <div style="width: 24px; height: 24px; border-radius: 6px; background: #F35A28; color: #FEFEFB; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0">3</div>
+        <div style="width: 78px; flex-shrink: 0; font-weight: 600; font-size: 12.5px; letter-spacing: 1px; padding-top: 4px">COLLIDE</div>
+        <div style="font-size: 12px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.72); padding-top: 4px">already there and different. Your file wins</div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <div style="width: 24px; height: 24px; border-radius: 6px; background: #F35A28; color: #FEFEFB; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0">4</div>
+        <div style="width: 78px; flex-shrink: 0; font-weight: 600; font-size: 12.5px; letter-spacing: 1px; padding-top: 4px">SKIP</div>
+        <div style="font-size: 12px; font-weight: 300; line-height: 1.45; color: rgba(51,51,51,0.72); padding-top: 4px">already exactly what it would have written. Nothing to do</div>
+      </div>
+
+      <div style="font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.72)">Junk never even makes the lists. Build folders, downloads and dependency folders are cut out of the walk before anything is classified, so they never appear at all.</div>
+      <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(51,51,51,0.14); font-size: 12.5px; font-weight: 600; color: rgba(51,51,51,0.8)">You read the four lists. Nothing has touched your project yet.</div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px">
+
+      <div style="background: rgba(243,90,40,0.08); border: 1px solid #F35A28; border-radius: 16px; padding: 18px 22px; display: flex; flex-direction: column; gap: 9px; box-shadow: 0 0 18px rgba(243,90,40,0.15)">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">NOTHING GETS CLOBBERED</div>
+        <div style="font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.82)">When your file and its file want the same name, yours stays exactly as it is. Its version goes into the hidden folder for you to look at, and you merge whatever you want by hand. There is no overwrite button. There is no force flag. Run it twice and the second run changes nothing.</div>
+        <div style="font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.82)">Two files are the exception and they are the two you would expect: the AI instruction file and your gitignore. Those get a clearly marked block added at the end, everything outside the markers is left alone to the byte, and a copy of the original goes into the backup first.</div>
+      </div>
+
+      <div style="flex-grow: 1; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 16px; padding: 18px 22px; display: flex; flex-direction: column; gap: 9px; justify-content: center">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">ROLLBACK IS ONE COMMAND</div>
+        <div style="font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.75)">It backs up before it writes, every time, without being asked. If you change your mind, one command takes out what it added and puts back what was there. If you edited one of its files in the meantime, it keeps that file and tells you it kept it. It never deletes anything you touched.</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div style="margin: 10px 56px 0 56px; border: 1px dashed rgba(51,51,51,0.25); border-radius: 12px; padding: 10px 20px; font-size: 13px; font-weight: 300; line-height: 1.5; color: rgba(51,51,51,0.75)">Why it matters: most systems ask you to reorganise first and get the benefit later, so most people never start. This one starts where you are. You see the change, you approve the change, you can undo the change. Ten years of folders stay exactly where they are and become something an agent can read on Monday morning.</div>
+
+  <div style="margin: 10px 56px 0 56px; background: #FFFFFF; border: 1px solid rgba(51,51,51,0.14); border-radius: 12px; padding: 10px 20px; display: flex; align-items: center; gap: 20px">
+    <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; flex-shrink: 0">THE TOOLKIT</div>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(51,51,51,0.8)">github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit</div>
+    <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; flex-shrink: 0; margin-left: 20px">INSTALL</div>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(51,51,51,0.8)">/plugin marketplace add MOMENTRIXMARKETING/momentrix-icm-kap-toolkit</div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 56px 18px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(51,51,51,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(51,51,51,0.4)">DROP IT ON WHAT YOU ALREADY HAVE</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+<div class="sheet"><div style="width: 1440px; height: 810px; background: #333333; color: #FEFEFB; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px 56px 0 56px">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMyIgZGF0YS1uYW1lPSJMYXllciAzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMzg4Ljg2IDE4NS44NiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogI2ZmZmZmYzsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDUwLjExLDI3LjU4aC0xNS43M2MtLjg3LDAtMS42Mi41OS0xLjg0LDEuNDNsLTI3Ljg3LDEwOS42Mi0yNy43Mi0xMDkuNjFjLS4yMS0uODQtLjk3LTEuNDMtMS44NC0xLjQzaC0zOS40NWMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtODIuNzVjMC0yLjIyLDMuMTUtMi42MywzLjczLS40OWwyMi40OSw4My43M2MuMjIuODMuOTcsMS40LDEuODMsMS40aDM0LjYzYy44NiwwLDEuNjEtLjU4LDEuODMtMS40MWwyMi40OS04NC4xOGMuNTctMi4xNCwzLjczLTEuNzMsMy43My40OXY4My4yYzAsMS4wNS44NSwxLjksMS45LDEuOWgyMS44MmMxLjA1LDAsMS45LS44NSwxLjktMS45VjI5LjQ4YzAtMS4wNS0uODUtMS45LTEuOS0xLjloLTIzLjcyWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTYwMC42OCw0NS4zOGMtNS43NC02LjUyLTEyLjgxLTExLjYzLTIxLjIyLTE1LjM1cy0xOC4wMi01LjU3LTI4Ljg0LTUuNTctMjAuNjMsMS44Ni0yOS4wNCw1LjU3LTE1LjQ4LDguODMtMjEuMjIsMTUuMzVjLTUuNzQsNi41Mi0xMC4wNywxNC4xMS0xMywyMi43OC0yLjkzLDguNjctNC40LDE3Ljg5LTQuNCwyNy42NywwLDEzLjMsMi42MSwyNS4zNiw3LjgyLDM2LjE4LDUuMjEsMTAuODIsMTIuODcsMTkuNDYsMjIuOTgsMjUuOTEsMTAuMSw2LjQ1LDIyLjM5LDkuNjgsMzYuODYsOS42OHMyNi43Mi0zLjIzLDM2Ljc2LTkuNjhjMTAuMDQtNi40NSwxNy42Ni0xNS4wOSwyMi44OC0yNS45MSw1LjIxLTEwLjgyLDcuODItMjIuODgsNy44Mi0zNi4xOCwwLTkuNzgtMS40Ny0xOS00LjQtMjcuNjctMi45My04LjY3LTcuMjctMTYuMjYtMTMtMjIuNzhaTTU4Ni4xMSwxMTguODFjLTIuOCw3LjIzLTcuMTQsMTMuMS0xMywxNy42cy0xMy40Myw2Ljc1LTIyLjY4LDYuNzUtMTYuNjYtMi4yNS0yMi41OC02Ljc1Yy01LjkzLTQuNS0xMC4yNy0xMC4zNi0xMy0xNy42LTIuNzQtNy4yNC00LjExLTE0Ljg5LTQuMTEtMjIuOThzMS4zNy0xNS41NSw0LjExLTIyLjc4YzIuNzQtNy4yNCw3LjA3LTEzLjA3LDEzLTE3LjUsNS45My00LjQzLDEzLjQ2LTYuNjUsMjIuNTgtNi42NXMxNi44MiwyLjIyLDIyLjY4LDYuNjVjNS44Nyw0LjQzLDEwLjIsMTAuMjcsMTMsMTcuNSwyLjgsNy4yMyw0LjIsMTQuODMsNC4yLDIyLjc4cy0xLjQsMTUuNzQtNC4yLDIyLjk4WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTc0MS40NywyNy41OGgtMTUuNzNjLS44NywwLTEuNjIuNTktMS44NCwxLjQzbC0yNy44NywxMDkuNjItMjcuNzItMTA5LjYxYy0uMjEtLjg0LS45Ny0xLjQzLTEuODQtMS40M2gtMzkuNDVjLTEuMDUsMC0xLjkuODUtMS45LDEuOXYxMzMuMDljMCwxLjA1Ljg1LDEuOSwxLjksMS45aDIxLjgyYzEuMDUsMCwxLjktLjg1LDEuOS0xLjl2LTgyLjc1YzAtMi4yMiwzLjE1LTIuNjMsMy43My0uNDlsMjIuNDksODMuNzNjLjIyLjgzLjk3LDEuNCwxLjgzLDEuNGgzNC42M2MuODYsMCwxLjYxLS41OCwxLjgzLTEuNDFsMjIuNDktODQuMThjLjU3LTIuMTQsMy43My0xLjczLDMuNzMuNDl2ODMuMmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMy43MloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MTAuOTUsMTA3LjE3aDUzLjY3Yy43OCwwLDEuNDItLjY0LDEuNDItMS40MnYtMjAuMjNjMC0uNzgtLjY0LTEuNDItMS40Mi0xLjQyaC01OXYtMjcuOTFjMC0yLjk1LDIuMzktNS4zNCw1LjM0LTUuMzRoNjEuMjdjLjksMCwxLjY0LS43MywxLjY0LTEuNjR2LTE5Ljk5YzAtLjktLjczLTEuNjQtMS42NC0xLjY0aC05MS41NmMtLjksMC0xLjY0LjczLTEuNjQsMS42NHYxMzMuNmMwLC45LjczLDEuNjQsMS42NCwxLjY0aDkyLjM0Yy45LDAsMS42NC0uNzMsMS42NC0xLjY0di0xOS45OWMwLS45LS43My0xLjY0LTEuNjQtMS42NGgtNjcuMzl2LTI4LjY5YzAtMi45NSwyLjM5LTUuMzQsNS4zNC01LjM0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2OC40LDEyMy4zM2wtNDQuNzYtOTQuNjZjLS4zMS0uNjYtLjk4LTEuMDktMS43MS0xLjA5aC0zNS44MmMtMS4wNSwwLTEuOS44NS0xLjksMS45djEzMy4wOWMwLDEuMDUuODUsMS45LDEuOSwxLjloMjEuODJjMS4wNSwwLDEuOS0uODUsMS45LTEuOXYtOTMuMzNjMC0yLjAzLDIuNzUtMi42NCwzLjYxLS44MWw0NC43Niw5NC45NWMuMzEuNjYuOTgsMS4wOSwxLjcyLDEuMDloMzYuMDFjMS4wNSwwLDEuOS0uODUsMS45LTEuOVYyOS40OGMwLTEuMDUtLjg1LTEuOS0xLjktMS45aC0yMi4wMmMtMS4wNSwwLTEuOS44NS0xLjksMS45djkzLjA0YzAsMi4wMi0yLjc1LDIuNjQtMy42MS44MVoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMDQ1LjU0LDI3LjU4aC00MC4yM2MtMS4zMywwLTIuNCwxLjA3LTIuNCwyLjR2MTguNDdjMCwxLjMzLDEuMDcsMi40LDIuNCwyLjRoMzguMzNjMS4wNSwwLDEuOS44NSwxLjksMS45djEwOS44MmMwLDEuMDUuODUsMS45LDEuOSwxLjloMjNjMS4wNSwwLDEuOS0uODUsMS45LTEuOVY1Mi43NWMwLTEuMDUuODUtMS45LDEuOS0xLjloMzguMzNjMS4zMywwLDIuNC0xLjA3LDIuNC0yLjR2LTE4LjQ3YzAtMS4zMy0xLjA3LTIuNC0yLjQtMi40aC02Ny4wMloiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjE5LjY3LDk4LjQ3YzUuMDItNi41OCw3LjUzLTE1LjM1LDcuNTMtMjYuM3MtMi41MS0xOS44NS03LjUzLTI2LjNjLTUuMDItNi40NS0xMi0xMS4xMS0yMC45Mi0xMy45OC04LjkzLTIuODctMTkuMzMtNC4zLTMxLjE5LTQuM2gtNDUuMjFjLTEuMTcsMC0yLjEyLjk1LTIuMTIsMi4xMnYxMzQuNzZoMjYuNTl2LTQ1LjgyYzAtMS4wNS44NS0xLjksMS45LTEuOWgxOC44M3MuMDYsMCwuMSwwYzUuNTgsMCwxMC42NCwzLjI2LDEyLjgzLDguMzlsMTYuOCwzOS4zMmgzMC4zMWwtMjUuNzYtNTNjNy40Ni0yLjg2LDEzLjQxLTcuMiwxNy44NC0xM1pNMTE0Ni44Myw5MC42MXYtMzcuODZjMC0xLjA1Ljg1LTEuOSwxLjktMS45aDE4LjgzYzYuNjUsMCwxMi4zNS42MiwxNy4xMSwxLjg2LDQuNzYsMS4yNCw4LjQxLDMuNDIsMTAuOTUsNi41NSwyLjU0LDMuMTMsMy44MSw3LjQzLDMuODEsMTIuOTFzLTEuMjcsOS43OC0zLjgxLDEyLjkxLTYuMTksNS4zNS0xMC45NSw2LjY1Yy00Ljc2LDEuMy0xMC40NiwxLjk2LTE3LjExLDEuOTZoLTE3LjY2Yy0xLjY5LDAtMy4wNy0xLjM3LTMuMDctMy4wN1oiLz4KICAgICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHg9IjEyMzcuMTYiIHk9IjI3LjU4IiB3aWR0aD0iMjYuNTkiIGhlaWdodD0iMTM2Ljg4IiByeD0iMS45IiByeT0iMS45Ii8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM4OC41NSwxNjEuNTNsLTQwLjM1LTYxLjY4Yy0xLjctMi42LTEuNy01Ljk1LDAtOC41NWwzOS43Ny02MC43OGMuODMtMS4yNi0uMDgtMi45NC0xLjU5LTIuOTRoLTI2LjM2Yy0uNjQsMC0xLjI0LjMyLTEuNTkuODZsLTI2Ljg5LDQxLjFjLS43NSwxLjE0LTIuNDMsMS4xNC0zLjE3LDBsLTI2Ljg5LTQxLjFjLS4zNS0uNTQtLjk1LS44Ni0xLjU5LS44NmgtMjUuOThjLTEuNjcsMC0yLjY3LDEuODUtMS43NiwzLjI1bDM5LjU2LDYwLjQ2YzEuNywyLjYsMS43LDUuOTUsMCw4LjU1bC00MC4zNSw2MS42OGMtLjgzLDEuMjYuMDgsMi45NCwxLjU5LDIuOTRoMjYuMzZjLjY0LDAsMS4yNC0uMzIsMS41OS0uODZsMjcuNDgtNDEuOTljLjc1LTEuMTQsMi40My0xLjE0LDMuMTcsMGwyNy40OCw0MS45OWMuMzUuNTQuOTUuODYsMS41OS44NmgyNi4zNmMxLjUxLDAsMi40MS0xLjY3LDEuNTktMi45NFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNjEuNjIsMjEuMDFjLTQuNDItNC43Ny0xMS43NS0xMi43NS0xNi40LTE3LjgyLTIuNjMtMi44Ny02LjctMy45MS0xMC4zOC0yLjY3bC05Mi40Myw2NC4yNGMtMS44OSwxLjEzLTQuMTIsMS42OC02LjMsMS4zMi0uNTQtLjA5LTEuMDctLjIyLTEuNTgtLjQtMi4xMS0uNzItMy44My0yLjI5LTQuOTYtNC4yMkw3OC44LDEyLjU2Yy0yLjUzLTIuNy02LjM2LTMuNzUtOS45MS0yLjcybC0yNC4wMiw2LjkzYy0zLjIyLjkzLTUuNzUsMy40My02LjcsNi42NUwuNDEsMTQxLjE5Yy0xLjM3LDQuNTkuNzcsOS40OSw1LjA1LDExLjYzbDI5LjQ0LDE0LjYzYzIuMjgsMS4xMyw0LjksMS4zNCw3LjMzLjU4bDczLjYzLTIxLjIyYzMuNzUtLjczLDcuMDgtLjEsMTAuMDUsMi41OGw0NS4zOSwzMy40NWMyLDIuMDgsNC44MSwzLjE4LDcuNywzLjAxbDM2Ljg1LTIuMjNjNC4yLS4yNSw3Ljc4LTMuMTUsOC44OS03LjIxbDM5LjE0LTE0Ni4wOWMuOTEtMy4yOS4wNS02LjgtMi4yNi05LjNaIi8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=" style="height: 26px" alt="Momentrix">
+    <div style="font-size: 13px; letter-spacing: 3px; font-weight: 600; color: rgba(254,254,251,0.55)">ICM FOR BEGINNERS 9 OF 9</div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; gap: 24px; padding: 16px 56px 0 56px; align-items: stretch">
+
+    <div style="width: 340px; display: flex; flex-direction: column; gap: 13px; flex-shrink: 0">
+      <div style="font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #F35A28">WHO IS ACTUALLY IN CHARGE</div>
+      <div style="font-size: 40px; line-height: 1.04; font-weight: 700; letter-spacing: 0.5px">THE FOLDERS ARE THE AGENTS</div>
+      <div style="font-size: 15px; line-height: 1.55; font-weight: 300; color: rgba(254,254,251,0.85)">An AI agent is not a member of staff. It is spawned into a folder, does one job, writes down what it did, and it is gone.</div>
+      <div style="font-size: 15px; line-height: 1.55; font-weight: 300; color: rgba(254,254,251,0.85)">So the folder is the job, the report is the record, and the person in charge is simply whichever AI opens the top folder next.</div>
+      <div style="margin-top: auto; background: rgba(243,90,40,0.12); border: 1px solid #F35A28; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 0 24px rgba(243,90,40,0.2)">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">ANY AI CAN TAKE THE CHAIR</div>
+        <div style="font-size: 13.5px; font-weight: 300; line-height: 1.5; color: rgba(254,254,251,0.85)">There is no appointment and no handover meeting. Any model, from any vendor, on any day, opens the top folder, reads four short files, and is the lead architect. The handover is the filing cabinet. Nothing is stored in a conversation somebody had to be present for.</div>
+      </div>
+    </div>
+
+    <div style="flex: 1.15; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column">
+      <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; margin-bottom: 10px">THE STRUCTURE</div>
+      <pre style="font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.78; margin: 0; color: #FEFEFB; white-space: pre-wrap">your business
+  IDENTITY.md      the name tag, who we are
+  CONTEXT.md       the map, where things go
+  ARCHITECT.md     the job card for this folder:
+                   read the rollup, decide who works
+                   today, never do the work yourself
+  status.md        one line per department,
+                   written by the workers
+
+  sales            a department
+    CONTEXT.md     the map inside sales
+    status.md      sales' one line
+    reports/       one file per run, nothing
+                   ever overwritten
+    _config        the rules only sales obeys
+    01_leads       a stage, with its own job card
+
+  marketing        same shape again
+  finance          same shape again</pre>
+      <div style="margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(254,254,251,0.12); font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(254,254,251,0.7)">No orchestrator. No supervisor. No process that has to stay running. The org chart is the folders.</div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+
+      <div style="background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">THE THREE THINGS THAT NEVER MOVE</div>
+        <div style="display: flex; gap: 12px; align-items: baseline">
+          <div style="width: 104px; font-family: 'Courier New', monospace; font-size: 13px; flex-shrink: 0">ARCHITECT.md</div>
+          <div style="min-width: 0"><div style="font-weight: 600; font-size: 11.5px; letter-spacing: 1px">THE JOB OF THIS FOLDER</div><div style="font-size: 12px; font-weight: 300; color: rgba(254,254,251,0.7)">you write it, once</div></div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: baseline">
+          <div style="width: 104px; font-family: 'Courier New', monospace; font-size: 13px; flex-shrink: 0">reports/</div>
+          <div style="min-width: 0"><div style="font-weight: 600; font-size: 11.5px; letter-spacing: 1px">WHAT HAPPENED</div><div style="font-size: 12px; font-weight: 300; color: rgba(254,254,251,0.7)">the workers write it, one file per run</div></div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: baseline">
+          <div style="width: 104px; font-family: 'Courier New', monospace; font-size: 13px; flex-shrink: 0; color: #F35A28">status.md</div>
+          <div style="min-width: 0"><div style="font-weight: 600; font-size: 11.5px; letter-spacing: 1px; color: #F35A28">THE ONE LINE SUMMARY</div><div style="font-size: 12px; font-weight: 300; color: rgba(254,254,251,0.7)">compiled, never the truth</div></div>
+        </div>
+        <div style="padding-top: 8px; border-top: 1px solid rgba(254,254,251,0.12); font-size: 12.5px; font-weight: 300; color: rgba(254,254,251,0.75)">If the summary and the folder disagree, the folder wins.</div>
+      </div>
+
+      <div style="flex-grow: 1; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; justify-content: center">
+        <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28">FIVE RULES AND THAT IS THE WHOLE SYSTEM</div>
+        <div style="font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(254,254,251,0.78)">Agents are temporary, reports are files. The architect reads reports, not conversations. Messages coordinate, files record: no decision is real until it is written in the folder. The architect never does a department's work, unless the job is smaller than the cost of handing it over, and then it says so. And anyone who reads the top four files is the architect.</div>
+      </div>
+
+      <div style="background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 14px; padding: 16px 20px; display: flex; gap: 14px; align-items: center">
+        <div style="width: 5px; align-self: stretch; border-radius: 3px; background: linear-gradient(180deg, #F35A28 0%, #D1543C 16.7%, #B04F4F 33.3%, #904A65 50%, #704579 66.7%, #4F408D 83.3%, #2E3BA1 100%)"></div>
+        <div style="font-size: 12.5px; font-weight: 300; line-height: 1.5; color: rgba(254,254,251,0.85)">Why it matters: every other way of doing this puts the structure inside software, so the business only exists while something is running and only one vendor's model knows the shape of it. Put the structure in folders and it survives the agent, the session, the model and the vendor. Kill any agent at any moment and nothing is lost, because the agent was never where the work was kept.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin: 12px 56px 0 56px; background: rgba(254,254,251,0.05); border: 1px solid rgba(254,254,251,0.12); border-radius: 12px; padding: 12px 20px; display: flex; align-items: center; gap: 20px">
+    <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; flex-shrink: 0">THE TOOLKIT</div>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.8)">github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit</div>
+    <div style="font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #F35A28; flex-shrink: 0; margin-left: 20px">THE PATTERN</div>
+    <div style="font-size: 13px; font-weight: 300; color: rgba(254,254,251,0.8)">pattern 24, spec/CONVENTIONS.md</div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 56px 20px 56px; font-size: 12px; letter-spacing: 2px; font-weight: 600">
+    <div style="color: rgba(254,254,251,0.55)">MOMENTRIX</div>
+    <div style="color: rgba(254,254,251,0.4)">THE FOLDERS ARE THE AGENTS</div>
+    <div style="color: #F35A28">momentrixbeta.com</div>
+  </div>
+
+</div></div>
+</body></html>

@@ -56,6 +56,14 @@ to sync, because there is nothing duplicated.
 **Layer 0 does not recurse.** A department does not get its own `IDENTITY.md`. If a folder
 feels like it needs one, it is a separate workspace, not a department.
 
+**Read from the other side: a folder that holds an `IDENTITY.md` is a workspace root.** That
+is what lets one repository carry a whole workspace inside it, a worked example, a vendored
+project, two workspaces in one monorepo. The checker reads it the same way. A `CONTEXT.md`
+sitting beside an `IDENTITY.md` is that workspace's layer 1, graded against the layer 1 budget
+and the layer 1 section list, and the tree beneath it is documented by its own `IDENTITY.md`
+rather than by the outer one. To grade the inside of a nested workspace, run the checker on
+that folder.
+
 ---
 
 ## Layer 1: CONTEXT.md, routing

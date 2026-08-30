@@ -116,9 +116,12 @@ square of the folder count and the tree eventually cannot be reasoned about.
 
 **Every fact has one home.** Other files point at it. They do not copy it. If the same rule
 appears in two files and both read as authoritative, one of them is already wrong and nobody
-has noticed yet. This is why budgets live in one JSON file, why the skip list lives in
-[`../spec/excluded-folders.md`](../spec/excluded-folders.md) and nowhere else, and why this
-document keeps sending you to `spec/` instead of telling you the number.
+has noticed yet. This is why every budget lives in
+[`../icm.defaults.json`](../icm.defaults.json), why the skip list lives in that same file under
+`excluded_globs` and `never_write` with
+[`../spec/excluded-folders.md`](../spec/excluded-folders.md) as its human rendering rather than
+a second authority, and why this document keeps sending you to `spec/` instead of telling you
+the number.
 
 ---
 
@@ -221,9 +224,12 @@ Stated formally in [`../spec/grounding-invariant.md`](../spec/grounding-invarian
 Both the linter and the forge classify every finding into one of three tiers, and the tier
 decides who is allowed to act.
 
-**Safe fix.** Deterministic and auto-applied. A dead link with exactly one possible target. An
-index row out of sync with the file it names. There is one right answer and a script can prove
-it.
+**Safe fix.** Deterministic, applied, then reported. A dead link with exactly one possible
+target. An index row out of sync with the file it names. There is one right answer and it can be
+proved, so it gets fixed rather than raised. No toolkit script applies one: nothing in
+`scripts/` writes into a workspace except `icm-apply.sh` executing a plan you read, so the
+safe fixes above are applied by the agent in `/icm-sync update` and counted in what it reports
+back. Applied does not mean invisible.
 
 **Mechanical report.** A script found it and a script must not fix it. A fact in the wiki that
 does not appear in its raw. A file over its ceiling. The finding is certain, the remedy is a

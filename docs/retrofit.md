@@ -137,7 +137,7 @@ belong to you.
 SKIP - already installed and identical, apply would do nothing
   CONTEXT.md                         identical, nothing to do
 
-REFUSE - apply will not write here at all
+REFUSE - apply will not write these at all
   node_modules/pkg/README.md         never_write glob in icm.defaults.json
 ```
 

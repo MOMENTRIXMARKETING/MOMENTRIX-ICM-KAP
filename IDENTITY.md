@@ -1,6 +1,6 @@
 # momentrix-icm-kap-toolkit - Identity
 
-> The toolkit that drops an ICM context layer onto someone else's project. This repo is the tool, not a workspace built with the tool.
+> The toolkit that drops an ICM context layer onto someone else's project. It is the tool, not a workspace built with it.
 
 Layer 0. Read this before anything else, every session.
 
@@ -8,22 +8,23 @@ Layer 0. Read this before anything else, every session.
 
 ```
 momentrix-icm-kap-toolkit/
-├── IDENTITY.md              # layer 0, you are here: where am I
+├── IDENTITY.md              # layer 0, you are here
 ├── CONTEXT.md               # layer 1: where do I go
 ├── CLAUDE.md                # adapter, aliases IDENTITY.md
 ├── BUILD-CONTRACT.md        # layer 3 rule book: the non-negotiables
-├── icm.defaults.json        # every budget, skip glob, required-section list
-├── README.md                # the front door a user reads first
-├── NOTICE.md                # provenance: three upstreams, what was vendored
+├── icm.defaults.json        # every budget, glob and section list
+├── README.md                # the front door
+├── QUICKSTART.md            # the sixty-second path: NEW, OVER, TRANSFER
+├── NOTICE.md                # provenance: the three upstreams
 ├── LICENSE                  # MIT
 ├── .gitignore               # keeps the toolkit's scratch folder out of git
 ├── .claude-plugin/          # marketplace.json, plugin.json: the install path
 ├── scripts/                 # POSIX sh: check, plan, apply, rollback, icm_lib
-├── skills/                  # the eight icm-* skills, one SKILL.md per folder
+├── skills/                  # the eight icm-* skills, one SKILL.md each
 ├── spec/                    # layer 3 rule books: layers, budgets, conventions
-├── interview-templates/     # .tmpl material filled in with a human; no script reads it
+├── interview-templates/     # .tmpl material a human fills in; no script reads it
 ├── docs/                    # methodology, retrofit, deck copy, the paper
-├── examples/                # one worked raw-and-article pair, the demo
+├── examples/                # worked examples: the raw and wiki pair, whole trees
 └── tests/                   # run-tests.sh, the POSIX harness, plus the python one
 ```
 
@@ -40,7 +41,7 @@ momentrix-icm-kap-toolkit/
 
 ## Why layers 2, 4a and 4b are absent
 
-The toolkit ships every layer and runs 0, 1 and 3 on itself. No stage folders, no `raw/`, no `wiki/`: this repo makes a toolkit, not compiled knowledge. `examples/` holds one worked pair instead. The checker calls the rest absent out loud rather than failing: report the gap, never paper over it.
+The toolkit ships every layer and runs 0, 1 and 3 on itself. No stage folders, no `raw/`, no `wiki/`: this repo makes a toolkit, not knowledge. `examples/` holds worked examples instead. The checker reports the rest absent rather than failing: name the gap, never paper over it.
 
 ## Rules
 

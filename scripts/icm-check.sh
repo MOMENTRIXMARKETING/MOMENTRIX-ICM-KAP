@@ -145,6 +145,33 @@ fi
 
 # ------------------------------------------------------------------- helpers --
 
+# A folder that holds its own IDENTITY.md is a workspace root in its own right.
+# spec/layers.md, layer 0: a folder that feels like it needs an IDENTITY.md is a
+# separate workspace, not a department. So the CONTEXT.md sitting beside one is
+# that workspace's layer 1, not a job card, and the tree under it is documented
+# by that IDENTITY.md rather than by the target's. Without this a repo carrying a
+# worked example workspace inside it grades that workspace against the wrong file
+# and reports failures that are not there.
+
+# True when the relative path of a CONTEXT.md sits beside an IDENTITY.md.
+nested_root_card() {
+    [ -f "$(dirname "$TARGET/$1")/IDENTITY.md" ]
+}
+
+# True when a relative directory sits inside a nested workspace root, meaning
+# some ancestor below the target holds its own IDENTITY.md. The target's own
+# root never matches, because the walk stops before it.
+under_nested_root() {
+    _un_p="$1"
+    while [ -n "$_un_p" ] && [ "$_un_p" != "." ] && [ "$_un_p" != "/" ]; do
+        if [ -f "$TARGET/$_un_p/IDENTITY.md" ]; then
+            return 0
+        fi
+        _un_p=$(dirname "$_un_p")
+    done
+    return 1
+}
+
 rel_of() {
     printf '%s\n' "${1#$TARGET/}"
 }
@@ -412,7 +439,12 @@ c_budgets() {
         [ -n "$_bu_r" ] || continue
         case "$_bu_r" in
             CONTEXT.md|IDENTITY.md) continue ;;
-            */CONTEXT.md)   budget_file "$TARGET/$_bu_r" "stage" "CONTEXT.stage.md" ;;
+            */CONTEXT.md)
+                if nested_root_card "$_bu_r"; then
+                    budget_file "$TARGET/$_bu_r" "context-root" "CONTEXT.root.md"
+                else
+                    budget_file "$TARGET/$_bu_r" "stage" "CONTEXT.stage.md"
+                fi ;;
             _config/*.md)   budget_file "$TARGET/$_bu_r" "rulebook" "rulebook.md" ;;
             wiki/index.md|wiki/log.md) : ;;
             wiki/*.md)      budget_file "$TARGET/$_bu_r" "article" "wiki_article.md" ;;
@@ -487,9 +519,14 @@ c_drift() {
 
     _dr_cards="$ICM_TMPDIR/cards"
     icm_walk_md "$TARGET" | grep '/CONTEXT\.md$' > "$_dr_cards" || true
+    _dr_nested=0
     while IFS= read -r _dr_c; do
         [ -n "$_dr_c" ] || continue
         _dr_dir=$(dirname "$_dr_c")
+        if under_nested_root "$_dr_dir"; then
+            _dr_nested=$((_dr_nested + 1))
+            continue
+        fi
         _dr_base=$(basename "$_dr_dir")
         if grep -q -F -- "$_dr_base" "$_dr_blk"; then
             :
@@ -501,6 +538,9 @@ c_drift() {
 
     if [ "$_dr_miss" -eq 0 ]; then
         icm_ok "the workspace map covers every real top-level entry and every job card folder"
+    fi
+    if [ "$_dr_nested" -gt 0 ]; then
+        icm_note "$_dr_nested job card folder(s) sit inside a nested workspace root, which carries its own IDENTITY.md; run the checker on that folder to grade them against their own map"
     fi
 
     # A top level row is "<box drawing>── <name>" and the name may hold spaces,
@@ -531,7 +571,12 @@ c_sections() {
         [ -n "$_se_r" ] || continue
         case "$_se_r" in
             CONTEXT.md) continue ;;
-            */CONTEXT.md) sections_of "$TARGET/$_se_r" "required_sections.CONTEXT.stage.md" ;;
+            */CONTEXT.md)
+                if nested_root_card "$_se_r"; then
+                    sections_of "$TARGET/$_se_r" "required_sections.CONTEXT.root.md"
+                else
+                    sections_of "$TARGET/$_se_r" "required_sections.CONTEXT.stage.md"
+                fi ;;
         esac
     done < "$_se_md"
 }
