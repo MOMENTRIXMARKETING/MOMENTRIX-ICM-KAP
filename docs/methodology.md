@@ -191,6 +191,25 @@ from structure rather than cleverness. The article ceiling that keeps this true 
 
 ---
 
+## Toolkit skills, rule books, customer skills
+
+A different three homes, about procedure rather than knowledge. Do not collapse them into the
+table above.
+
+| Home | Holds | Same in every project? |
+|---|---|---|
+| Toolkit `skills/icm-*` | how to install and keep ICM honest | yes. The same eight. |
+| `_config/` | rule books: how we work | no. They are this project's. |
+| `customers/<name>/SKILL.md` | this customer's procedure | no. One folder per customer. |
+
+The eight toolkit skills are the install toolkit. A customer `SKILL.md` does not join them, is
+never copied into `~/.claude/skills`, never put in the agent, and never installed as a Grok Bot
+global skill. The blank is [`../examples/customers/_TEMPLATE/`](../examples/customers/_TEMPLATE).
+Pattern 25 in [`../spec/CONVENTIONS.md`](../spec/CONVENTIONS.md). Customer-facing copy never
+says "AI agent", "AI platform", or "AI OS".
+
+---
+
 ## The grounding invariant
 
 Every load-bearing fact in a compiled file, meaning every number, date and direct quote, exists

@@ -7,7 +7,8 @@
 | What you are doing | Go to | Load first |
 |---|---|---|
 | Changing a script or the shared library | `scripts/` | `spec/CLI-CONTRACT.md`, then `BUILD-CONTRACT.md` |
-| Writing or editing a skill | `skills/` | `docs/skill-authoring.md` |
+| Writing or editing a toolkit skill | `skills/` | `docs/skill-authoring.md` |
+| Writing a customer-specific skill | `examples/customers/_TEMPLATE/CONTEXT.md` | `spec/CONVENTIONS.md` Pattern 25 |
 | Changing a budget, a skip glob or a required section | `icm.defaults.json` | `spec/budgets.md` |
 | Editing material a skill fills in with a human | `interview-templates/` | `spec/placeholder-syntax.md` |
 | Changing the layer model or the conventions | `spec/` | `spec/layers.md` |
@@ -35,7 +36,7 @@ A rule book binds. It is reference, not instruction, and it is never called a sk
 |---|---|---|
 | `BUILD-CONTRACT.md` | every file in this repo | before writing or editing anything |
 | `spec/CLI-CONTRACT.md` | every command name, flag, exit code, artifact path and disposition word | changing a script, a skill, or prose naming one |
-| `spec/CONVENTIONS.md` | naming, folder shapes, the twenty-four patterns | creating, moving or renaming a file |
+| `spec/CONVENTIONS.md` | naming, folder shapes, the twenty-five patterns | creating, moving or renaming a file |
 | `spec/layers.md` | the five layers and how they recurse | any change to what a layer means |
 | `spec/budgets.md` | ceilings, all of them read from `icm.defaults.json` | writing or growing a layer file |
 | `spec/grounding-invariant.md` | anything the evidence half produces | changing `check_evidence.py` |

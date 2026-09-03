@@ -131,9 +131,11 @@ before it grows in chars.
 
 Files in a `_config/` folder. They answer "what rules apply".
 
-**They are rule books. They are never called skills.** A skill is a folder under `skills/`
-with a `SKILL.md` and frontmatter. A rule book is a markdown file in `_config/` holding a
-human's ruling. Different owners, different budgets, different authority.
+**They are rule books. They are never called skills.** Toolkit skills are the eight
+`skills/icm-*` folders in this repo, each with a `SKILL.md` and frontmatter. A customer skill
+is a `SKILL.md` in `customers/<name>/` of that customer's workspace (Pattern 25). A rule book
+is a markdown file in `_config/` holding a human's ruling. Different owners, different
+budgets, different authority. `_config/` is not a skills library.
 
 A rule book states the rule first and the reason second. The rule is what gets applied under
 load. The reason is what stops the rule being ignored the first time it is inconvenient.

@@ -279,9 +279,24 @@ else on the list is written only where nothing exists.
 Layers 1, 2 and 3 recurse. A company holds departments, and each department repeats the same
 pattern inside itself. See [`spec/layers.md`](spec/layers.md).
 
-`_config/` holds **rule books**, not skills. Skills are the eight things above, they live in
-this repo, and they are the same eight in every project. Rule books are yours, they differ per
-project, and nothing but you edits them.
+Three homes, and they are not interchangeable.
+
+| Home | Holds | Same in every project? |
+|---|---|---|
+| Toolkit skills | the eight `icm-*` skills in this repo's `skills/` | yes. The install toolkit. |
+| `_config/` | **rule books**, not skills | no. They are yours. |
+| Customer skills | `customers/<name>/SKILL.md` in that customer's workspace | no. One folder per customer. |
+
+The eight toolkit skills stay the same eight in every project. A customer-specific `SKILL.md`
+does not join them. It lives in that customer's folder, or in that company's own tree the way
+[`examples/architect-company/`](examples/architect-company) is a company tree. It is never
+copied into `skills/`, never into `~/.claude/skills`, never into the agent, and never installed
+as a Grok Bot global skill. `_config/` is not a skills library. Rule books differ per project,
+and nothing but you edits them.
+
+The blank, including the job card that routes to it:
+[`examples/customers/_TEMPLATE/`](examples/customers/_TEMPLATE). Pattern 25 in
+[`spec/CONVENTIONS.md`](spec/CONVENTIONS.md).
 
 ---
 
@@ -349,7 +364,7 @@ Every budget, every skip glob and every required-section list lives in
 - The layer table: [`spec/layers.md`](spec/layers.md)
 - Command names, flags, exit codes, artifact paths and vocabulary:
   [`spec/CLI-CONTRACT.md`](spec/CLI-CONTRACT.md)
-- The methodology, patterns 1 to 24: [`spec/CONVENTIONS.md`](spec/CONVENTIONS.md)
+- The methodology, patterns 1 to 25: [`spec/CONVENTIONS.md`](spec/CONVENTIONS.md)
 - The grounding invariant: [`spec/grounding-invariant.md`](spec/grounding-invariant.md)
 - Placeholder onboarding: [`spec/placeholder-syntax.md`](spec/placeholder-syntax.md)
 
@@ -371,6 +386,7 @@ If a number appears in two files and both look authoritative, one of them is a b
   - [`examples/raw/`](examples/raw) and [`examples/wiki/`](examples/wiki) - a source capture and the article compiled from it, the grounding invariant end to end
   - [`examples/architect-company/`](examples/architect-company) - the Pattern 24 company tree, with the file bodies an agent reads when it walks in
   - [`examples/content-pipeline/`](examples/content-pipeline) - a numbered stage pipeline, job card by job card
+  - [`examples/customers/_TEMPLATE/`](examples/customers/_TEMPLATE) - Pattern 25: where a customer `SKILL.md` lives, not a workspace root
 
 ---
 
