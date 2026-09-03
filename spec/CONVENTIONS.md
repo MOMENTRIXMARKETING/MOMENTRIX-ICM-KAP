@@ -273,11 +273,12 @@ workspace/
         └── SKILL.md
 ```
 
-**Vocabulary, and it is not negotiable.** "Skill" means one thing in this system: a folder
-under `skills/` containing a `SKILL.md` with frontmatter. Files in `_config/` are **rule
-books**. A stage `CONTEXT.md` is a **job card**. Never write "skills library" and never call
-a rule book a skill. The three things have different owners, different budgets, and
-different authority, and blurring the words blurs all three.
+**Vocabulary, and it is not negotiable.** Files in `_config/` are **rule books**. A stage
+`CONTEXT.md` is a **job card**. Never write "skills library" and never call a rule book a
+skill. Toolkit skills are folders under this repo's `skills/` containing a `SKILL.md` with
+frontmatter. Customer skills are Pattern 25: a `SKILL.md` in `customers/<name>/`, not in
+`skills/`. The three homes have different owners, different budgets, and different authority,
+and blurring the words blurs all three.
 
 Frontmatter for every `SKILL.md`:
 
@@ -302,6 +303,9 @@ Job cards reference skills in their Inputs table like anything else:
 
 Do not bundle skills that are about the agent harness itself. Bundle skills that carry
 domain knowledge the workspace's agents need at runtime.
+
+For Momentrix customer work, do not use a workspace `skills/` folder and do not install
+the customer's procedure globally. That skill lives in `customers/<name>/`. Pattern 25.
 
 ---
 
@@ -708,6 +712,55 @@ model with no memory of yesterday can rejoin it cold.
 It also removes the failure mode every orchestrator has: the single process that must stay up.
 Kill any agent here at any moment and the workspace is unharmed, because the agent was never
 where the state lived.
+
+---
+
+## Pattern 25: Customer Skills Stay in the Customer Folder
+
+The eight toolkit skills are the install toolkit. They live in this repo under `skills/` and
+they are the same eight in every project:
+
+`icm-scaffold`, `icm-retrofit`, `icm-context`, `icm-stage`, `icm-sync`, `icm-wiki`, `icm-log`,
+`icm-forge`
+
+A customer-specific skill is a different object. It is a `SKILL.md` that lives in that
+customer's folder:
+
+```
+customers/<name>/
+  CONTEXT.md     the job card for this customer
+  SKILL.md       this customer's procedure
+```
+
+`<name>` is the customer's real folder name on disk. This repo ships a blank at
+`examples/customers/_TEMPLATE/`. Do not invent a customer name in the toolkit.
+
+In a Pattern 24 company tree the equivalent is the same file sitting in that company's own
+folder, the way `examples/architect-company/` is a company tree. The skill stays in that
+tree. It is not copied out of it.
+
+**Never:**
+
+- add a customer `SKILL.md` under this repo's `skills/`
+- copy it into `~/.claude/skills` or `~/.agents/skills`
+- install it as a Grok Bot global skill
+- put it in the agent
+
+**The three homes:**
+
+| Home | Holds | Who changes it |
+|---|---|---|
+| Toolkit `skills/icm-*` | how to install and keep ICM honest | this toolkit |
+| `_config/` | rule books: how we sound, what words mean | the human, per project |
+| `customers/<name>/SKILL.md` | this customer's procedure | the human, per customer |
+
+`_config/` is not a skills library. A customer skill is not a ninth toolkit skill. The eight
+stay the eight.
+
+Customer-facing copy never says "AI agent", "AI platform", or "AI OS".
+
+The template, including the job card that routes to it:
+`examples/customers/_TEMPLATE/`.
 
 ---
 

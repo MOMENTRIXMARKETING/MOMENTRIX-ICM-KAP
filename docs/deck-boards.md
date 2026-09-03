@@ -29,12 +29,28 @@ copy. The subject is the same. The copy below is the version that ships.
 Board anatomy, unchanged from boards 1 to 6: logo top left, counter top right, orange eyebrow
 line, short title, a two sentence intro, an indented folder tree in mono, callout blocks, a
 closing "Why it matters:" paragraph, then the footer strip reading MOMENTRIX / board title /
-momentrixbeta.com. Boards alternate dark and light. Board 7 is dark, board 8 is light, board 9
-is dark.
+app.momentrix.com.au/signup. Boards alternate dark and light. Board 7 is dark, board 8 is light,
+board 9 is dark.
+
+**Do not print momentrixbeta.com.** That domain is not the CTA. Sign up is
+https://app.momentrix.com.au/signup. The public site is momentrix.com.au. Do not edit that
+site from this repo.
+
+**Customer-facing copy never says "AI agent", "AI platform", or "AI OS".** Say model, agent,
+or the job. Board 9's intro used to open with "An AI agent is not a member of staff"; the
+copy below does not.
+
+The laid-out deck is [`deck/icm-for-beginners.html`](deck/icm-for-beginners.html). Keep it in
+step with this file.
 
 ---
 
-## Two fixes owed on the existing boards
+## Two fixes owed on the existing boards, plus two more
+
+Fix 1 and Fix 2 below are already in [`deck/icm-for-beginners.html`](deck/icm-for-beginners.html).
+Keep them in this ledger so a reprint of boards 1 to 6 cannot revive the old wording. Fix 3
+(the CTA) and Fix 4 (customer copy) were still live in the footers and on board 9; the copy
+below and the HTML now match.
 
 ### Fix 1. Say rule books, never skills library
 
@@ -73,6 +89,25 @@ on it, and a reader who follows the folder tree literally builds the wrong thing
 | 3 | `03_production  CONTEXT.md + final.md` | `03_production  CONTEXT.md + output/` |
 
 Everywhere else in the toolkit already uses `output/`. See `spec/layers.md`, layer 4b.
+
+### Fix 3. Do not print momentrixbeta.com as a CTA
+
+The footer CTA is **app.momentrix.com.au/signup**, which is
+https://app.momentrix.com.au/signup. The public site is momentrix.com.au. Do not point a board
+at momentrixbeta.com. Do not edit momentrix.com.au from this repo.
+
+| Where | Reads now | Change to |
+|---|---|---|
+| Anatomy, and every footer strip | momentrixbeta.com | app.momentrix.com.au/signup |
+
+### Fix 4. Customer copy never says AI agent, AI platform, or AI OS
+
+| Board | Reads now | Change to |
+|---|---|---|
+| 9 | An AI agent is not a member of staff. It is spawned into a folder, does one job, writes down what it did, and it is gone. | A model is not a member of staff. It is spawned into a folder, does one job, writes down what it did, and it is gone. |
+
+"The folders are the agents" on the title is fine. The banned strings are the three compounds
+above.
 
 ### While you are in there
 
@@ -157,7 +192,7 @@ my workspace
 > a source on Monday and every run from Tuesday already knows it. Nothing gets relearned,
 > nothing gets lost, and every claim traces back to the file it came from.
 
-**Footer strip:** MOMENTRIX / THE KNOWLEDGE LAYER / momentrixbeta.com
+**Footer strip:** MOMENTRIX / THE KNOWLEDGE LAYER / app.momentrix.com.au/signup
 
 ---
 
@@ -253,7 +288,7 @@ Caption under the tree:
 >
 > **INSTALL** /plugin marketplace add MOMENTRIXMARKETING/momentrix-icm-kap-toolkit
 
-**Footer strip:** MOMENTRIX / DROP IT ON WHAT YOU ALREADY HAVE / momentrixbeta.com
+**Footer strip:** MOMENTRIX / DROP IT ON WHAT YOU ALREADY HAVE / app.momentrix.com.au/signup
 
 ---
 
@@ -269,7 +304,7 @@ Caption under the tree:
 
 **Intro:**
 
-> An AI agent is not a member of staff. It is spawned into a folder, does one job, writes down
+> A model is not a member of staff. It is spawned into a folder, does one job, writes down
 > what it did, and it is gone.
 
 > So the folder is the job, the report is the record, and the person in charge is simply
@@ -347,4 +382,4 @@ Caption under the tree:
 >
 > **THE PATTERN** pattern 24, spec/CONVENTIONS.md
 
-**Footer strip:** MOMENTRIX / THE FOLDERS ARE THE AGENTS / momentrixbeta.com
+**Footer strip:** MOMENTRIX / THE FOLDERS ARE THE AGENTS / app.momentrix.com.au/signup

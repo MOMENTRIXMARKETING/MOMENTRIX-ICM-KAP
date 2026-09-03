@@ -1,6 +1,6 @@
 # examples
 
-Three worked instances. Each one is a real workspace on disk, not a description of one, and each passes `scripts/icm-check.sh` clean.
+Three worked instances, plus one template. Each of the three workspaces is a real tree on disk, not a description of one, and each passes `scripts/icm-check.sh` clean. The template is a folder shape, not a workspace root.
 
 Read an example when a spec sentence is clear but the shape it produces is not.
 
@@ -9,6 +9,7 @@ Read an example when a spec sentence is clear but the shape it produces is not.
 | [`raw/`](raw) and [`wiki/`](wiki) | `wiki` | one source capture and the article compiled from it, the grounding invariant end to end |
 | [`architect-company/`](architect-company) | `quick`, extended into Pattern 24 | a three department company where the folders are the workers |
 | [`content-pipeline/`](content-pipeline) | `full` | a staged pipeline that hands off through files |
+| [`customers/_TEMPLATE/`](customers/_TEMPLATE) | none. Pattern 25 | where a customer `SKILL.md` lives: in that folder, never in the toolkit |
 
 Archetype names are the ones `icm-plan.sh --archetype` takes. `spec/CLI-CONTRACT.md` owns them.
 
@@ -47,6 +48,23 @@ What it demonstrates:
 One worked run is on disk end to end, slug `why-bread-goes-stale`: a brief with a claim table, a script whose every beat names the brief row it rests on, a shot list, and the [assembled package](content-pipeline/output/why-bread-goes-stale-package.md). The open questions the research could not settle are carried all the way through to delivery rather than smoothed over.
 
 The subject matter is illustrative. The source rows in the brief name the kind of source a researcher opened, because this example ships without a source library. In a live run each row carries the edition and the page.
+
+## customers/_TEMPLATE: Pattern 25, the three homes
+
+A customer-specific `SKILL.md` lives in `customers/<name>/` of that customer's workspace. It is not a ninth toolkit skill. The eight `icm-*` skills stay as the install toolkit.
+
+[`customers/_TEMPLATE/`](customers/_TEMPLATE) is the blank. Copy it, rename the folder to the customer's real name, set `name` in `SKILL.md` to match. This toolkit does not invent a customer name.
+
+What it demonstrates:
+
+- **Three homes.** Toolkit skills, `_config/` rule books, and this folder's `SKILL.md`. Stated in [`customers/_TEMPLATE/SKILL.md`](customers/_TEMPLATE/SKILL.md) and as Pattern 25 in `spec/CONVENTIONS.md`.
+- **`_config/` is rule books, not a skills library.** Rulings go there. This customer's procedure goes in this `SKILL.md`.
+- **Never install it globally.** Not in `~/.claude/skills`, not in the agent, not as a Grok Bot global skill, not under this repo's `skills/`.
+- **Pattern 24 equivalent.** In a company tree the same file sits in that company's own folder. [`architect-company/`](architect-company) is that shape. Do not copy a skill out of it.
+
+Customer-facing copy never says "AI agent", "AI platform", or "AI OS".
+
+The template is a folder with a job card, not a workspace root. Do not run the checker on it expecting layers 0 and 1. Grade it as part of this repo.
 
 ## Running the checker
 

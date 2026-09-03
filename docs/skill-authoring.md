@@ -1,7 +1,10 @@
 # Skill authoring
 
 The contract every `skills/<name>/SKILL.md` in this repo has to meet. Read it before you write
-one, and before you edit one.
+one, and before you edit one. That set is the eight toolkit skills. A customer-specific
+`SKILL.md` is a different object: it lives in `customers/<name>/` (Pattern 25 in
+[`../spec/CONVENTIONS.md`](../spec/CONVENTIONS.md)), uses the same frontmatter shape, and is
+never added to `skills/`.
 
 This document exists because of a specific failure. Upstream, icm-template's flagship skill
 shipped with no YAML frontmatter at all. Line 1 was a markdown heading. The loader therefore
@@ -204,12 +207,24 @@ unreadable.
 
 | Say | Not | Why |
 |---|---|---|
-| rule book | skill | `_config/` holds rule books. "Skill" means `skills/<name>/SKILL.md` and nothing else. |
+| rule book | skill | `_config/` holds rule books. Toolkit skills are `skills/icm-*/SKILL.md`. A customer skill is `customers/<name>/SKILL.md`. |
 | rule books | skills library | Collides head-on with Claude Code skills. Never write it. |
+| customer skill | ninth toolkit skill | Customer `SKILL.md` stays in `customers/<name>/`. Never in `skills/`, never in `~/.claude/skills`, never as a Grok Bot global skill. |
 | job card | stage context, stage file | A stage or folder `CONTEXT.md` is a job card. |
 | `output/` | `output.md` | A stage writes a folder of results, not one file. |
 
 Folder names are lowercase in prose. `_config/`, `raw/`, `wiki/`, `01_research`.
+
+### Customer skills are not the install set
+
+The eight `icm-*` skills in this repo are the install toolkit. A customer's procedure is a
+`SKILL.md` in `customers/<name>/` of that customer's workspace, or in that company's own tree
+the way [`../examples/architect-company/`](../examples/architect-company) is a company tree.
+The blank is [`../examples/customers/_TEMPLATE/`](../examples/customers/_TEMPLATE). Copy it,
+rename the folder to the customer's real name, set `name` to match. Do not invent a name here.
+
+Never copy that file into `skills/`, into `~/.claude/skills`, into the agent, or onto a Grok
+Bot as a global skill. Customer-facing copy never says "AI agent", "AI platform", or "AI OS".
 
 ---
 
@@ -248,5 +263,6 @@ Then check by eye what the script cannot:
 - [ ] No budget number is written in the file; it points at `spec/budgets.md`.
 - [ ] No skip list is written in the file; it points at `spec/excluded-folders.md`.
 - [ ] Nothing in `_config/` is called a skill.
+- [ ] This file is one of the eight `icm-*` skills. A customer skill does not belong under `skills/`.
 - [ ] Every claim the skill makes about disk comes from a script it ran.
 - [ ] The skill cannot overwrite anything.
