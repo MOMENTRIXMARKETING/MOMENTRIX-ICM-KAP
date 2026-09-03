@@ -24,7 +24,7 @@ momentrix-icm-kap-toolkit/
 ├── spec/                    # layer 3 rule books: layers, budgets, conventions
 ├── interview-templates/     # .tmpl material a human fills in; no script reads it
 ├── docs/                    # methodology, retrofit, deck copy, the paper
-├── examples/                # worked examples: raw/wiki, architect-company, content-pipeline, customers/_TEMPLATE
+├── examples/                # worked examples, including customers/_TEMPLATE
 └── tests/                   # run-tests.sh, the POSIX harness, plus the python one
 ```
 
@@ -47,7 +47,7 @@ The toolkit ships every layer and runs 0, 1 and 3 on itself. No stage folders, n
 
 1. Every script is POSIX `sh`. No bashisms, no python, no node. `sh -n` and the checker's bashism sweep gate every change, and the tests stay green before anything ships.
 2. Numbers live in one file, `icm.defaults.json`. Prose cites it, and never restates a budget, a ceiling or a skip glob as a literal.
-3. Rule books are rule books. The eight toolkit skills live under `skills/` and are the install toolkit. A customer skill is a SKILL.md in `customers/<name>/`, never in `skills/`, never in `~/.claude/skills`, never as a Grok Bot global skill. A folder's own CONTEXT.md is a job card.
+3. Rule books are rule books. Toolkit skills live under `skills/`. A customer skill lives in `customers/<name>/` (Pattern 25). A folder's own CONTEXT.md is a job card.
 4. A user's file is never rewritten. `CLAUDE.md` and `.gitignore` get a marked block appended, backed up first. Anything else that exists is parked in `.icm/proposed/`.
 5. Every path written into a document exists on disk. A path that does not resolve is a failure, not a typo.
 6. Test fixtures carry a space in their path on purpose. Quote every path variable, every time.
