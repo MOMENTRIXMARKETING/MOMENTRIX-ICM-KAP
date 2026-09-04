@@ -166,7 +166,7 @@ awk -F '|' \
     -v today="$TODAY" -v starve="$STARVE_DAYS" -v recent="$RECENT_DAYS" \
     -v archive="$ARCHIVE_DAYS" -v sev3n="$SEV3_N" -v sev2n="$SEV2_N" \
     -v recurn="$RECUR_N" -v disk="$DISK" -v mode="$MODE" -v ledger="$LEDGER" \
-    -v target="$TARGET" '
+    -v target="$TARGET" -v icmhome="$ICM_HOME" '
 function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
 function isdate(s) { return s ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ }
 function dn(s,   y, m, d, a, yy, mm) {
@@ -270,11 +270,13 @@ END {
     for (i = 1; i <= norder; i++) {
         p = order[i]
         # A ledger path outside the three kinds the walk collects (a spec, a
-        # script, a doc) is still a real file. Ask the disk before calling it
-        # a ghost. Quotes in a path are escaped for the shell.
+        # script, a doc) is still a real file, and a toolkit skill lives in
+        # the toolkit, not the workspace. Ask both disks before calling it a
+        # ghost. Quotes in a path are escaped for the shell.
         if (!(p in ondisk) && p != "none") {
             q = p; gsub(/"/, "\\\"", q)
             if (system("[ -f \"" target "/" q "\" ]") == 0) { ondisk[p] = 1; kind[p] = "other" }
+            else if (system("[ -f \"" icmhome "/" q "\" ]") == 0) { ondisk[p] = 1; kind[p] = "toolkit skill" }
         }
         k = kind[p]
         v = "ok"

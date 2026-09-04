@@ -1797,6 +1797,9 @@ snapshot "$LP" | grep -v '^_log/SKILL-INDEX.md' > "$LP.after"
 grep -v '^_log/SKILL-INDEX.md' "$LP.before" > "$LP.before2"
 assert_same "the index run touched no file other than the index" "$LP.before2" "$LP.after"
 
+printf '| 2026-09-03 | Use | icm-loop | skills/icm-loop/SKILL.md | install | ok | 0 |\n' >> "$LP/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-09-04 "$LP"
+assert_out "a toolkit skill used from a workspace is found in the toolkit, not called a ghost" '| icm-loop | toolkit skill | `skills/icm-loop/SKILL.md` | 1 | 1 | 2026-09-03 | 0 | 0 | 0 | - | ok |'
 run "$SCRIPTS/icm-loop.sh" --today 2026-11-01 "$LP"
 assert_out "no use in the archive window on an old ledger is archive" '`skills/icm-context/SKILL.md` | 0 | 0 | 2026-08-20 | 0 | 0 | 0 | - | archive |'
 
