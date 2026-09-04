@@ -1101,7 +1101,7 @@ ICM_EOF
     fi
     cat <<'ICM_EOF'
 - Nothing overwrites a file you did not write. Collisions land in `.icm/proposed/`.
-- Append one line to `_log/LOOP-LEDGER.md` when a task closes. Never rewrite history there.
+- Every task ends with the Session Close in `CONTEXT.md`: miss lines, use lines, the placement question, the task line, all appended to `_log/LOOP-LEDGER.md`. Never rewrite history there.
 - An agent proposes a rule change, it never makes one. Proposals go to `_log/FORGE-PROPOSALS.md`.
 - When the map above stops matching the disk, the map is wrong. Fix the map.
 ICM_EOF
@@ -1145,7 +1145,11 @@ If the job is not in the table, the table is incomplete. Say so before you impro
 2. Read this file. Pick the row that matches the job.
 3. Read the job card the row points to, and the rule book in the Load first column.
 4. Do the work. Nothing else loads unless the job card says to load it.
-5. Append one line to `_log/LOOP-LEDGER.md` when the task closes.
+5. Run the Session Close below before your last reply. It is part of the task, not an afterthought.
+
+ICM_EOF
+    icm_body_session_close
+    cat <<'ICM_EOF'
 
 ## Rule Books
 
@@ -1162,6 +1166,26 @@ ICM_EOF
     cat <<'ICM_EOF'
 
 Only a human edits a rule book. An agent proposes a change by appending to `_log/FORGE-PROPOSALS.md`.
+ICM_EOF
+}
+
+# The Session Close is the write back obligation: the one block that makes the
+# loop recursive. It lives in layer 1 because layer 1 is loaded on every run by
+# every harness, whichever alias points at it. icm-loop.sh --block prints the
+# same body between markers for hosts that are not ICM workspaces. One body,
+# two consumers, no copy.
+icm_body_session_close() {
+    cat <<'ICM_EOF'
+## Session Close
+
+Before your last reply of any task, do these four, in order. Skipping one is itself a miss, sev 2. Log it.
+
+1. **Miss check.** Did you ask for something already available, get corrected by hand, skip a step in your instructions, ship output that needed rework, or run when you should not have (or not run when you should)? Each one is one miss line in `_log/LOOP-LEDGER.md`, shape in that file. Name the rule book, job card or skill at fault, never a person. Name the mechanism, not the feeling. Grep first: a fault already open on that path is not logged twice. A fault that returns after a patch is logged with `RECURRENCE:` in front. Log it even when you recovered. No misses, write nothing.
+2. **Use line.** One per skill or job card this task ran under.
+3. **Placement question.** Did this task produce a procedure, rule or fact that nothing on disk holds? Do not create it. Append a proposal of kind `new` to `_log/FORGE-PROPOSALS.md` at the path `_config/conventions.md` gives it under Where A Learned Thing Lives, and stop. A human naming the id is what creates it.
+4. **Task line.** Close against the job card, then append the task line and any call lines.
+
+Sub agents carry these four steps too. One that cannot write files reports its lines in its final message and the caller appends them. One ledger per workspace, never one per agent.
 ICM_EOF
 }
 
@@ -1291,6 +1315,20 @@ Required sections and size ceilings live in `icm.defaults.json`, and the skip li
 ## One Home Per Fact
 
 Every fact has exactly one home. Other files link to it. If the same sentence is authoritative in two places, one of them becomes a pointer. Search for a phrase: if it appears twice and both copies claim to be right, that is the bug.
+
+## Where A Learned Thing Lives
+
+A task teaches something. The kind of thing decides the layer, and the layer decides the path. Nothing is created at close: the Session Close writes a proposal naming this path, and a human creates it.
+
+| What was learned | Kind | Lives at |
+|---|---|---|
+| A rule, a do or a never | Rule book | `_config/<book>.md`, the existing book that is nearest in subject. A new book only when none fits |
+| How this folder does its job | Job card | that folder's `CONTEXT.md`, its Process section |
+| A procedure invoked by name, reused across folders or workspaces | Skill | `skills/<name>/SKILL.md` in the harness that runs it |
+| A fact about the world | Source and article | `raw/` first, then `wiki/`. Never a rule book |
+| A fact about this workspace | Map or route | `IDENTITY.md` or the routing `CONTEXT.md` it belongs to |
+
+Depth: the lowest folder that covers every place the thing applies. Two sibling folders both need it, it moves up one level. Never sideways.
 
 ## When a rule is wrong
 
@@ -1513,7 +1551,7 @@ icm_body_ledger() {
     cat <<'ICM_EOF'
 # LOOP LEDGER
 
-Append only. Never rewrite history. The format below is fixed by the out-of-the-loop skill; do not invent columns.
+Append only. Never rewrite history. A wrong line is corrected by a new line. Every line of every kind goes at the end of the file, under Lines, in time order. The sections above Lines are the shapes, not the places. Task, call and weekly review shapes are fixed by the out-of-the-loop skill. Miss, use and patched shapes are fixed by the toolkit's icm-log skill. Do not invent columns.
 
 ## Task lines
 
@@ -1529,13 +1567,32 @@ One line per call fired. The last column is filled at the weekly review. Necessa
 | Date | Trigger | What fired it | Decision | Was the call necessary |
 |---|---|---|---|---|
 
+## Miss lines
+
+One line per miss, at Session Close. The literal word Miss in column two is the selector. Sev is 3 wrong output shipped or a decision made on bad information, 2 cost time, 1 cosmetic, 2 when unsure. At fault is a rule book, job card or skill path as it exists on disk, or the word none. A returning fault after a patch starts What missed with RECURRENCE: and that is the strongest signal in the file.
+
+| Date | Miss | Sev | At fault | What missed | Fix that would have prevented it |
+|---|---|---|---|---|---|
+
+## Skill lines
+
+One use line per skill or job card a task ran under, at Session Close. The literal word Use in column two is the selector. Outcome is ok, rework or abandoned. Misses is how many miss lines this run wrote against it. One patched line whenever a human approves a proposal that changes a file; the forge writes it, the index reads it, and every miss dated before it counts as closed.
+
+| Date | Use | Skill or job card | Path | Task | Outcome | Misses |
+|---|---|---|---|---|---|---|
+
+| Date | Patched | Path | Proposal id |
+|---|---|---|---|
+
 ## Weekly review
 
 Appended at each review, one block per week:
 
 Week of, calls fired and how many were necessary, catch counts for pre-mortem, hunt, review and audit, workarounds taken, the recurring blocker if there is one, the anchor decay check, floor misses, and any threshold proposal with the operator's decision.
 
-No reviews yet.
+## Lines
+
+Everything below this heading is the record. Append here. Never edit above it except to fix a shape, and never edit a line below it for any reason.
 ICM_EOF
 }
 
@@ -1547,10 +1604,17 @@ What the forge proposes, waiting on a human decision. The forge never edits. The
 
 ## Proposals
 
-| Date | Rule book | Proposal | Evidence | Authority | Decision |
-|---|---|---|---|---|---|
+One block per proposal, appended by icm-forge below the Authority section, body never edited after it is written. The Status line is the only line that changes, and only when a human names the id. The shape, indented here so the example is never counted as a proposal:
 
-No proposals yet.
+    ## FP-<YYYY-MM-DD>-<NN> | <path>
+    - Status: proposed | proposed (unattended run) | approved <date> | rejected <date>, <reason>
+    - Kind: edit | new | archive | rewrite
+    - Hole: <one line>
+    - Evidence: <the ledger lines, pasted verbatim, at least two for edit>
+    - Smallest edit: <the exact replacement text, or the exact path and shape for new>
+    - Test that proves it: <a measurable check, or none possible and why>
+
+A proposal heading starts at column one with two hashes and FP-. No other heading in this file may start with FP-.
 
 ## Authority
 
@@ -1571,7 +1635,7 @@ $ICM_BEGIN
 @IDENTITY.md
 @CONTEXT.md
 
-Read IDENTITY.md first, then CONTEXT.md, then the job card in the folder you are working in. Nothing else loads by default.
+Read IDENTITY.md first, then CONTEXT.md, then the job card in the folder you are working in. Nothing else loads by default. Before your last reply, run the Session Close in CONTEXT.md.
 $ICM_END
 ICM_EOF
 }

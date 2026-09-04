@@ -59,7 +59,7 @@ Source: `icm.defaults.json`, key `budgets`.
 | Key in `icm.defaults.json` | Applies to | Target chars | Ceiling chars | Other |
 |---|---|---|---|---|
 | `IDENTITY.md` | The one layer 0 file at the workspace root | 3200 | 6000 | |
-| `CONTEXT.root.md` | Layer 1 routing at a workspace root | 3200 | 8000 | |
+| `CONTEXT.root.md` | Layer 1 routing at a workspace root | 4400 | 8000 | |
 | `CONTEXT.stage.md` | Layer 2 job cards in stage folders | 1200 | 2000 | ceiling 80 lines |
 | `CONTEXT.folder.md` | Layer 1 routing inside a department or other folder | 1200 | 2000 | |
 | `rulebook.md` | Any layer 3 file in a `_config/` folder | 2000 | 4000 | |
@@ -79,9 +79,13 @@ it.
 `IDENTITY.md` gets 6000, which is 3200 target plus roughly the same again. Workspace maps
 grow with the workspace and a map is the one thing in layer 0 that legitimately gets longer.
 
-`CONTEXT.root.md` gets the loosest ratio in the table, 8000 against a 3200 target. It carries
+`CONTEXT.root.md` gets the loosest ratio in the table, 8000 against a 4400 target. It carries
 the routing table for the entire workspace and a workspace with twenty destinations has a
-longer table than one with three. Routing rows are cheap to read and expensive to omit.
+longer table than one with three. Routing rows are cheap to read and expensive to omit. The
+target is 1200 above layer 0 because layer 1 also carries the Session Close, the write back
+obligation, and that block is roughly 1200 chars of the target. It sits here and not in a rule
+book because layer 1 is loaded on every run by every harness, and a write back that loads only
+sometimes is a ledger that starves.
 
 `CONTEXT.stage.md` gets 2000 and also an 80 line ceiling. Job cards fail by accumulating
 content, and content shows up in lines before it shows up in chars: an Inputs table growing
@@ -111,17 +115,17 @@ is not budgeted here. `icm.defaults.json` marks that explicitly with `"layer4_va
 
 ```
 layer0_identity     3200      IDENTITY.md at target
-layer1_context      3200      root CONTEXT.md at target
+layer1_context      4400      root CONTEXT.md at target, Session Close included
 layer2_stage        1200      the job card at target
 layer3_rulebooks    4000      the rule books the job card names
                   ------
-fixed_total        11600
+fixed_total        12800
 ```
 
-Check the arithmetic: 3200 + 3200 = 6400. 6400 + 1200 = 7600. 7600 + 4000 = 11600. That
+Check the arithmetic: 3200 + 4400 = 7600. 7600 + 1200 = 8800. 8800 + 4000 = 12800. That
 matches `loading_budget.fixed_total` in `icm.defaults.json`.
 
-In tokens, at the 4 chars per token ratio the JSON states: 11600 / 4 = 2900 tokens. The
+In tokens, at the 4 chars per token ratio the JSON states: 12800 / 4 = 3200 tokens. The
 upstream `icm-template` layer reference card reports a focused stage load of 2,000 to 8,000
 tokens, so a workspace built to these budgets sits at the bottom of the band that methodology
 already expects.
@@ -161,8 +165,8 @@ rule books           4000      two at the 2000 rulebook target
 6000 + 8000 = 14000. 14000 + 2000 = 16000. 16000 + 4000 = 20000 chars, which is 20000 / 4 =
 5000 tokens.
 
-That is 20000 against a target of 11600, so a workspace that lets every file drift to its
-ceiling pays 8400 extra chars on every task it ever runs. This is why ceilings are a lint
+That is 20000 against a target of 12800, so a workspace that lets every file drift to its
+ceiling pays 7200 extra chars on every task it ever runs. This is why ceilings are a lint
 failure and not an aspiration.
 
 Note what the worst case does not include: rule books at their own 4000 ceiling. The
@@ -183,23 +187,23 @@ card adds one `CONTEXT.folder.md` read, at its 1200 target.
 One department level:
 
 ```
-fixed_total                     11600
+fixed_total                     12800
 department CONTEXT.folder.md     1200
                               -------
-                                12800
+                                14000
 ```
 
 Two department levels:
 
 ```
-fixed_total                     11600
+fixed_total                     12800
 department CONTEXT.folder.md     1200
 sub-department CONTEXT.folder.md 1200
                               -------
-                                14000
+                                15200
 ```
 
-11600 + 1200 = 12800. 12800 + 1200 = 14000. Both figures are arithmetic on published numbers,
+12800 + 1200 = 14000. 14000 + 1200 = 15200. Both figures are arithmetic on published numbers,
 which is why the components are shown rather than the totals asserted. Same rule as the
 grounding invariant: a derived value shows its parts.
 

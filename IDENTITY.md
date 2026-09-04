@@ -19,12 +19,13 @@ momentrix-icm-kap-toolkit/
 ├── LICENSE                  # MIT
 ├── .gitignore               # keeps the toolkit's scratch folder out of git
 ├── .claude-plugin/          # marketplace.json, plugin.json: the install path
-├── scripts/                 # POSIX sh: check, plan, apply, rollback, icm_lib
-├── skills/                  # the eight icm-* skills, one SKILL.md each
+├── scripts/                 # POSIX sh: check, plan, apply, rollback, loop, lib
+├── skills/                  # the nine icm-* skills, one SKILL.md each
 ├── spec/                    # layer 3 rule books: layers, budgets, conventions
 ├── interview-templates/     # .tmpl material a human fills in; no script reads it
 ├── docs/                    # methodology, retrofit, deck copy, the paper
 ├── examples/                # worked examples: the raw and wiki pair, whole trees
+├── _log/                    # this repo's own ledger, proposals, index
 └── tests/                   # run-tests.sh, the POSIX harness, plus the python one
 ```
 
@@ -41,11 +42,11 @@ momentrix-icm-kap-toolkit/
 
 ## Why layers 2, 4a and 4b are absent
 
-The toolkit ships every layer and runs 0, 1 and 3 on itself. No stage folders, no `raw/`, no `wiki/`: this repo makes a toolkit, not knowledge. `examples/` holds worked examples instead. The checker reports the rest absent rather than failing: name the gap, never paper over it.
+The toolkit ships every layer and runs 0, 1, 3 and the loop on itself. No stages, no `raw/`, no `wiki/`: this repo makes a toolkit, not knowledge. `examples/` holds worked trees instead. The checker reports the rest absent rather than failing.
 
 ## Rules
 
-1. Every script is POSIX `sh`. No bashisms, no python, no node. `sh -n` and the checker's bashism sweep gate every change, and the tests stay green before anything ships.
+1. Every script is POSIX `sh`. No bashisms, no python, no node. `sh -n`, the bashism sweep and the tests gate every change.
 2. Numbers live in one file, `icm.defaults.json`. Prose cites it, and never restates a budget, a ceiling or a skip glob as a literal.
 3. Rule books are rule books. "Skill" means a SKILL.md under `skills/` and nothing else. A folder's own CONTEXT.md is a job card.
 4. A user's file is never rewritten. `CLAUDE.md` and `.gitignore` get a marked block appended, backed up first. Anything else that exists is parked in `.icm/proposed/`.

@@ -34,17 +34,18 @@ ICM_HOME="${ICM_HOME:-${CLAUDE_PLUGIN_ROOT:-$HOME/src/momentrix-icm-kap-toolkit}
 }
 ```
 
-Four scripts, and there are no others. All four take the target directory as a positional
-argument, defaulting to `.`, and all four answer `--help`.
+Five scripts, and there are no others. All five take the target directory as a positional
+argument, defaulting to `.`, and all five answer `--help`.
 
 ```sh
 sh "$ICM_HOME/scripts/icm-plan.sh" .       # dry run, writes .icm/plan.txt and nothing else
 sh "$ICM_HOME/scripts/icm-apply.sh" .      # executes that plan and nothing else
 sh "$ICM_HOME/scripts/icm-rollback.sh" .   # undoes one apply run
 sh "$ICM_HOME/scripts/icm-check.sh" .      # reports only, writes nothing
+sh "$ICM_HOME/scripts/icm-loop.sh" .       # compiles the skill index from the ledger, writes that one file
 ```
 
-Exit codes are one scheme across all four, and they are listed in
+Exit codes are one scheme across all five, and they are listed in
 [`README.md`](README.md#zero-dependencies). The short version: 0 clean, 1 a human decision is
 waiting, 2 refused before writing anything, 3 aborted part way through.
 

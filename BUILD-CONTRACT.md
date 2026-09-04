@@ -52,6 +52,8 @@ Every load-bearing fact (number, date, quote) in a `wiki/` article exists verbat
 The logger never judges. The forge never edits. The human holds the only pen that touches rule books.
 
 ## PATHS
-- `_log/LOOP-LEDGER.md` — append-only ledger (format: `references/ledger.md` of out-of-the-loop).
-- `_log/FORGE-PROPOSALS.md` — what the forge proposes, awaiting approval.
+- `_log/LOOP-LEDGER.md` — append-only ledger. Task, call and weekly review shapes: `references/ledger.md` of out-of-the-loop. Miss, use and patched shapes: `skills/icm-log/SKILL.md`. Every line appends under `## Lines`.
+- `_log/FORGE-PROPOSALS.md` — what the forge proposes, awaiting approval. Kinds: edit, new, archive, rewrite.
+- `_log/SKILL-INDEX.md` — compiled by `scripts/icm-loop.sh` from the ledger, overwritten every run, never hand edited.
+- `CONTEXT.md` `## Session Close` — the write back obligation. Layer 1, every harness, one body in `icm_lib.sh`, printed by `icm-loop.sh --block`. Placement of a new learning: `spec/placement.md`.
 - `.icm/` — plan, backups, proposed collisions. Gitignored.
