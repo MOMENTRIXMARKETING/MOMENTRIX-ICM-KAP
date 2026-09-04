@@ -156,7 +156,7 @@ A task closes with one task line, plus one call line for every call it fired.
 Example:
 
 ```
-| 2026-08-10 | MCK outreach batch 03 | 3 | Cash | 1 | 1/2/1/0 | 1 (API limit, batched sends) | T5 (approved default) | batch-03.md |
+| 2026-08-10 | Acme outreach batch 03 | 3 | Cash | 1 | 1/2/1/0 | 1 (API limit, batched sends) | T5 (approved default) | batch-03.md |
 ```
 
 Column by column:
