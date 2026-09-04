@@ -565,19 +565,24 @@ entirely.
 
 ## Pattern 22: The Log Is Append Only
 
-Four log files, all append only, all defined in `icm.defaults.json` under `log`.
+Four log files, all append only, and one compiled file that is not a log, all defined in
+`icm.defaults.json` under `log`.
 
 | File | Holds |
 |---|---|
-| `_log/LOOP-LEDGER.md` | One line per closed task, one line per call fired, the weekly review block |
+| `_log/LOOP-LEDGER.md` | One line per closed task, one per call fired, one per miss, one per skill or job card used, one per approved patch, the weekly review block. Every line appends under `## Lines` |
 | `_log/LOOP-RUNLOG-<task>.md` | One line per event during a task, timestamped |
 | `_log/FORGE-PROPOSALS.md` | What the forge proposes, awaiting approval |
 | `wiki/log.md` | Ingest, query, and lint operations against the wiki |
+| `_log/SKILL-INDEX.md` | Not a log. Compiled from the ledger by `scripts/icm-loop.sh`, overwritten every run, never hand edited |
 
-The ledger and run log formats are **not defined here**. They are defined in the
-out-of-the-loop skill's `references/ledger.md`, and this toolkit uses those formats unchanged.
-Pattern 5 applies to formats as hard as it applies to facts. If the ledger format changes
-there, it changes here, because there is no copy here to update.
+The line shapes are **not defined here**, and they have exactly two owners. The task line, the
+call line, the run log line and the weekly review block are defined in the out-of-the-loop
+skill's `references/ledger.md`, and this toolkit uses them unchanged. The miss line, the use
+line and the patched line are defined in `skills/icm-log/SKILL.md`, because out-of-the-loop has
+no miss shape and the forge that reads them lives here. Pattern 5 applies to formats as hard as
+it applies to facts. If a shape changes at its owner, it changes everywhere, because there is
+no copy anywhere to update.
 
 Three rules about logging.
 

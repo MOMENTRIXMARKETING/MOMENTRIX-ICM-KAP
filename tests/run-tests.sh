@@ -1670,7 +1670,7 @@ printf '\n%s\n' '-- conformance: flags --'
 
 # flag existence: every --flag a doc shows for a script is in that script's usage
 BADFLAG=""
-for s in icm-check icm-plan icm-apply icm-rollback; do
+for s in icm-check icm-plan icm-apply icm-rollback icm-loop; do
     USAGE=$("$SCRIPTS/$s.sh" --help 2>&1 || true)
     for fl in $(grep -rhoE "$s\.sh[^\`\"]*" "$ROOT"/skills/*/SKILL.md "$ROOT"/docs/*.md "$ROOT"/README.md "$ROOT"/QUICKSTART.md 2>/dev/null \
             | grep -oE '\-\-[a-z][a-z-]*' | sort -u); do
@@ -1746,6 +1746,92 @@ run "$SCRIPTS/icm-plan.sh" --quiet "$MB"
 assert_out "a CLAUDE.md missing its end marker is classified COLLIDE" "COLLIDE"
 run "$SCRIPTS/icm-apply.sh" "$MB"
 assert_same "a malformed block loses not one line of the user's file" "$MB/CLAUDE.md" "$MB.pre"
+
+
+# ------------------------------------------------------------ the loop --
+# icm-loop.sh is the librarian. It counts, it never judges, and every verdict
+# word it writes is a count a reader can redo by hand. These fixtures pin the
+# counts, the kill rules, the starvation check and the one file it may write.
+
+printf '\n%s\n' '-- the loop --'
+
+LP=$(fixture "loop ws")
+run "$SCRIPTS/icm-plan.sh" --quiet "$LP"
+run "$SCRIPTS/icm-apply.sh" "$LP"
+assert_file "apply installs a ledger with the Lines section" "$LP/_log/LOOP-LEDGER.md"
+run grep -c '^## Lines' "$LP/_log/LOOP-LEDGER.md"
+assert_out "the installed ledger ends with a Lines section to append under" "1"
+run grep -c '^## Session Close' "$LP/CONTEXT.md"
+assert_out "the installed CONTEXT.md carries the Session Close" "1"
+run grep -c 'Session Close' "$LP/CLAUDE.md"
+assert_out "the adapter points at the Session Close without copying it" "1"
+run "$SCRIPTS/icm-check.sh" --only sections "$LP"
+assert_rc "a fresh install passes the sections check with Session Close required" 0
+
+mkdir -p "$LP/skills/icm-context" "$LP/sales"
+printf -- '---\nname: icm-context\ndescription: x\n---\n# x\n' > "$LP/skills/icm-context/SKILL.md"
+printf '# card\n' > "$LP/sales/CONTEXT.md"
+cat >> "$LP/_log/LOOP-LEDGER.md" <<'LOOP_EOF'
+| 2026-08-20 | outreach 01 | 2 | cash | 1 | 0/1/0/0 | 0 | none | out.md |
+| 2026-08-20 | Use | icm-context | skills/icm-context/SKILL.md | outreach 01 | ok | 1 |
+| 2026-08-20 | Miss | 2 | _config/voice.md | em dash in deck copy | ban it in deck copy |
+| 2026-08-27 | Miss | 2 | _config/voice.md | em dash in slide subhead | say it covers slides |
+| 2026-08-28 | Miss | 3 | none | no rule for saying we do not know | a rule |
+| 2026-08-29 | Patched | _config/style.md | FP-2026-08-29-01 |
+| 2026-08-30 | Miss | 2 | _config/style.md | RECURRENCE: timecode ambiguity | say beat start |
+| 2026-09-01 | Miss | 2 | _config/style.md | RECURRENCE: timecode again | say beat start |
+| 2026-09-02 | Miss | 1 | ghosts/old.md | stale | none |
+LOOP_EOF
+snapshot "$LP" > "$LP.before"
+run "$SCRIPTS/icm-loop.sh" --today 2026-09-04 "$LP"
+assert_rc "an index with verdicts waiting exits 1" 1
+assert_file "the index is written to _log/SKILL-INDEX.md" "$LP/_log/SKILL-INDEX.md"
+assert_out "two sev 2 misses on one rule book is a hole" '`_config/voice.md` | - | - | - | 2 | 2 | 0 | - | hole |'
+assert_out "two RECURRENCE misses after a patch is a rewrite" '`_config/style.md` | - | - | - | 2 | 2 | 2 | 2026-08-29 | rewrite |'
+assert_out "a sev 3 miss against none is uncovered, not a hole" '| none | none | `none` |'
+assert_out "uncovered is the verdict word for none" '| 1 | 3 | 0 | - | uncovered |'
+assert_out "a ledger path that is not on disk is a ghost" '`ghosts/old.md` | 0 | 0 | - | 1 | 1 | 0 | - | ghost |'
+assert_out "a job card with no lines yet in a young ledger is unlogged" '`sales/CONTEXT.md` | 0 | 0 | - | 0 | 0 | 0 | - | unlogged |'
+assert_out "a used skill with its misses logged is ok" '`skills/icm-context/SKILL.md` | 1 | 1 | 2026-08-20 | 0 | 0 | 0 | - | ok |'
+snapshot "$LP" | grep -v '^_log/SKILL-INDEX.md' > "$LP.after"
+grep -v '^_log/SKILL-INDEX.md' "$LP.before" > "$LP.before2"
+assert_same "the index run touched no file other than the index" "$LP.before2" "$LP.after"
+
+printf '| 2026-09-03 | Use | icm-loop | skills/icm-loop/SKILL.md | install | ok | 0 |\n' >> "$LP/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-09-04 "$LP"
+assert_out "a toolkit skill used from a workspace is found in the toolkit, not called a ghost" '| icm-loop | toolkit skill | `skills/icm-loop/SKILL.md` | 1 | 1 | 2026-09-03 | 0 | 0 | 0 | - | ok |'
+run "$SCRIPTS/icm-loop.sh" --today 2026-11-01 "$LP"
+assert_out "no use in the archive window on an old ledger is archive" '`skills/icm-context/SKILL.md` | 0 | 0 | 2026-08-20 | 0 | 0 | 0 | - | archive |'
+
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-08-26 "$LP"
+assert_rc "work and a miss in the window is not starved" 0
+assert_out "the starvation check says the write back is firing" "the write back is firing"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-08-22 "$LP"
+assert_rc "work and a miss two days apart is not starved" 0
+printf '| 2026-09-08 | outreach 02 | 2 | cash | 1 | 0/0/0/0 | 0 | none | out2.md |\n' >> "$LP/_log/LOOP-LEDGER.md"
+printf '| 2026-09-08 | Use | icm-context | skills/icm-context/SKILL.md | outreach 02 | ok | 0 |\n' >> "$LP/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-09-10 "$LP"
+assert_rc "real work and no miss in the window is starved, exit 1" 1
+assert_out "starvation names the fix, not a rule book" "STARVED"
+assert_nofile "--starve writes no index" "$LP/_log/SKILL-INDEX.md.icm-tmp.$$"
+
+run "$SCRIPTS/icm-loop.sh" --block
+assert_rc "--block prints and exits 0 with no target" 0
+assert_out "the block opens with its start marker" "<!-- ICM-LOOP:START -->"
+assert_out "the block closes with its end marker" "<!-- ICM-LOOP:END -->"
+assert_out "the block is the Session Close, not a paraphrase of it" "## Session Close"
+BLK_LINES=$(printf '%s\n' "$OUT" | sed '1d;$d' | sed '/^$/d')
+CTX_LINES=$(sed -n '/^## Session Close$/,/^## Rule Books$/p' "$LP/CONTEXT.md" | sed '$d' | sed '/^$/d')
+assert_eq "the block and the installed Session Close are the same bytes" "$BLK_LINES" "$CTX_LINES"
+
+E=$(fixture "loop empty")
+run "$SCRIPTS/icm-loop.sh" "$E"
+assert_rc "no ledger is refused with exit 2" 2
+assert_out "the refusal names a command that does work" "icm-plan.sh"
+run "$SCRIPTS/icm-loop.sh" --index --starve "$LP"
+assert_rc "two modes at once is a usage error" 2
+run "$SCRIPTS/icm-loop.sh" --today 2026-13-40 "$LP"
+assert_rc "a malformed --today date is refused" 2
 
 # ---------------------------------------------------------------- the tally --
 

@@ -1,11 +1,16 @@
 <!-- Emitted as _log/LOOP-LEDGER.md.
-     Formats are the out-of-the-loop skill's, references/ledger.md. Do not invent
-     columns, do not reorder them, do not rename them. Tiers (1 to 4) and triggers
-     (T1 to T5) are defined in that skill; this file records, it does not define.
+     Task, call and weekly review shapes are the out-of-the-loop skill's,
+     references/ledger.md. Miss, use and patched shapes are the toolkit's own,
+     defined in skills/icm-log/SKILL.md and read by scripts/icm-loop.sh. Do not
+     invent columns, do not reorder them, do not rename them. Tiers (1 to 4) and
+     triggers (T1 to T5) are defined in out-of-the-loop; this file records, it
+     does not define.
      Headings are spelled exactly as icm_body_ledger writes them in
-     scripts/icm_lib.sh: "## Task lines", "## Call lines", "## Weekly review".
+     scripts/icm_lib.sh and listed under required_sections in icm.defaults.json.
      One heading set, one consumer. Do not retitle them here.
-     Append only. Never rewrite a line that is already here.
+     Append only. Never rewrite a line that is already here. Every line of every
+     kind is appended under "## Lines" at the end, in time order. The sections
+     above it are the shapes, not the places.
      The example rows below sit inside comments so the tables start empty.
      Delete these comments before saving. -->
 
@@ -13,7 +18,7 @@
 
 Workspace: {{PROJECT_NAME}}
 
-Append only, never rewrite history. One line per closed task, one line per call fired, one block per weekly review. If the run log and the ledger disagree, the run log is the record and this file is the summary that got it wrong.
+Append only, never rewrite history. One line per closed task, one line per call fired, one line per miss, one line per skill or job card used, one block per weekly review. Every line goes under Lines at the end of this file; the sections before it show the shapes. If the run log and the ledger disagree, the run log is the record and this file is the summary that got it wrong.
 
 ## Run logs
 
@@ -44,6 +49,32 @@ Loop is which part of the graph wrote the line: run, workaround, hunt, review, t
      is tuning data: enough unnecessary calls on one trigger and the threshold
      loosens. Leave the last column blank until the weekly review fills it. -->
 
+## Miss lines
+
+One line per miss, written at Session Close. The literal word `Miss` in column two is the selector `icm-loop.sh` and `icm-forge` grep for. Sev: 3 wrong output shipped or a decision made on bad information, 2 cost time, 1 cosmetic, 2 when unsure. At fault is a rule book, job card or skill path exactly as it exists on disk, or the word `none`. A fault that returns after a patch starts its What missed with `RECURRENCE:`.
+
+| Date | Miss | Sev | At fault | What missed | Fix that would have prevented it |
+|---|---|---|---|---|---|
+
+<!-- Example of a filled line:
+| 2026-08-30 | Miss | 2 | _config/voice.md | shipped an em dash in deck copy | ban the em dash in deck copy, not just in prose |
+-->
+
+## Skill lines
+
+One use line per skill or job card a task ran under, written at Session Close. `Use` in column two is the selector. Outcome is `ok`, `rework` or `abandoned`. Misses is how many miss lines this run wrote against it. One `Patched` line each time a human approves a proposal that changes a file; `icm-forge approve` writes it, and every miss dated before it counts as closed.
+
+| Date | Use | Skill or job card | Path | Task | Outcome | Misses |
+|---|---|---|---|---|---|---|
+
+| Date | Patched | Path | Proposal id |
+|---|---|---|---|
+
+<!-- Examples of filled lines:
+| 2026-08-30 | Use | 02-script | 02-script/CONTEXT.md | bread staling script | rework | 1 |
+| 2026-09-06 | Patched | _config/voice.md | FP-2026-09-06-01 |
+-->
+
 ## Weekly review
 
 Append one block per review, newest at the bottom, in exactly this shape:
@@ -62,6 +93,8 @@ The trendline to watch: review and audit catches falling while pre-mortem and hu
 
 Anything the review wants changed in a rule book goes to `_log/FORGE-PROPOSALS.md` as a proposal. It does not get edited into `_config/` from here.
 
-### Reviews
+## Lines
 
-<!-- Filled blocks go below this line, oldest first. -->
+<!-- Every task line, call line, miss line, use line, patched line and weekly review
+     block goes below this heading, in time order. Nothing above this heading is
+     ever appended to. -->

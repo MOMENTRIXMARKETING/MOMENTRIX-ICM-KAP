@@ -125,8 +125,10 @@ Judgment findings against rule books are the forge's entire output. They go to
 |---|---|---|---|---|
 | `icm-sync` lint | The workspace tree, `IDENTITY.md`, `CONTEXT.md` files, `wiki/` | Safe fixes only | Mechanical and judgment findings, in its report | Write to `_config/`, write to `raw/`, overwrite a user file |
 | `scripts/check_evidence.py` | `wiki/`, `raw/`, `wiki/log.md` | Nothing | Mechanical findings, in its report | Modify any file at all |
-| `icm-forge` | `_log/LOOP-LEDGER.md`, `_log/LOOP-RUNLOG-*.md`, `wiki/log.md`, `_config/` | Nothing | Judgment proposals into `_log/FORGE-PROPOSALS.md` | Edit any file other than its own proposals file |
+| `icm-forge` | `_log/LOOP-LEDGER.md`, `_log/LOOP-RUNLOG-*.md`, `_log/SKILL-INDEX.md`, `wiki/log.md`, `_config/` | Nothing | Judgment proposals into `_log/FORGE-PROPOSALS.md` | Edit any file other than its own proposals file, or move its own thresholds |
 | `icm-log` | The run log and the ledger | Appends its own log lines | Nothing | Judge, grade, summarise a verdict, or rewrite a past line |
+| `scripts/icm-loop.sh` | The ledger and the tree | Overwrites `_log/SKILL-INDEX.md`, its own compiled artifact | Mechanical findings, as verdict words in that index | Write to any other file, read the proposals, or decide what a count means |
+| `icm-loop` | The host's always loaded file | Appends the Session Close between markers, regenerates it | Nothing | Paraphrase the block, keep a second ledger, or act on what gets logged |
 | The human | Everything | Everything | | |
 
 Three of those rows carry the weight.
@@ -264,9 +266,16 @@ When the evidence deep check could not run, the lint line says so rather than st
 about it. See `spec/grounding-invariant.md`.
 
 Task level and call level records go to `_log/LOOP-LEDGER.md` and `_log/LOOP-RUNLOG-<task>.md`,
-in the formats defined by the out-of-the-loop skill's `references/ledger.md`. Those formats are
-not restated here and they are not restated anywhere else in this repo. Canonical sources
-applies to formats exactly as hard as it applies to facts.
+in the formats defined by the out-of-the-loop skill's `references/ledger.md`. Miss, use and
+patched lines go to the same ledger in the shapes `skills/icm-log/SKILL.md` defines. None of
+those shapes is restated here or anywhere else in this repo. Canonical sources applies to
+formats exactly as hard as it applies to facts.
+
+The index is the one compiled artifact in `_log/`. `scripts/icm-loop.sh` counts the ledger and
+writes verdict words that are each a named count, which makes every row a mechanical report:
+the count is certain, the remedy is a decision, and the forge writes it as a proposal. A
+`STARVED` result from the same script is the one finding that outranks every other, because a
+ledger nobody writes to makes the whole model above a story about a file that is empty.
 
 ---
 

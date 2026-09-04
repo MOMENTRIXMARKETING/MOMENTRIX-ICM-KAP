@@ -35,8 +35,9 @@ Say this, and nothing else, when describing what the toolkit does to a project.
 > `icm-plan.sh` decides what installing would do and writes one plan file. It also walks your
 > tree and reports which folders look like they want a job card. `icm-apply.sh` executes the
 > plan and nothing else. `icm-rollback.sh` undoes one apply run. `icm-check.sh` verifies a
-> workspace and never writes to it. Job cards for your existing folders are written by
-> `/icm-context`, which is a conversation, not a script.
+> workspace and never writes to it. `icm-loop.sh` counts the ledger into one index file and
+> writes nothing else. Job cards for your existing folders are written by `/icm-context`, which
+> is a conversation, not a script.
 
 Three consequences that every document must respect.
 
@@ -97,7 +98,7 @@ Reads of toolkit material use the same variable: `$ICM_HOME/spec/layers.md`,
 `$ICM_HOME/icm.defaults.json`. A bare `spec/budgets.md` in a skill's read table is a defect,
 because the model's working directory is the user's project.
 
-**DELETE.** Every bare `sh scripts/icm-*.sh` in `README.md`, `docs/`, and all eight skills.
+**DELETE.** Every bare `sh scripts/icm-*.sh` in `README.md`, `docs/`, and every skill.
 
 **BUILD.** `README.md` gains one sentence that exists nowhere today, immediately after the
 install section: where the scripts live after each install method, and the `ICM_HOME` line.
@@ -108,10 +109,10 @@ There is no `bin/icm`, no PATH install, and no wrapper. One resolution mechanism
 
 ## 3. The scripts
 
-Four scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
+Five scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
 `scripts/check_evidence.py` is optional and is only ever invoked by `icm-check.sh`.
 
-### 3.0 Rules common to all four
+### 3.0 Rules common to all five
 
 - POSIX `sh`. Verified with both `sh -n` and `dash -n`.
 - Flags and the positional target may appear in any order. More than one positional target is
@@ -128,7 +129,7 @@ Four scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
 
 ### 3.1 Exit codes
 
-One scheme, all four scripts, documented in `README.md` next to the command list.
+One scheme, all five scripts, documented in `README.md` next to the command list.
 
 | Code | Meaning |
 |---|---|
@@ -174,7 +175,7 @@ prints `FAIL unknown check id: <id>` followed by the eleven valid ids, and exits
 names the id, not the flag.
 
 **BUILD: the `links` check.** `routes` only walks files literally named `CONTEXT.md` and only
-extracts routing-table tokens. That leaves `README.md`, every doc, every spec and all eight
+extracts routing-table tokens. That leaves `README.md`, every doc, every spec and every
 `SKILL.md` files unchecked, which is why `IDENTITY.md` rule 5 has no machine behind it and two
 dead links ship today. `links` walks every `.md` under the target, honours `excluded_globs`,
 extracts markdown link targets, skips `http*` and anchors, and FAILs on a relative target that
@@ -322,6 +323,41 @@ inside the success branches, and relabel the block: `git clean` is not verificat
 **BUILD.** When a file is kept, name the decision. `note <path> was kept because you edited it.
 keep it, or delete it by hand and rerun to close the run.` The current message says "rerun
 after you decide" without naming a decision, and rerunning changes nothing.
+
+### 3.6 `icm-loop.sh`
+
+```
+usage: icm-loop.sh [--index] [--starve] [--block] [--today YYYY-MM-DD] [-h|--help] [target-dir]
+```
+
+The librarian. It counts, it never judges, and it is the half of the weekly cron that needs no
+model. **These are the flag names. `--index`, `--starve`, `--block`, `--today`. KEEP all
+four.** One mode flag per invocation; two is a usage error, exit 2. No mode flag means
+`--index`.
+
+| Flag | Meaning |
+|---|---|
+| `--index` | Read `log.ledger`, walk the tree for `skills/*/SKILL.md`, `_config/*.md` and every non-root `CONTEXT.md`, write `log.skill_index`, print it. The only mode that writes, and it writes that one file, atomically. |
+| `--starve` | Print the starvation check for the `loop.starve_days` window and stop. Writes nothing. |
+| `--block` | Print `icm_body_session_close` between `<!-- ICM-LOOP:START -->` and `<!-- ICM-LOOP:END -->` and stop. Needs no target. The only way the block leaves the toolkit. |
+| `--today DATE` | Count windows back from `DATE`. For tests and replays. Refused unless it is a calendar date. |
+
+Exit: 0 clean. 1 at least one index row carries a verdict other than `ok` or `unlogged`, or the
+window is starved. 2 refused: no ledger at `log.ledger`, bad target, usage error.
+
+**The line shapes it reads** are the ones `skills/icm-log/SKILL.md` and out-of-the-loop's
+`references/ledger.md` define. It selects on the literal in column two: `Miss`, `Use`,
+`Patched`. Any other line whose column one is a date counts as work done. It never redefines a
+shape and a line in a private shape is silently not counted, which is the enforcement.
+
+**The verdict words. This is the complete list. There are no others.** `rewrite`, `hole`,
+`ghost`, `uncovered`, `archive`, `check-write-back`, `unlogged`, `ok`. Each is a count over the
+ledger against a threshold in the `loop` section of `icm.defaults.json`, and the index it
+writes states the count next to the word. Prose never restates the thresholds as literals.
+
+**What it never does.** Read `_log/FORGE-PROPOSALS.md`. Write a proposal. Write to the ledger.
+Touch `_config/`, a job card, a skill, or any file other than `log.skill_index`. Move its own
+thresholds.
 
 ---
 
@@ -1004,9 +1040,14 @@ Before any doc, skill or script is called done, these must all be true.
 5. The only rule book filenames used are the five in section 8.
 6. The only check ids used are the eleven in section 3.2.
 7. The only flags named per script are the ones in section 3.
-8. The never-overwrite promise uses the wording in section 10.1, and none of the banned
+8. The only verdict words used for the index are the eight in section 3.6, and the only
+   proposal kinds are `edit`, `new`, `archive` and `rewrite`.
+9. The never-overwrite promise uses the wording in section 10.1, and none of the banned
    sentences in section 10.2 appear.
-9. No prose says a script writes from `templates/`, and no prose says `templates/` exists.
+10. No prose says a script writes from `templates/`, and no prose says `templates/` exists.
+11. The Session Close body exists once, in `icm_body_session_close` in `scripts/icm_lib.sh`.
+    Every generated root `CONTEXT.md` carries it under `## Session Close`, `icm-loop.sh --block`
+    prints it, and no `.md` or `.tmpl` restates it.
 
 ### 13.2 Tests that enforce it
 
@@ -1032,6 +1073,7 @@ back.
 | never_write depth | `docs/sub/node_modules/x.md` and `a/.git/config` are both refused. |
 | byte count | The checker's reported count for a multibyte fixture equals `wc -c`. |
 | adapter shape | The adapter that `skills/icm-scaffold/SKILL.md` documents passes `icm-check.sh --adapters`. |
+| the loop | A fresh apply installs a ledger with `## Lines` and a `CONTEXT.md` with `## Session Close` that passes `--sections`. A fixture ledger produces the pinned verdict words `hole`, `rewrite`, `uncovered`, `ghost`, `unlogged`, `ok` and `archive`, the index run changes no file but the index, `--starve` exits 1 on work with no misses and 0 otherwise, `--block` prints the same bytes as the installed Session Close, no ledger exits 2, two modes exit 2, a non-date `--today` exits 2. |
 
 ### 13.3 The scaffold adapter rule
 

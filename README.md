@@ -8,7 +8,7 @@ organise a filing cabinet, and the structure itself does the routing. KAP is for
 the second half of the toolkit is a `raw/` and `wiki/` pair where the model writes up what it
 learned from your sources, and every fact it writes has to exist in a source first.
 
-Nothing here is a framework. It is markdown files, POSIX `sh` scripts, and eight skills that
+Nothing here is a framework. It is markdown files, POSIX `sh` scripts, and nine skills that
 know how to write and check both.
 
 **In a hurry?** [`QUICKSTART.md`](QUICKSTART.md) is the sixty-second path for all three ways in,
@@ -94,7 +94,7 @@ folder that does real work. Every folder that is not doing work gets left alone.
 
 The repo is its own single-plugin marketplace, so the first command reads
 `.claude-plugin/marketplace.json` straight off the GitHub URL. `marketplace.json` sets
-`"source": "./"`, so the whole repo lands and the plugin root is the repo root. All eight
+`"source": "./"`, so the whole repo lands and the plugin root is the repo root. All nine
 skills arrive together and update with `/plugin update`. Nothing else to do: the skills find
 the scripts through `CLAUDE_PLUGIN_ROOT`, which the harness sets for you.
 
@@ -147,7 +147,7 @@ scripts' own root resolution.
 | Manual copy | Your clone directory | `ICM_HOME`, defaulting to `~/src/momentrix-icm-kap-toolkit` |
 
 Every skill resolves the root once, before its first command, with this block. It is identical
-in all eight, byte for byte, so you can paste it into your own shell too.
+in all nine, byte for byte, so you can paste it into your own shell too.
 
 ```sh
 # Resolve the toolkit root once, before any icm command.
@@ -180,8 +180,9 @@ There is no `bin/icm`, no PATH install and no wrapper. One resolution mechanism,
 | `icm-stage` | You want another numbered stage in the pipeline | `<stage-name>`, `<stage-name> after:NN` |
 | `icm-sync` | The folder map has gone stale, or routing points at nothing | `lint` (default), `update` |
 | `icm-wiki` | You have sources to turn into knowledge the model can reuse | `ingest <url\|path>`, `query <question>`, `lint` |
-| `icm-log` | Something missed and you want it on the record in ten seconds | `miss`, `close`, `show` |
-| `icm-forge` | It is review day and you want the misses turned into proposals | `run`, `show`, `approve <id>` |
+| `icm-log` | Something missed and you want it on the record in ten seconds, or a task closed | `miss`, `use`, `close`, `show` |
+| `icm-forge` | It is review day and you want the misses ranked and turned into proposals | `run`, `show`, `approve <id>` |
+| `icm-loop` | You want a system, any system, to log its own misses, and proof that it does | `install`, `prove`, `starve`, `block` |
 
 Run a skill with no argument to get its default mode, which is always the one that reports
 before it writes. Each skill's own `argument-hint` is the authority on its modes, and the
@@ -207,27 +208,51 @@ It is Pattern 24 in [`spec/CONVENTIONS.md`](spec/CONVENTIONS.md).
 [`docs/architect.md`](docs/architect.md) says why it works and where the obvious version of it
 goes wrong, and [`examples/architect-company/`](examples/architect-company) is a worked tree.
 
-Two of these are the loop that keeps the rest honest. `icm-log` writes to
-`_log/LOOP-LEDGER.md` and never judges. `icm-forge` reads that ledger, finds where the same
-rule book failed twice, and writes proposals to `_log/FORGE-PROPOSALS.md`. It never edits a
-rule book. You hold the only pen that touches those.
+Three of these are the loop that keeps the rest honest. `icm-loop` installs the Session Close,
+the write back obligation, into the file a host loads on every run, and proves it fired.
+`icm-log` writes to `_log/LOOP-LEDGER.md` and never judges: one miss line with a severity, one
+use line per skill or job card a task ran under. `icm-forge` reads that ledger and the index
+`scripts/icm-loop.sh` compiles from it, ranks by severity, applies the kill rules, and writes
+proposals to `_log/FORGE-PROPOSALS.md`. It never edits a rule book, a job card or a skill. You
+hold the only pen that touches those.
+
+The obligation does not live in `CLAUDE.md`. It lives in `CONTEXT.md`, layer 1, under
+`## Session Close`, because layer 1 is loaded on every run by every harness through whichever
+alias points at it. Swap the model, swap the harness, the loop still fires, and
+`icm-check.sh --sections` fails a workspace that has lost it. When a task teaches the workspace
+something nothing on disk holds, the Session Close does not create it: it writes a proposal of
+kind `new` at the path [`spec/placement.md`](spec/placement.md) gives it, and a human names the
+id that creates it. That is what locks a learning away where it lives.
+
+### The skill index
+
+`_log/SKILL-INDEX.md` is the librarian: one row per skill, job card and rule book on disk, with
+uses in the recent window, open misses since the last patch, recurrences, and a verdict word
+from the kill rules (`hole`, `rewrite`, `uncovered`, `ghost`, `archive`, `check-write-back`,
+`unlogged`, `ok`). `scripts/icm-loop.sh` compiles it from the ledger with no model in the loop,
+so a plain cron can run it and any agent can read it. Every verdict is a count a reader can
+redo by hand, and the index says which count.
 
 ### The weekly forge cron
 
 The forge is the one skill worth putting on a schedule, because its input accumulates whether
-anyone is watching or not. Set it up once, in the workspace you want reviewed, with Claude
-Code's `/schedule`:
+anyone is watching or not. Two halves. The count needs no model: any scheduler that can run a
+shell command runs `sh "$ICM_HOME/scripts/icm-loop.sh" --index <workspace>` and gets the index,
+exit 1 when something is waiting. The reading runs on whatever agent you have, in Claude Code
+with `/schedule`, elsewhere with that harness's equivalent:
 
-- **Cadence: weekly.** The threshold for a hole is two misses on the same rule book, and two
+- **Cadence: weekly.** A hole is one sev 3 miss, or two at sev 2, on the same path, and two
   misses take about a week to arrive. A daily run mostly reports nothing, and a report that is
   usually empty trains you to skip it.
 - **The routine's prompt is exactly `/icm-forge run`.** Nothing else. No extra instructions, no
   "and fix what you find".
 
-What the run does: reads `_log/LOOP-LEDGER.md`, counts the misses per rule book, names the holes
-that cleared the threshold, and appends one proposal block per hole to
-`_log/FORGE-PROPOSALS.md`, each quoting the ledger lines that justify it. It also appends the
-weekly review block to the ledger. That is the whole of it.
+What the run does: checks the ledger for starvation first, and stops if real work was logged
+with no misses, because that is the Session Close not firing and not a clean week. Then compiles
+the index, names the holes that cleared the threshold, and appends one proposal block per finding
+to `_log/FORGE-PROPOSALS.md`, each quoting the ledger lines that justify it, with a kind (`edit`,
+`new`, `archive`, `rewrite`) and a test that proves the fix. It also appends the weekly review
+block to the ledger. That is the whole of it.
 
 **The cron only runs the forge. Approval always stays with the human.** A scheduled run cannot
 approve anything, because approval is defined as a human in the turn naming a proposal by its
@@ -260,6 +285,7 @@ your project
   _config/style.md          layer 3, headings, tables, dates         every archetype
   _log/LOOP-LEDGER.md       the append-only ledger                   every archetype
   _log/FORGE-PROPOSALS.md   what the forge proposes                  every archetype
+  _log/SKILL-INDEX.md       compiled by icm-loop.sh, not installed    when the loop first runs
   CLAUDE.md                 adapter, a marked block appended         every archetype
   .gitignore                a marked block appended, adds .icm/      every archetype
   output/CONTEXT.md         layer 4b, what we shipped                full and wiki
@@ -279,8 +305,8 @@ else on the list is written only where nothing exists.
 Layers 1, 2 and 3 recurse. A company holds departments, and each department repeats the same
 pattern inside itself. See [`spec/layers.md`](spec/layers.md).
 
-`_config/` holds **rule books**, not skills. Skills are the eight things above, they live in
-this repo, and they are the same eight in every project. Rule books are yours, they differ per
+`_config/` holds **rule books**, not skills. Skills are the nine things above, they live in
+this repo, and they are the same nine in every project. Rule books are yours, they differ per
 project, and nothing but you edits them.
 
 ---
@@ -316,13 +342,14 @@ sh "$ICM_HOME/scripts/icm-check.sh" .      # lints a workspace, reports only, wr
 sh "$ICM_HOME/scripts/icm-plan.sh" .       # dry run, writes .icm/plan.txt and nothing else
 sh "$ICM_HOME/scripts/icm-apply.sh" .      # executes that plan and nothing else
 sh "$ICM_HOME/scripts/icm-rollback.sh" .   # undoes one apply run
+sh "$ICM_HOME/scripts/icm-loop.sh" .       # compiles _log/SKILL-INDEX.md from the ledger and nothing else
 ```
 
-Four scripts. There are no others. `scripts/icm_lib.sh` is dot-sourced, never executed, and
-`scripts/check_evidence.py` is only ever invoked by `icm-check.sh`. All four take the target
-directory as a positional argument, defaulting to `.`, and all four answer `--help`.
+Five scripts. There are no others. `scripts/icm_lib.sh` is dot-sourced, never executed, and
+`scripts/check_evidence.py` is only ever invoked by `icm-check.sh`. All five take the target
+directory as a positional argument, defaulting to `.`, and all five answer `--help`.
 
-One exit code scheme, all four scripts.
+One exit code scheme, all five scripts.
 
 | Code | Meaning |
 |---|---|

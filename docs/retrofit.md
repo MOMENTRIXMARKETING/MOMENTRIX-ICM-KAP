@@ -34,7 +34,7 @@ ICM_HOME="${ICM_HOME:-${CLAUDE_PLUGIN_ROOT:-$HOME/src/momentrix-icm-kap-toolkit}
 | Undo | `/icm-retrofit rollback` | `sh "$ICM_HOME/scripts/icm-rollback.sh" <path>` |
 | Check | `/icm-sync lint` | `sh "$ICM_HOME/scripts/icm-check.sh" <path>` |
 
-Four scripts. Rollback is its own script: there is no `--rollback` flag on apply, and there
+Four scripts on this path, and a fifth, `icm-loop.sh`, that belongs to the loop rather than to the retrofit. Rollback is its own script: there is no `--rollback` flag on apply, and there
 never was.
 
 ---

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "budgets": {
     "IDENTITY.md":        { "target_chars": 3200, "ceiling_chars": 6000 },
-    "CONTEXT.root.md":    { "target_chars": 3200, "ceiling_chars": 8000 },
+    "CONTEXT.root.md":    { "target_chars": 4400, "ceiling_chars": 8000 },
     "CONTEXT.stage.md":   { "target_chars": 1200, "ceiling_chars": 2000, "ceiling_lines": 80 },
     "CONTEXT.folder.md":  { "target_chars": 1200, "ceiling_chars": 2000 },
     "rulebook.md":        { "target_chars": 2000, "ceiling_chars": 4000 },
@@ -13,10 +13,10 @@
   "loading_budget": {
     "note": "Chars, not tokens. 4 chars ~= 1 token. Layers 0+1+2+3 are the fixed cost.",
     "layer0_identity": 3200,
-    "layer1_context": 3200,
+    "layer1_context": 4400,
     "layer2_stage": 1200,
     "layer3_rulebooks": 4000,
-    "fixed_total": 11600,
+    "fixed_total": 12800,
     "layer4_varies": true
   },
   "excluded_globs": [
@@ -38,16 +38,16 @@
   ],
   "required_sections": {
     "IDENTITY.md":     ["## Workspace Map", "## Rules"],
-    "CONTEXT.root.md": ["## Routing", "## Session Start", "## Rule Books"],
+    "CONTEXT.root.md": ["## Routing", "## Session Start", "## Session Close", "## Rule Books"],
     "CONTEXT.stage.md":["## Purpose", "## Inputs", "## Process", "## Outputs", "## Routing"],
-    "_config/conventions.md":     ["## Quick Reference", "## One Home Per Fact", "## When a rule is wrong"],
+    "_config/conventions.md":     ["## Quick Reference", "## One Home Per Fact", "## Where A Learned Thing Lives", "## When a rule is wrong"],
     "_config/glossary.md":        ["## Workspace Vocabulary", "## Domain Terms", "## When a rule is wrong"],
     "_config/voice.md":           ["## Voice", "## Honesty", "## Hard Constraints", "## When a rule is wrong"],
     "_config/style.md":           ["## Quick Reference", "## Structure", "## Code Fences", "## When a rule is wrong"],
     "_config/grounding.md":       ["## The invariant", "## The rules", "## Article shape", "## What enforces this", "## When a rule is wrong"],
     "wiki/index.md":              ["## How a row gets here", "## Article shape"],
     "wiki/log.md":                ["## Format", "## Entries"],
-    "_log/LOOP-LEDGER.md":        ["## Task lines", "## Call lines", "## Weekly review"],
+    "_log/LOOP-LEDGER.md":        ["## Task lines", "## Call lines", "## Miss lines", "## Skill lines", "## Weekly review", "## Lines"],
     "_log/FORGE-PROPOSALS.md":    ["## Proposals", "## Authority"]
   },
   "frontmatter": {
@@ -59,6 +59,16 @@
     "ledger": "_log/LOOP-LEDGER.md",
     "runlog": "_log/LOOP-RUNLOG-<task>.md",
     "wiki_log": "wiki/log.md",
-    "forge_proposals": "_log/FORGE-PROPOSALS.md"
+    "forge_proposals": "_log/FORGE-PROPOSALS.md",
+    "skill_index": "_log/SKILL-INDEX.md"
+  },
+  "loop": {
+    "note": "Read by icm-loop.sh. Days are calendar days back from today. Sev thresholds decide when the index calls a hole.",
+    "starve_days": 7,
+    "recent_days": 30,
+    "archive_days": 60,
+    "hole_sev3_count": 1,
+    "hole_sev2_count": 2,
+    "recurrence_rewrite_count": 2
   }
 }
