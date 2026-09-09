@@ -1781,6 +1781,9 @@ cat >> "$LP/_log/LOOP-LEDGER.md" <<'LOOP_EOF'
 | 2026-08-30 | Miss | 2 | _config/style.md | RECURRENCE: timecode ambiguity | say beat start |
 | 2026-09-01 | Miss | 2 | _config/style.md | RECURRENCE: timecode again | say beat start |
 | 2026-09-02 | Miss | 1 | ghosts/old.md | stale | none |
+| 2026-09-02 | Miss | 3 | ghosts/sev3.md | wrong path, wrong output | none |
+| 2026-09-03 | Patched | _config/glossary.md | FP-2026-09-03-01 |
+| 2026-09-03 | Miss | 2 | _config/glossary.md | term still ambiguous after patch | define it |
 LOOP_EOF
 snapshot "$LP" > "$LP.before"
 run "$SCRIPTS/icm-loop.sh" --today 2026-09-04 "$LP"
@@ -1791,6 +1794,8 @@ assert_out "two RECURRENCE misses after a patch is a rewrite" '`_config/style.md
 assert_out "a sev 3 miss against none is uncovered, not a hole" '| none | none | `none` |'
 assert_out "uncovered is the verdict word for none" '| 1 | 3 | 0 | - | uncovered |'
 assert_out "a ledger path that is not on disk is a ghost" '`ghosts/old.md` | 0 | 0 | - | 1 | 1 | 0 | - | ghost |'
+assert_out "a sev 3 miss against a path not on disk is a ghost, not a hole" '`ghosts/sev3.md` | 0 | 0 | - | 1 | 3 | 0 | - | ghost |'
+assert_out "a miss dated the patch day and appended after the patch stays open" '`_config/glossary.md` | - | - | - | 1 | 2 | 0 | 2026-09-03 | ok |'
 assert_out "a job card with no lines yet in a young ledger is unlogged" '`sales/CONTEXT.md` | 0 | 0 | - | 0 | 0 | 0 | - | unlogged |'
 assert_out "a used skill with its misses logged is ok" '`skills/icm-context/SKILL.md` | 1 | 1 | 2026-08-20 | 0 | 0 | 0 | - | ok |'
 snapshot "$LP" | grep -v '^_log/SKILL-INDEX.md' > "$LP.after"

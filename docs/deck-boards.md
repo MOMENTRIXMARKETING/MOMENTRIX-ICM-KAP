@@ -249,9 +249,9 @@ Caption under the tree:
 
 **Repo strip, above the footer:**
 
-> **THE TOOLKIT** github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit
+> **THE TOOLKIT** github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP
 >
-> **INSTALL** /plugin marketplace add MOMENTRIXMARKETING/momentrix-icm-kap-toolkit
+> **INSTALL** /plugin marketplace add MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP
 
 **Footer strip:** MOMENTRIX / DROP IT ON WHAT YOU ALREADY HAVE / momentrixbeta.com
 
@@ -343,7 +343,7 @@ Caption under the tree:
 
 **Repo strip, above the footer:**
 
-> **THE TOOLKIT** github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit
+> **THE TOOLKIT** github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP
 >
 > **THE PATTERN** pattern 24, spec/CONVENTIONS.md
 

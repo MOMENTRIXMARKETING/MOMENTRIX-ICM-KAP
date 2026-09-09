@@ -148,7 +148,9 @@ icm_utc_iso() {
 }
 
 icm_today() {
-    date -u '+%Y-%m-%d'
+    # Local calendar date. The skills stamp ledger lines with date +%Y-%m-%d,
+    # so the windows must count on the same clock, never UTC.
+    date '+%Y-%m-%d'
 }
 
 # ------------------------------------------------------------ temp + tally --

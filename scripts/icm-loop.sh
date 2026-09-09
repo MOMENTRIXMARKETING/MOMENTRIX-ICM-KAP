@@ -200,7 +200,7 @@ BEGIN {
         nmiss++
         if (age >= 0 && age < starve) miss_win++
         misstotal[p]++
-        if (dn(d) > lastpatch_dn[p]) {
+        if (dn(d) >= lastpatch_dn[p]) {
             openmiss[p]++
             if (sev >= 3) osev3[p]++
             if (sev >= 2) osev2[p]++
@@ -281,9 +281,9 @@ END {
         k = kind[p]
         v = "ok"
         if (p == "none") v = (openmiss[p] > 0) ? "uncovered" : "ok"
+        else if (!(p in ondisk)) v = "ghost"
         else if (recur[p] >= recurn) v = "rewrite"
         else if (osev3[p] >= sev3n || osev2[p] >= sev2n) v = "hole"
-        else if (!(p in ondisk)) v = "ghost"
         else if ((k == "skill" || k == "job card") && ledger_age >= archive && uses60[p] == 0) v = "archive"
         else if ((k == "skill" || k == "job card") && uses30[p] >= 3 && misstotal[p] == 0) v = "check-write-back"
         else if ((k == "skill" || k == "job card") && uses60[p] == 0 && misstotal[p] == 0) v = "unlogged"
@@ -299,7 +299,7 @@ END {
     printf "| Verdict | The count that tripped it | What a human decides |\n|---|---|---|\n"
     printf "| rewrite | %d or more open misses starting RECURRENCE: | The last fix was wrong at the concept level. Rewrite the file, do not patch it |\n", recurn
     printf "| hole | %d open miss at sev 3, or %d at sev 2 or higher, since the last patch | The forge proposes the smallest edit |\n", sev3n, sev2n
-    printf "| ghost | The ledger names a path that is not on disk | Fix the path in future lines, or the file was moved without a patched line |\n"
+    printf "| ghost | The ledger names a path that is not on disk. Ghost wins over hole and rewrite, so the forge never proposes an edit to a file that does not exist | Fix the path in future lines, or the file was moved without a patched line |\n"
     printf "| uncovered | Misses logged against none | No file covers this ground. Placement question: what kind, what path |\n"
     printf "| archive | Ledger older than %d days and no use line in that window | It is not part of how you work. Archive it |\n", archive
     printf "| check-write-back | 3 or more uses in %d days and never one miss | Under logged, not perfect. Fix the Session Close before touching the file |\n", recent

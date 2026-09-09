@@ -88,7 +88,7 @@ folder that does real work. Every folder that is not doing work gets left alone.
 ### Plugin marketplace (do this one)
 
 ```
-/plugin marketplace add MOMENTRIXMARKETING/momentrix-icm-kap-toolkit
+/plugin marketplace add MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP
 /plugin install momentrix-icm-kap-toolkit@momentrix-icm-kap-toolkit
 ```
 
@@ -104,7 +104,7 @@ For Cursor, Codex CLI, or anyone not on Claude Code. Clone the **whole repo** an
 the skills out of it. The scripts stay in the clone.
 
 ```sh
-git clone https://github.com/MOMENTRIXMARKETING/momentrix-icm-kap-toolkit.git ~/src/momentrix-icm-kap-toolkit
+git clone https://github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP.git ~/src/momentrix-icm-kap-toolkit
 
 mkdir -p ~/.claude/skills
 for s in ~/src/momentrix-icm-kap-toolkit/skills/icm-*; do

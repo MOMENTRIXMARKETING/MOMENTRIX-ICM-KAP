@@ -51,3 +51,12 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-09-04 | Patched | skills/icm-log/SKILL.md | commit the-loop-librarian, human edit, no proposal |
 | 2026-09-04 | Patched | scripts/icm_lib.sh | commit the-loop-librarian, human edit, no proposal |
 | 2026-09-04 | Patched | skills/icm-forge/SKILL.md | commit the-loop-librarian, human edit, no proposal |
+| 2026-09-10 | Miss | 3 | scripts/icm-loop.sh | ghost ranked below hole and rewrite, so a sev 3 miss on a mistyped path was reported as a hole and the forge would edit a file that does not exist | rank ghost first in the verdict chain |
+| 2026-09-10 | Miss | 2 | scripts/icm-loop.sh | a miss dated the patch day and appended after the patch counted as closed, so a same day recurrence was invisible | count a miss open when its date is on or after the patch |
+| 2026-09-10 | Miss | 2 | scripts/icm_lib.sh | icm_today stamped UTC while every skill stamps local date, so windows counted a day behind before 10am AEST | one clock, local date, in icm_today |
+| 2026-09-10 | Miss | 1 | .claude-plugin/plugin.json | homepage and repository pointed at the old repo name after the GitHub rename | update to MOMENTRIX-ICM-KAP |
+| 2026-09-10 | Patched | scripts/icm-loop.sh | commit ghost-first-same-day-open, human directed edit, no proposal |
+| 2026-09-10 | Patched | scripts/icm_lib.sh | commit ghost-first-same-day-open, human directed edit, no proposal |
+| 2026-09-10 | Patched | .claude-plugin/plugin.json | commit ghost-first-same-day-open, human directed edit, no proposal |
+| 2026-09-10 | Use | icm-loop | skills/icm-loop/SKILL.md | audit the loop and fix the index | ok | 3 |
+| 2026-09-10 | loop audit and index fixes | 2 | Date | 0 | 0/4/0/0 | 0 | none | scripts/icm-loop.sh |
