@@ -1693,6 +1693,21 @@ REALBYTES=$(wc -c < "$BC/probe.md" | tr -d ' ')
 LIBBYTES=$(. "$SCRIPTS/icm_lib.sh" >/dev/null 2>&1; icm_chars "$BC/probe.md")
 assert_eq "the checker counts bytes, not characters, on multibyte input" "$LIBBYTES" "$REALBYTES"
 
+# locale: a file holding an invalid UTF-8 sequence must not kill the walk.
+# Under a UTF-8 locale macOS awk aborts on it ("towc: multibyte conversion
+# failure") and the checker died with exit 2 and no summary. icm_lib.sh pins
+# LC_ALL=C, so the run below forces the bad locale from outside and expects
+# the library to override it. (GitHub issue 5.)
+BL=$(fixture "badlocale")
+mkdir -p "$BL/_config" "$BL/_log"
+printf '# x\n\n## Workspace Map\n\n```\nx/\n├── _config/\n├── _log/\n├── bad.md\n├── CONTEXT.md\n└── IDENTITY.md\n```\n' > "$BL/IDENTITY.md"
+printf '# x\n' > "$BL/CONTEXT.md"
+printf '# note\n\n| a | b\342\210\n| 2 |\n' > "$BL/bad.md"
+run env LC_ALL=en_AU.UTF-8 LANG=en_AU.UTF-8 sh "$SCRIPTS/icm-check.sh" --placeholders --fences --budgets "$BL"
+assert_rc "an invalid UTF-8 byte in a .md file does not abort the checker under a UTF-8 locale" 0
+assert_out "the walk past a non-UTF-8 file still reaches the summary" "result: clean"
+assert_not_out "no awk multibyte conversion failure leaks out" "multibyte conversion failure"
+
 # adapter shape: the adapter icm-scaffold documents must pass --adapters
 AD=$(fixture "adaptershape")
 run "$SCRIPTS/icm-plan.sh" --quiet "$AD"

@@ -21,6 +21,18 @@
 #   install   icm_manifest / icm_candidate / icm_render / icm_tree
 #   output    icm_ok / icm_fail / icm_warn / icm_note  (+ tally, subshell safe)
 
+# ------------------------------------------------------------------- locale --
+
+# Byte-wise text tools, everywhere. Every awk, grep, sed and sort in the
+# toolkit counts bytes, fence lines and braces; none needs multibyte character
+# semantics, and icm_chars already counts with wc -c. Under a UTF-8 locale
+# macOS awk aborts ("towc: multibyte conversion failure") on the first file
+# that holds an invalid sequence, which kills the whole walk with exit 2 and no
+# summary. Under C it cannot fail on a byte, and sort order is deterministic.
+# Set once here, because every script dot-sources this file.
+LC_ALL=C
+export LC_ALL
+
 # ---------------------------------------------------------------- constants --
 
 ICM_BEGIN='<!-- icm:begin -->'

@@ -259,7 +259,9 @@ approve anything, because approval is defined as a human in the turn naming a pr
 id, and there is no human in a scheduled turn. So a run that finds five holes writes five
 proposals and stops. Proposals from an unattended run are written
 `Status: proposed (unattended run)`, so nobody later reads silence as consent, and the "was the
-call necessary" column is left blank rather than guessed.
+call necessary" column is left blank rather than guessed. The skill cannot see from inside the
+prompt whether a human is present, so set `ICM_UNATTENDED=1` in the environment of the scheduled
+command (the launchd job, the cron line, the `claude -p` wrapper) and it marks every proposal.
 
 The output is a queue, not a decision. You read it when you sit down, with `/icm-forge show`,
 and act on it with `/icm-forge approve <id>`, which is the only mode in which a rule book
