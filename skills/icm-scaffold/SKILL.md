@@ -163,9 +163,11 @@ Only if answer 9 asked for them. **An adapter is an alias, never a copy.** Copyi
 @IDENTITY.md
 @CONTEXT.md
 
-Read IDENTITY.md first, then CONTEXT.md, then the job card in the folder you are working in. Nothing else loads by default.
+Read IDENTITY.md first, then CONTEXT.md, then the job card in the folder you are working in. Nothing else loads by default. Before your last reply, run the Session Close in CONTEXT.md.
 <!-- icm:end -->
 ```
+
+That block is the one `icm_body_claude_block` in `scripts/icm_lib.sh` writes; copy it from there, not from here, if the two ever differ. The last sentence is the write-back obligation, and the root `CONTEXT.md` you scaffold from `interview-templates/CONTEXT.root.md.tmpl` carries the matching `## Session Close` section, which `icm-check.sh --sections` requires.
 
 `AGENTS.md`, `GEMINI.md`, `.cursorrules` and `.windsurfrules` take the loose form: the checker only requires that they mention `IDENTITY.md` somewhere. One sentence pointing the reader at `IDENTITY.md` and then at `CONTEXT.md` is enough, and it is the whole file. Never paste the body of `IDENTITY.md` into any of them; a second source of truth is exactly the failure the layer 0 file exists to prevent.
 

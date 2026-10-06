@@ -105,8 +105,7 @@ if [ "$MODE" = block ]; then
     exit 0
 fi
 
-[ -d "$TARGET" ] || icm_die "no such directory: $TARGET"
-TARGET=$(icm_abspath "$TARGET")
+TARGET=$(icm_require_target "$TARGET") || exit 2
 icm_init "$TARGET"
 icm_trap_default
 
@@ -272,11 +271,19 @@ END {
         # A ledger path outside the three kinds the walk collects (a spec, a
         # script, a doc) is still a real file, and a toolkit skill lives in
         # the toolkit, not the workspace. Ask both disks before calling it a
-        # ghost. Quotes in a path are escaped for the shell.
+        # ghost. The path is data anyone can append to the ledger, so it goes
+        # to the shell inside single quotes, where $(...), backticks and $VAR
+        # are bytes and nothing else; a single quote in the path becomes '\''.
+        # \047 is the single quote, spelled so because this awk program is
+        # itself inside shell single quotes. Split and rejoin rather than
+        # gsub, because a gsub replacement string re-reads backslashes and
+        # awks disagree on how many survive. No apostrophe in this comment:
+        # it would end the shell quoting around the program.
         if (!(p in ondisk) && p != "none") {
-            q = p; gsub(/"/, "\\\"", q)
-            if (system("[ -f \"" target "/" q "\" ]") == 0) { ondisk[p] = 1; kind[p] = "other" }
-            else if (system("[ -f \"" icmhome "/" q "\" ]") == 0) { ondisk[p] = 1; kind[p] = "toolkit skill" }
+            nq = split(p, qparts, "\047"); q = qparts[1]
+            for (qi = 2; qi <= nq; qi++) q = q "\047\\\047\047" qparts[qi]
+            if (system("[ -f \047" target "/" q "\047 ]") == 0) { ondisk[p] = 1; kind[p] = "other" }
+            else if (system("[ -f \047" icmhome "/" q "\047 ]") == 0) { ondisk[p] = 1; kind[p] = "toolkit skill" }
         }
         k = kind[p]
         v = "ok"

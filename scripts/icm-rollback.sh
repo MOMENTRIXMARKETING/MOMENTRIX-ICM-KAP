@@ -331,6 +331,14 @@ while IFS="$TAB" read -r ACTION RP PRE POST MODE; do
                 continue
             fi
             NOW=$(icm_sha "$DEST")
+            if [ "$NOW" = "$PRE" ]; then
+                # An earlier pass of this same run already put the pre-image
+                # back. Not an edit, so it never blocks closing the run, and
+                # running twice stays a no-op.
+                printf 'note %s already holds its pre-image, nothing to restore\n' "$RP"
+                DONE=$((DONE + 1))
+                continue
+            fi
             if [ "$NOW" != "$POST" ]; then
                 printf 'warn kept     %s changed after apply (now %s, apply left %s), it is yours now\n' \
                     "$RP" "$NOW" "$POST"

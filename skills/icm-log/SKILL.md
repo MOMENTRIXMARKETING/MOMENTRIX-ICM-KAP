@@ -137,7 +137,7 @@ Not written by this mode and not written by the user. `icm-forge approve` writes
 | Date | Patched | Path | Proposal id |
 ```
 
-Every miss against that path dated on or before the patched line counts as closed. Every miss after it is open again, and a `RECURRENCE:` after it is the fix failing. The shape is recorded here because this skill owns the line shapes, and it is listed so that nobody invents a second way to say "fixed".
+Every miss against that path dated before the patched line counts as closed. A miss dated the same day as the patch, or after it, is open: the index cannot tell which of two same-day lines came first, so a fix and a same-day recurrence stay visible. Every miss after it is open again, and a `RECURRENCE:` after it is the fix failing. The shape is recorded here because this skill owns the line shapes, and it is listed so that nobody invents a second way to say "fixed".
 
 ---
 

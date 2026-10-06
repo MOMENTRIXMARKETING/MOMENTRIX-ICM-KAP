@@ -115,8 +115,10 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$TARGET" ] || TARGET="."
-[ -d "$TARGET" ] || icm_die "no such directory: $TARGET"
-TARGET=$(icm_abspath "$TARGET")
+# Same preflight as every other script: not a directory, unreadable, or a
+# .icm that is a file all exit 2 here. A report-only checker that could not
+# list the tree must never print "clean" for it.
+TARGET=$(icm_require_target "$TARGET") || exit 2
 
 if [ "$SEL" -eq 0 ]; then
     D_SELF=1; D_FM=1; D_BUD=1; D_ADP=1; D_DRIFT=1
@@ -504,12 +506,27 @@ c_drift() {
         icm_fail "IDENTITY.md has no fenced workspace map, there is nothing to compare to disk"
         return 0
     fi
+    # Two name lists from the map, compared whole-line, never as substrings:
+    # "_log/" in the map must not vouch for a real "log/", nor a nested
+    # "voice.md" row for a top-level file of that name. A top level row is
+    # "<box drawing>── <name>" and the name may hold spaces, so take the whole
+    # rest of the row, then drop the aligned "# ..." comment the map writes
+    # after two or more spaces, then the trailing slash. Nested rows carry
+    # leading spaces before their box drawing; "documented" leaves them out on
+    # purpose, because their names are relative to a parent, not to the
+    # target, while "allnames" keeps every row for the job card folder check.
+    sed -n 's/^[^ ]*── //p' "$_dr_blk" \
+        | sed -e 's/  *#.*$//' -e 's/[ 	]*$//' -e 's|/$||' \
+        > "$ICM_TMPDIR/documented"
+    sed -n 's/^.*── //p' "$_dr_blk" \
+        | sed -e 's/  *#.*$//' -e 's/[ 	]*$//' -e 's|/$||' \
+        > "$ICM_TMPDIR/allnames"
     _dr_real="$ICM_TMPDIR/realtop"
     icm_top_entries "$TARGET" > "$_dr_real"
     _dr_miss=0
     while IFS= read -r _dr_e; do
         [ -n "$_dr_e" ] || continue
-        if grep -q -F -- "$_dr_e" "$_dr_blk"; then
+        if grep -q -x -F -- "$_dr_e" "$ICM_TMPDIR/documented"; then
             :
         else
             icm_fail "the workspace map in IDENTITY.md does not document: $_dr_e"
@@ -528,7 +545,7 @@ c_drift() {
             continue
         fi
         _dr_base=$(basename "$_dr_dir")
-        if grep -q -F -- "$_dr_base" "$_dr_blk"; then
+        if grep -q -x -F -- "$_dr_base" "$ICM_TMPDIR/allnames"; then
             :
         else
             icm_fail "the workspace map does not document the folder that holds a job card: $_dr_dir"
@@ -543,14 +560,7 @@ c_drift() {
         icm_note "$_dr_nested job card folder(s) sit inside a nested workspace root, which carries its own IDENTITY.md; run the checker on that folder to grade them against their own map"
     fi
 
-    # A top level row is "<box drawing>── <name>" and the name may hold spaces,
-    # so take the whole rest of the row, then drop the aligned "# ..." comment
-    # the map writes after two or more spaces, then the trailing slash. Nested
-    # rows carry leading spaces before their box drawing and never match, which
-    # is deliberate: their names are relative to a parent, not to the target.
-    sed -n 's/^[^ ]*── //p' "$_dr_blk" \
-        | sed -e 's/  *#.*$//' -e 's/[ 	]*$//' -e 's|/$||' \
-        > "$ICM_TMPDIR/documented"
+    # The reverse pass: every top level row the map documents must be on disk.
     while IFS= read -r _dr_d; do
         [ -n "$_dr_d" ] || continue
         if [ -e "$TARGET/$_dr_d" ]; then
@@ -646,7 +656,11 @@ c_links() {
             case "$_lk_t" in
                 *'{{'*|*'*'*|*'<'*|*'$'*|*'|'*) continue ;;
             esac
-            _lk_p=${_lk_t%%#*}
+            # A markdown destination may carry a title after a space,
+            # [m](IDENTITY.md "the map"), and a space in a path is written
+            # %20. Neither is part of the path claim.
+            _lk_p=$(printf '%s\n' "$_lk_t" | sed -e 's/ *"[^"]*" *$//' -e "s/ *'[^']*' *$//" -e 's/%20/ /g')
+            _lk_p=${_lk_p%%#*}
             _lk_p=${_lk_p#./}
             [ -n "$_lk_p" ] || continue
             _lk_n=$((_lk_n + 1))
@@ -742,7 +756,7 @@ c_evidence() {
     # skipped. Never report a clean grounding sweep that never happened.
     if ! grep -q '^## Summary' "$_ev_out"; then
         icm_note "check_evidence.py did not complete here (exit $_ev_rc), so the deep grounding check was skipped; every other check still ran"
-        icm_note "it needs python3 3.10 or newer. the toolkit does not require python at all, this check is the one optional extra"
+        icm_note "it needs python3 3.10 or newer; on a newer python the relayed lines above hold the cause. the toolkit does not require python at all, this check is the one optional extra"
         return 0
     fi
     _ev_err=$(sed -n 's/.*, \([0-9][0-9]*\) evidence error(s).*/\1/p' "$_ev_out" | head -n 1)

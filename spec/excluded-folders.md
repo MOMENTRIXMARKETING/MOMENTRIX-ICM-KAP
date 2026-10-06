@@ -36,7 +36,7 @@ answer is no, and the script says which rule refused.
 
 ## `excluded_globs`
 
-Twenty entries. Do not descend into any of them.
+Twenty-one entries. Do not descend into any of them.
 
 ```
 # icm:excluded-globs:begin
@@ -44,6 +44,7 @@ Twenty entries. Do not descend into any of them.
 .github
 .claude
 .icm
+.in_use
 node_modules
 venv
 .venv
@@ -65,7 +66,7 @@ coverage
 
 They group into four kinds.
 
-**Tool state.** `.git`, `.github`, `.claude`, `.icm`. Machinery, not workspace. `.claude`
+**Tool state.** `.git`, `.github`, `.claude`, `.icm`, `.in_use`. Machinery, not workspace. `.in_use` is the lock directory a Claude Code plugin install writes at the plugin root while a session has it loaded. `.claude`
 holds harness configuration that the user owns. `.icm` holds this toolkit's own plan,
 backups, and proposals, and a scanner that walks it would find the proposals it just wrote and
 report them as real files.

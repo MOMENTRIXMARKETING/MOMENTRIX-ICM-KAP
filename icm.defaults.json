@@ -20,7 +20,7 @@
     "layer4_varies": true
   },
   "excluded_globs": [
-    ".git", ".github", ".claude", ".icm",
+    ".git", ".github", ".claude", ".icm", ".in_use",
     "node_modules", "venv", ".venv", "__pycache__", ".pytest_cache",
     "dist", "build", "out", ".next", ".nuxt", ".cache",
     "vendor", "target", ".terraform", "coverage", ".DS_Store"

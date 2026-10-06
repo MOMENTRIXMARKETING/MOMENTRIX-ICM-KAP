@@ -248,7 +248,7 @@ Exit 0 clean, 1 findings, 2 usage or environment error. `--only <id>` selects on
 printf '| %s | Patched | %s | %s |\n' "$(date +%Y-%m-%d)" "$BOOK" "$FPID" >> _log/LOOP-LEDGER.md
 ```
 
-Every miss against that path dated on or before this line is closed. A miss after it is open again, and one that starts `RECURRENCE:` is the fix failing.
+Every miss against that path dated before this line is closed. A miss dated the same day as the patch, or after it, counts open, because the index cannot order two lines that share a date. A miss after it is open again, and one that starts `RECURRENCE:` is the fix failing.
 
 ---
 

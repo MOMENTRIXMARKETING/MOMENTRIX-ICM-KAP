@@ -38,12 +38,20 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+# The extractor and contains() must agree on what a token is, or a candidate
+# is cut out of a longer run of digits that the matcher then (rightly) refuses
+# to find: "1.000" inside "1.000,50", "4567-89" inside "1234567-89". So every
+# alternative ends where contains() would end it, never inside more digits.
 NUMBER_TOKEN_RE = re.compile(
-    r"(?:\d{1,3}(?:,\d{3})+(?:\.\d+)*(?:\s*[KMB%](?![A-Za-z]))?"
-    r"|\d+(?:\.\d+)*(?:\s*[KMB%](?![A-Za-z]))?)(?![A-Za-z])"
+    r"(?<![\d.,])"
+    r"(?:\d{1,3}(?:\.\d{3})+(?:,\d+)?(?:\s*[KMB%](?![A-Za-z]))?"  # 1.000,50 European
+    r"|\d{1,3}(?:,\d{3})+(?:\.\d+)*(?:\s*[KMB%](?![A-Za-z]))?"
+    r"|\d+(?:\.\d+)*(?:\s*[KMB%](?![A-Za-z]))?)(?![A-Za-z]|[.,]?\d)"
 )
 SUFFIX_RE = re.compile(r"[KMB%]$")
-DATE_RE = re.compile(r"\d{4}-\d{2}(?:-\d{2})?")
+# An ISO date stands alone: a phone number, a part number or a reference
+# like 1234567-89 holds a date-shaped run of digits and is not a date.
+DATE_RE = re.compile(r"(?<![\d-])\d{4}-\d{2}(?:-\d{2})?(?![\d-])")
 QUOTE_RES = [re.compile(r'"([^"\n]*)"'), re.compile(r"“([^”\n]*)”")]
 METADATA_RE = re.compile(r"^>\s*(Sources?|Raw|Collected|Published|Updated|Archived):")
 STATUS_LINE_RE = re.compile(r"^>\s*\*\*Status:")
@@ -279,17 +287,35 @@ def contains(haystack: str, candidate: Candidate) -> bool:
     return re.search(pattern, haystack) is not None
 
 
+def read_markdown(path: Path) -> str:
+    """Every file read goes through here. utf-8-sig swallows a byte order
+    mark, which some editors prepend and which would otherwise hide the
+    title line. A file that is not UTF-8 raises UnicodeDecodeError; the
+    caller turns that into an evidence error for the one article it
+    touches, so the rest of the wiki is still swept."""
+    return path.read_text(encoding="utf-8-sig")
+
+
+def read_markdown_lenient(path: Path) -> str:
+    """For inventory sweeps only (which raw files are referenced), where a
+    bad byte must not abort the walk and cannot change a link target."""
+    return path.read_text(encoding="utf-8-sig", errors="replace")
+
+
 def source_content(path: Path) -> str:
     """Raw file body with the metadata header removed. Collection
     metadata (Source/Collected/Published) is bookkeeping, not evidence;
     letting it match candidates would false-pass dates and years."""
-    document = parse_document(path.read_text(encoding="utf-8"))
+    document = parse_document(read_markdown(path))
     return normalize("\n".join(document.body))
 
 
 def check_article(article: Path, root: Path) -> tuple[list[str], list[str]]:
     """Return (fidelity suspects, evidence errors) for one article."""
-    text = article.read_text(encoding="utf-8")
+    try:
+        text = read_markdown(article)
+    except UnicodeDecodeError:
+        return [], ["article is not valid UTF-8, it cannot be checked"]
     links = raw_links_of(text)
     if not links:
         if any(ARCHIVED_RE.match(line.strip()) for line in parse_document(text).header):
@@ -305,7 +331,10 @@ def check_article(article: Path, root: Path) -> tuple[list[str], list[str]]:
         elif not target.is_file():
             errors.append(f"unresolvable Raw link: {link}")
         else:
-            raws.append(source_content(target))
+            try:
+                raws.append(source_content(target))
+            except UnicodeDecodeError:
+                errors.append(f"raw file is not valid UTF-8, it cannot be evidence: {link}")
     misses = []
     if raws:
         for candidate in extract_candidates(text):
@@ -325,7 +354,7 @@ def no_material_paths(log_file: Path) -> set[str]:
     if not log_file.is_file():
         return set()
     paths = set()
-    text = strip_fences(log_file.read_text(encoding="utf-8"))
+    text = strip_fences(read_markdown_lenient(log_file))
     for line in text.splitlines():
         m = NO_MATERIAL_HEADING_RE.match(line)
         if m:
@@ -336,7 +365,7 @@ def no_material_paths(log_file: Path) -> set[str]:
 def referenced_raws(root: Path) -> set[Path]:
     referenced = set()
     for article in iter_articles(root / "wiki"):
-        for link in raw_links_of(article.read_text(encoding="utf-8")):
+        for link in raw_links_of(read_markdown_lenient(article)):
             target = (article.parent / link).resolve()
             referenced.add(target)
     return referenced

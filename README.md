@@ -203,7 +203,7 @@ interview; `icm-plan.sh --archetype ID` picks one on the retrofit path.
 
 `architect` is a workspace **shape**, not a fourth install manifest.
 `icm-plan.sh --archetype` takes `quick`, `full` and `wiki` only. You build the architect shape
-on top of a `full` install, one department at a time, with `/icm-context` and `/icm-stage add`.
+on top of a `full` install, one department at a time, with `/icm-context` and `/icm-stage <stage-name>`.
 It is Pattern 24 in [`spec/CONVENTIONS.md`](spec/CONVENTIONS.md).
 [`docs/architect.md`](docs/architect.md) says why it works and where the obvious version of it
 goes wrong, and [`examples/architect-company/`](examples/architect-company) is a worked tree.
@@ -299,7 +299,7 @@ your project
 ```
 
 Numbered stage folders are **not** part of any install. You get one only when you ask for it,
-with `/icm-stage add`. Job cards for folders you already have are written by `/icm-context`.
+with `/icm-stage <stage-name>`. Job cards for folders you already have are written by `/icm-context`.
 
 `CLAUDE.md` and `.gitignore` are the two paths that are edited rather than created. Everything
 else on the list is written only where nothing exists.

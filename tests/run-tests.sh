@@ -1853,6 +1853,107 @@ assert_rc "two modes at once is a usage error" 2
 run "$SCRIPTS/icm-loop.sh" --today 2026-13-40 "$LP"
 assert_rc "a malformed --today date is refused" 2
 
+# ------------------------------------------------ the 2026-10 defect hunt --
+# Each block below is a defect reproduced on ee91520 and fixed on the same
+# branch. The fixture is the reproduction; the assertion is the contract line.
+
+printf '\n%s\n' '-- hunt: the ledger is data, never a command --'
+HI=$(fixture "hunt inject")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HI"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HI"
+printf '| 2026-10-01 | Miss | 3 | $(touch "%s/PWNED") | what | fix |\n' "$HI" >> "$HI/_log/LOOP-LEDGER.md"
+printf '| 2026-10-01 | Use | x | `touch "%s/PWNED2"` | t | o | 0 |\n' "$HI" >> "$HI/_log/LOOP-LEDGER.md"
+printf "| 2026-10-01 | Use | q | it's.md | t | o | 0 |\n" >> "$HI/_log/LOOP-LEDGER.md"
+touch "$HI/it's.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HI"
+assert_nofile "a \$(...) in a ledger path column is never executed" "$HI/PWNED"
+assert_nofile "a backtick command in a ledger path column is never executed" "$HI/PWNED2"
+assert_out "a path holding a single quote still resolves on disk" "\`it's.md\` | 1 | 1 | 2026-10-01 | 0 | 0 | 0 | - | ok |"
+
+printf '\n%s\n' '-- hunt: .in_use is tool state (issue 3) --'
+HU=$(fixture "hunt inuse")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HU"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HU"
+mkdir "$HU/.in_use"
+run "$SCRIPTS/icm-check.sh" --drift "$HU"
+assert_rc "a plugin install's .in_use lock directory is not a drift finding" 0
+assert_not_out "the drift check never names .in_use" "does not document: .in_use"
+if grep -q -x '\.in_use' "$ROOT/spec/excluded-folders.md" && grep -q '"\.in_use"' "$ROOT/icm.defaults.json"; then
+    t_pass "excluded_globs and its human rendering both carry .in_use"
+else
+    t_fail "excluded_globs and its human rendering both carry .in_use" "one side is missing it"
+fi
+
+printf '\n%s\n' '-- hunt: drift compares whole names --'
+HD=$(fixture "hunt drift names")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HD"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HD"
+mkdir "$HD/log"
+run "$SCRIPTS/icm-check.sh" --drift "$HD"
+assert_rc "a real log/ is not vouched for by the map's _log/ row" 1
+assert_out "the undocumented entry is named whole" "does not document: log"
+
+printf '\n%s\n' '-- hunt: links accept a title and %20 --'
+HL=$(fixture "hunt links")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HL"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HL"
+mkdir "$HL/01 - notes"
+printf 'See [m](IDENTITY.md "the map"), [n](01%%20-%%20notes/) and [bad](nope.md).\n' > "$HL/README.md"
+run "$SCRIPTS/icm-check.sh" --links "$HL"
+assert_not_out "a link title is not part of the path" 'IDENTITY.md "the map"'
+assert_not_out "%20 in a link is a space on disk" "01%20-%20notes"
+assert_out "a dead link still fails" "does not exist: nope.md"
+
+printf '\n%s\n' '-- hunt: check and loop refuse what they cannot read --'
+HR=$(fixture "hunt unreadable")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HR"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HR"
+chmod 0300 "$HR"
+run "$SCRIPTS/icm-check.sh" "$HR"
+assert_rc "the checker exits 2 on a target it cannot list, never clean" 2
+run "$SCRIPTS/icm-loop.sh" "$HR"
+assert_rc "the loop exits 2 on a target it cannot list" 2
+chmod 0700 "$HR"
+HF=$(fixture "hunt icm file")
+touch "$HF/.icm"
+run "$SCRIPTS/icm-check.sh" "$HF"
+assert_rc "a .icm that is a file is a preflight refusal in the checker too" 2
+
+printf '\n%s\n' '-- hunt: the quick map documents only what quick installs --'
+HQ=$(fixture "hunt quick map")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HQ"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HQ"
+if grep -q "grounding.md" "$HQ/IDENTITY.md"; then
+    t_fail "a quick install's map does not document _config/grounding.md, which it never writes" "$(grep -n grounding "$HQ/IDENTITY.md")"
+else
+    t_pass "a quick install's map does not document _config/grounding.md, which it never writes"
+fi
+HQW=$(fixture "hunt wiki map")
+run "$SCRIPTS/icm-plan.sh" --quiet --archetype wiki "$HQW"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HQW"
+if grep -q "grounding.md" "$HQW/IDENTITY.md" && [ -f "$HQW/_config/grounding.md" ]; then
+    t_pass "a wiki install's map documents the grounding.md it writes"
+else
+    t_fail "a wiki install's map documents the grounding.md it writes" "$(grep -n grounding "$HQW/IDENTITY.md"; ls "$HQW/_config")"
+fi
+
+printf '\n%s\n' '-- hunt: rollback closes once the kept file is gone --'
+HK=$(fixture "hunt rollback kept")
+printf 'mine\n' > "$HK/CLAUDE.md"
+run "$SCRIPTS/icm-plan.sh" --quiet "$HK"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HK"
+printf 'edited\n' >> "$HK/IDENTITY.md"
+run "$SCRIPTS/icm-rollback.sh" "$HK"
+assert_out "the edited file is kept" "kept     IDENTITY.md"
+run "$SCRIPTS/icm-rollback.sh" "$HK"
+assert_not_out "a file already restored is not reported as edited" "kept     CLAUDE.md"
+assert_out "a file already restored is named as such" "CLAUDE.md already holds its pre-image"
+rm "$HK/IDENTITY.md"
+run "$SCRIPTS/icm-rollback.sh" "$HK"
+assert_rc "deleting the kept file by hand closes the run, as the note promises" 0
+HK_MARK=$(ls "$HK"/.icm/backup/*/ROLLED-BACK 2>/dev/null | head -n 1)
+assert_file "the run carries its ROLLED-BACK marker" "$HK_MARK"
+
 # ---------------------------------------------------------------- the tally --
 
 printf '\n%s\n' '-- summary --'

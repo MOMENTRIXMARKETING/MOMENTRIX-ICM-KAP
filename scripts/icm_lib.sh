@@ -33,6 +33,18 @@
 LC_ALL=C
 export LC_ALL
 
+# ------------------------------------------------------------------- locale --
+
+# Byte-wise text tools, everywhere. Every awk, grep, sed and sort in the
+# toolkit counts bytes, fence lines and braces; none needs multibyte character
+# semantics, and icm_chars already counts with wc -c. Under a UTF-8 locale
+# macOS awk aborts ("towc: multibyte conversion failure") on the first file
+# that holds an invalid sequence, which kills the whole walk with exit 2 and no
+# summary. Under C it cannot fail on a byte, and sort order is deterministic.
+# Set once here, because every script dot-sources this file.
+LC_ALL=C
+export LC_ALL
+
 # ---------------------------------------------------------------- constants --
 
 ICM_BEGIN='<!-- icm:begin -->'
@@ -963,7 +975,7 @@ icm_expected_top() {
 icm_expected_sub() {
     {
         icm_top_entries "$1/$2"
-        icm_manifest | awk -v d="$2" '
+        icm_manifest "${ICM_ARCHETYPE:-quick}" | awk -v d="$2" '
             index($2, d "/") == 1 {
                 r = substr($2, length(d) + 2)
                 p = index(r, "/")
@@ -976,7 +988,7 @@ icm_is_expected_dir() {
     if [ -d "$1/$2" ]; then
         return 0
     fi
-    icm_manifest | awk -v d="$2" 'index($2, d "/") == 1 { f = 1 } END { exit f ? 0 : 1 }'
+    icm_manifest "${ICM_ARCHETYPE:-quick}" | awk -v d="$2" 'index($2, d "/") == 1 { f = 1 } END { exit f ? 0 : 1 }'
 }
 
 icm_tree_raw() {
