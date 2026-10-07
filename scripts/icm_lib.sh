@@ -160,6 +160,25 @@ icm_require_target() {
     printf '%s\n' "$_rt_abs"
 }
 
+# icm_is_calendar_date <yyyy> <m> <d> - true for a date that exists, so
+# 2026-02-30 and 2026-04-31 are refused as well as month 13. Leap years per
+# the Gregorian rule. Numbers arrive without leading zeros.
+icm_is_calendar_date() {
+    _cd_y=$1; _cd_m=$2; _cd_d=$3
+    [ "$_cd_m" -ge 1 ] && [ "$_cd_m" -le 12 ] && [ "$_cd_d" -ge 1 ] || return 1
+    case "$_cd_m" in
+        4|6|9|11) _cd_dim=30 ;;
+        2)
+            if [ $((_cd_y % 4)) -eq 0 ] && { [ $((_cd_y % 100)) -ne 0 ] || [ $((_cd_y % 400)) -eq 0 ]; }; then
+                _cd_dim=29
+            else
+                _cd_dim=28
+            fi ;;
+        *) _cd_dim=31 ;;
+    esac
+    [ "$_cd_d" -le "$_cd_dim" ]
+}
+
 # A stamp that cannot collide. A whole second is not unique: two applies in the
 # same second would share one backup directory and the second would store the
 # first one's output as the "pre-image".
@@ -1309,56 +1328,49 @@ icm_body_conventions() {
     cat <<'ICM_EOF'
 # Rule Book - Conventions
 
-Binds: naming, folder shapes and layer discipline. This rule book is not a skill and not documentation. It binds.
+Binds naming, folder shapes and layer discipline. Not a skill, not documentation.
 
 ## Quick Reference
 
 | Thing | Convention |
 |---|---|
 | Folders and files | lowercase-with-hyphens, no spaces |
-| Stage folders | zero-padded number prefix, `01-`, `02-`, `03-` |
-| Output artifacts | topic slug first, then artifact type |
+| Stage folders | zero-padded prefix, `01-`, `02-`, `03-` |
+| Output artifacts | topic slug, then artifact type |
 | Raw files | `YYYY-MM-DD-descriptive-slug.md` |
-| Routing files | `CONTEXT.md`, one per folder that needs routing |
+| Routing files | `CONTEXT.md`, one per folder that routes |
 | Rule books | `_config/*.md`, reference only |
 | Never edited | anything under `raw/` |
 
 ## Layer Discipline
 
-Layers 1 to 3 recurse. A folder that holds sub-areas repeats the same shape inside itself: its own `CONTEXT.md`, and its own `_config/` only if it has rules of its own. A folder that does real work has a job card. A folder that only holds files does not need one.
+Layers 1 to 3 recurse: a folder with sub-areas repeats the shape inside itself. A folder that does real work has a job card; one that only holds files does not.
 
 ## File Shapes
 
-Each file type has one shape and it does not drift.
-
-- Layer 0 `IDENTITY.md`: what this workspace is, Workspace Map, Rules.
-- Layer 1 root `CONTEXT.md`: Routing, Session Start, Rule Books.
-- Layer 2 job card: Purpose, Inputs, Process, Outputs, Routing. Nothing else.
-- Layer 3 rule book: this shape. Quick Reference first, detail after.
-
-Required sections and size ceilings live in `icm.defaults.json`, and the skip list lives in the spec. Do not restate either as a literal here. Cite the file, so there is one place to change it.
+Required sections and size ceilings per file kind live in `icm.defaults.json`; the skip list lives in the spec. Cite them, never restate them.
 
 ## One Home Per Fact
 
-Every fact has exactly one home. Other files link to it. If the same sentence is authoritative in two places, one of them becomes a pointer. Search for a phrase: if it appears twice and both copies claim to be right, that is the bug.
+Every fact has exactly one home; other files link to it. Two authoritative copies means one becomes a pointer.
 
 ## Where A Learned Thing Lives
 
-A task teaches something. The kind of thing decides the layer, and the layer decides the path. Nothing is created at close: the Session Close writes a proposal naming this path, and a human creates it.
+The kind of thing decides the layer, the layer decides the path. Nothing is created at close: the Session Close proposes the path and a human creates it.
 
 | What was learned | Kind | Lives at |
 |---|---|---|
-| A rule, a do or a never | Rule book | `_config/<book>.md`, the existing book that is nearest in subject. A new book only when none fits |
+| A rule, a do or a never | Rule book | `_config/<book>.md`, the nearest existing book; a new one only when none fits |
 | How this folder does its job | Job card | that folder's `CONTEXT.md`, its Process section |
-| A procedure invoked by name, reused across folders or workspaces | Skill | `skills/<name>/SKILL.md` in the harness that runs it |
+| A procedure invoked by name, reused across folders | Skill | `skills/<name>/SKILL.md` in the harness that runs it |
 | A fact about the world | Source and article | `raw/` first, then `wiki/`. Never a rule book |
 | A fact about this workspace | Map or route | `IDENTITY.md` or the routing `CONTEXT.md` it belongs to |
 
-Depth: the lowest folder that covers every place the thing applies. Two sibling folders both need it, it moves up one level. Never sideways.
+Depth: the lowest folder covering every place it applies; two siblings need it, it moves up a level, never sideways.
 
 ## When a rule is wrong
 
-Append the case to `_log/FORGE-PROPOSALS.md`. Do not edit this file.
+Append the case to `_log/FORGE-PROPOSALS.md`; never edit this file.
 ICM_EOF
 }
 
@@ -1404,7 +1416,7 @@ No banned synonyms recorded yet.
 
 ## When a rule is wrong
 
-Append the case to `_log/FORGE-PROPOSALS.md`. Do not edit this file.
+Append the case to `_log/FORGE-PROPOSALS.md`; never edit this file.
 ICM_EOF
 }
 
@@ -1452,7 +1464,7 @@ No pairs recorded yet.
 
 ## When a rule is wrong
 
-Append the case to `_log/FORGE-PROPOSALS.md`. Do not edit this file.
+Append the case to `_log/FORGE-PROPOSALS.md`; never edit this file.
 ICM_EOF
 }
 
@@ -1492,7 +1504,7 @@ If a paragraph is really three parallel facts, make it a table. Routing, inputs,
 
 ## When a rule is wrong
 
-Append the case to `_log/FORGE-PROPOSALS.md`. Do not edit this file.
+Append the case to `_log/FORGE-PROPOSALS.md`; never edit this file.
 ICM_EOF
 }
 
@@ -1528,7 +1540,7 @@ Each article opens with a metadata block before the first section: what it cover
 
 ## When a rule is wrong
 
-Append the case to `_log/FORGE-PROPOSALS.md`. Do not edit this file.
+Append the case to `_log/FORGE-PROPOSALS.md`; never edit this file.
 ICM_EOF
 }
 

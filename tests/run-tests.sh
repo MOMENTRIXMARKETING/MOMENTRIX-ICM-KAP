@@ -1954,6 +1954,89 @@ assert_rc "deleting the kept file by hand closes the run, as the note promises" 
 HK_MARK=$(ls "$HK"/.icm/backup/*/ROLLED-BACK 2>/dev/null | head -n 1)
 assert_file "the run carries its ROLLED-BACK marker" "$HK_MARK"
 
+printf '\n%s\n' '-- hunt: open items O2 O3 O4 O6 O7 O8 --'
+# O4: a fresh install must not warn on its own rule book
+HO=$(fixture "hunt fresh warn")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HO"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HO"
+run "$SCRIPTS/icm-check.sh" --budgets --sections "$HO"
+assert_not_out "a fresh install carries no budget warning on its own rule books" "over the rulebook.md target"
+HO_MISS=""
+for h in "## Quick Reference" "## One Home Per Fact" "## Where A Learned Thing Lives" "## When a rule is wrong"; do
+    grep -q -x -F -- "$h" "$HO/_config/conventions.md" || HO_MISS="$HO_MISS $h"
+done
+if [ -z "$HO_MISS" ]; then
+    t_pass "the trimmed conventions book still carries every heading required_sections lists for it"
+else
+    t_fail "the trimmed conventions book still carries every heading required_sections lists for it" "missing:$HO_MISS"
+fi
+
+# O2: the check-write-back threshold comes from icm.defaults.json
+CWB=$(icm_json_num "$ROOT/icm.defaults.json" loop.check_write_back_uses 0)
+assert_eq "loop.check_write_back_uses exists in icm.defaults.json" "$CWB" "3"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HO"
+assert_out "the index legend cites the configured check-write-back count" "| check-write-back | 3 or more uses"
+if grep -q "uses30\[p\] >= 3" "$SCRIPTS/icm-loop.sh"; then
+    t_fail "no verdict threshold is a literal in icm-loop.sh" "$(grep -n 'uses30\[p\] >= 3' "$SCRIPTS/icm-loop.sh")"
+else
+    t_pass "no verdict threshold is a literal in icm-loop.sh"
+fi
+
+# O6: --today and the ledger want a date that exists
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-02-30 "$HO"
+assert_rc "--today 2026-02-30 is refused" 2
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-04-31 "$HO"
+assert_rc "--today 2026-04-31 is refused" 2
+run "$SCRIPTS/icm-loop.sh" --starve --today 2024-02-29 "$HO"
+assert_rc "--today 2024-02-29 is a real leap day" 0
+printf '| 2026-13-45 | Use | bogus | _config/style.md | t | o | 0 |\n' >> "$HO/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HO"
+assert_not_out "a ledger line dated 2026-13-45 is not counted" "2026-13-45"
+
+# O8: a truncated Use line is a private shape, not a row
+printf '| 2026-10-05 | Use |\n' >> "$HO/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HO"
+assert_not_out "a Use line with no name and no path makes no index row" "|  | ? | \`\` |"
+
+# O7: CRLF is named, not misdiagnosed
+HC=$(fixture "hunt crlf")
+mkdir -p "$HC/skills/foo"
+printf -- '---\r\nname: foo\r\ndescription: "x"\r\nuser-invocable: true\r\n---\r\n# Foo\r\n' > "$HC/skills/foo/SKILL.md"
+run "$SCRIPTS/icm-plan.sh" --quiet "$HC"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HC"
+run "$SCRIPTS/icm-check.sh" --frontmatter "$HC"
+assert_out "a CRLF SKILL.md is reported as CRLF" "CRLF line endings"
+assert_not_out "a CRLF SKILL.md is not reported as missing frontmatter" "line 1 is not ---"
+
+# O3: the shipped budgets example reads the defaults file, not a memory of it
+NEWRAW=$(ls "$ROOT"/examples/raw/*-icm-defaults-budgets.md | sort | tail -n 1)
+O3_BAD=""
+for k in IDENTITY.md CONTEXT.root.md CONTEXT.stage.md CONTEXT.folder.md rulebook.md wiki_article.md; do
+    t=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.target_chars" 0)
+    c=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.ceiling_chars" 0)
+    grep -q -F -- "- $k: target $t, ceiling $c" "$NEWRAW" || O3_BAD="$O3_BAD $k"
+done
+ft=$(icm_json_num "$ROOT/icm.defaults.json" loading_budget.fixed_total 0)
+grep -q -F -- "fixed_total as $ft" "$NEWRAW" || O3_BAD="$O3_BAD fixed_total"
+grep -q -F -- "| Layer 1 routing at a workspace root | $(icm_json_num "$ROOT/icm.defaults.json" budgets.CONTEXT.root.md.target_chars 0) |" "$ROOT/examples/wiki/icm-defaults-budgets.md" || O3_BAD="$O3_BAD wiki-table"
+if [ -z "$O3_BAD" ]; then
+    t_pass "the newest budgets raw reading and its article match icm.defaults.json"
+else
+    t_fail "the newest budgets raw reading and its article match icm.defaults.json" "stale:$O3_BAD"
+fi
+# and spec/budgets.md's table restates nothing the defaults do not say
+O3_SPEC=""
+for k in IDENTITY.md CONTEXT.root.md CONTEXT.stage.md CONTEXT.folder.md rulebook.md wiki_article.md; do
+    t=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.target_chars" 0)
+    c=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.ceiling_chars" 0)
+    grep -E -q -- "^\| \`$k\` \|.*\| $t \| $c \|" "$ROOT/spec/budgets.md" || O3_SPEC="$O3_SPEC $k"
+done
+if [ -z "$O3_SPEC" ]; then
+    t_pass "every row of the table in spec/budgets.md equals icm.defaults.json"
+else
+    t_fail "every row of the table in spec/budgets.md equals icm.defaults.json" "drifted:$O3_SPEC"
+fi
+
 # ---------------------------------------------------------------- the tally --
 
 printf '\n%s\n' '-- summary --'

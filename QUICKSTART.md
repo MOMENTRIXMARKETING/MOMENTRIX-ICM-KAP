@@ -270,7 +270,7 @@ ok   manifest: /home/you/acme-api/.icm/backup/20260830T055159Z-53330/manifest.tx
 
 ok   icm-check.sh ran on the result:
      -- summary --
-     ok 17   warn 0   FAIL 3
+     ok 17   warn 0   FAIL 4
      result: FAIL
 note the check does not change this run status. read the full report with:
 note   scripts/icm-check.sh /home/you/acme-api
@@ -294,9 +294,9 @@ result: a decision is waiting
 ?? _log/
 ```
 
-### The three FAILs are the collision, and they are expected
+### The four FAILs are the collision, and they are expected
 
-Apply runs the checker on the result. It found three, and they all name the file it refused to
+Apply runs the checker on the result. It found four, and they all name the file it refused to
 touch:
 
 ```sh
@@ -308,6 +308,7 @@ sh "$ICM_HOME/scripts/icm-check.sh" --only sections .
 ok   IDENTITY.md has every required section
 FAIL CONTEXT.md is missing a required section: ## Routing
 FAIL CONTEXT.md is missing a required section: ## Session Start
+FAIL CONTEXT.md is missing a required section: ## Session Close
 FAIL CONTEXT.md is missing a required section: ## Rule Books
 ```
 

@@ -36,6 +36,7 @@ absolute or relative to the project root.
 import re
 import sys
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 # The extractor and contains() must agree on what a token is, or a candidate
@@ -275,16 +276,20 @@ def raw_links_of(article_text: str) -> list[str]:
     return links
 
 
+@lru_cache(maxsize=None)
+def _value_pattern(kind: str, value: str) -> re.Pattern[str]:
+    # Values must stand on their own, while sentence punctuation remains
+    # valid. A month may not pass as the prefix of a full ISO date. Compiled
+    # once per distinct value: a wiki repeats the same figures across many
+    # articles, and re.compile on every lookup was most of the runtime.
+    right = r"(?!-\d{2})" if kind == "date" and len(value) == 7 else ""
+    return re.compile(r"(?<![\d.,])" + re.escape(value) + right + r"(?![A-Za-z0-9]|[.,]\d|%)")
+
+
 def contains(haystack: str, candidate: Candidate) -> bool:
     if candidate.kind == "quote":
         return candidate.value in haystack
-    # Values must stand on their own, while sentence punctuation remains
-    # valid. A month may not pass as the prefix of a full ISO date.
-    right = r"(?!-\d{2})" if candidate.kind == "date" and len(candidate.value) == 7 else ""
-    pattern = (
-        r"(?<![\d.,])" + re.escape(candidate.value) + right + r"(?![A-Za-z0-9]|[.,]\d|%)"
-    )
-    return re.search(pattern, haystack) is not None
+    return _value_pattern(candidate.kind, candidate.value).search(haystack) is not None
 
 
 def read_markdown(path: Path) -> str:
@@ -302,10 +307,13 @@ def read_markdown_lenient(path: Path) -> str:
     return path.read_text(encoding="utf-8-sig", errors="replace")
 
 
+@lru_cache(maxsize=None)
 def source_content(path: Path) -> str:
     """Raw file body with the metadata header removed. Collection
     metadata (Source/Collected/Published) is bookkeeping, not evidence;
-    letting it match candidates would false-pass dates and years."""
+    letting it match candidates would false-pass dates and years. Cached:
+    one raw file is read and normalised once per run, however many
+    articles cite it."""
     document = parse_document(read_markdown(path))
     return normalize("\n".join(document.body))
 

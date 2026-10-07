@@ -69,6 +69,7 @@
     "archive_days": 60,
     "hole_sev3_count": 1,
     "hole_sev2_count": 2,
-    "recurrence_rewrite_count": 2
+    "recurrence_rewrite_count": 2,
+    "check_write_back_uses": 3
   }
 }

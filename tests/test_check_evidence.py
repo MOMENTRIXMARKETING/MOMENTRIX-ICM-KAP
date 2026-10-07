@@ -718,10 +718,12 @@ EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
 
 class ExamplesSmokeTest(WikiTestCase):
     def test_examples_have_zero_suspects(self):
-        raw_src = EXAMPLES_DIR / "raw" / "2026-08-30-icm-defaults-budgets.md"
         article_src = EXAMPLES_DIR / "wiki" / "icm-defaults-budgets.md"
         (self.root / "raw").mkdir(parents=True, exist_ok=True)
-        (self.root / "raw" / raw_src.name).write_text(raw_src.read_text())
+        # Every reading ships: a raw file is never rewritten, a new dated one
+        # is added and the article recompiled, so the smoke test copies them all.
+        for raw_src in sorted((EXAMPLES_DIR / "raw").glob("*-icm-defaults-budgets.md")):
+            (self.root / "raw" / raw_src.name).write_text(raw_src.read_text())
         (self.root / "wiki").mkdir(parents=True, exist_ok=True)
         (self.root / "wiki" / article_src.name).write_text(article_src.read_text())
         (self.root / "wiki" / "index.md").write_text("# Knowledge Base Index\n")

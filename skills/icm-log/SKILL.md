@@ -247,7 +247,7 @@ Authority model: `$ICM_HOME/spec/authority-model.md`.
 
 **Machine-enforced by a toolkit script: the count, not the write.** `scripts/icm-check.sh` has no ledger check, no format check and no append check. `scripts/icm-loop.sh` reads the ledger and counts it, and a line in the wrong shape is a line it silently does not count, which is enforcement after the fact: the index will show a skill you know you used as unlogged, and that is the signal the shape was wrong. Say that plainly rather than implying a machine is watching the record as it is written.
 
-Two indirect checks worth knowing: `icm-check.sh --fences` reads every `.md` under the workspace, so an unbalanced code fence pasted into the ledger will show up in a workspace check, and `icm-check.sh --sections` requires the ledger's section headings on a ledger the toolkit installed.
+Two indirect checks worth knowing: `icm-check.sh --fences` reads every `.md` under the workspace, so an unbalanced code fence pasted into the ledger will show up in a workspace check, while `icm-check.sh --sections` grades only `IDENTITY.md` and the `CONTEXT.md` files; the ledger's section headings are listed under `required_sections` in `icm.defaults.json` as the shape the toolkit writes, and no script fails a ledger that lacks them.
 
 **Safe fix, applied by you, then reported.** These are shell commands you run and edits you make. No script applies any of them, and none of them is silent: you say what you did.
 

@@ -382,8 +382,13 @@ c_frontmatter() {
             icm_fail "skills/$_f_d has no SKILL.md"
             continue
         fi
-        if [ "$(head -n 1 "$_f_file")" != "---" ]; then
-            icm_fail "skills/$_f_d/SKILL.md does not open with frontmatter, line 1 is not ---"
+        _f_l1=$(head -n 1 "$_f_file")
+        if [ "$_f_l1" != "---" ]; then
+            if [ "$(printf '%s' "$_f_l1" | tr -d '\r')" = "---" ]; then
+                icm_fail "skills/$_f_d/SKILL.md has CRLF line endings; the frontmatter reader wants LF. convert it, then rerun"
+            else
+                icm_fail "skills/$_f_d/SKILL.md does not open with frontmatter, line 1 is not ---"
+            fi
             continue
         fi
         _f_blk="$ICM_TMPDIR/fmblk"

@@ -145,7 +145,7 @@ The wiki archetype carries the grounding invariant: every load-bearing fact in a
 
 - Write only what the interview and the disk support. Do not invent a folder, a task, or a status.
 - Every folder in the workspace map gets a comment saying what it holds. The map is a fenced block, because `icm-check.sh --drift` reads the first fenced block in `IDENTITY.md` and compares it to the real tree.
-- Required headings per file kind are in `icm.defaults.json` under `required_sections`. Missing one is a check failure, not a style choice.
+- Required headings per file kind are in `icm.defaults.json` under `required_sections`. For `IDENTITY.md` and every `CONTEXT.md` a missing one is a check failure; for rule books, the wiki index and log, and the ledger the list is the shape to write, graded by you, not by a script.
 - Character budgets come from `$ICM_HOME/spec/budgets.md`. A file over its ceiling is a failure. Cut the file.
 - If canonical content already exists elsewhere in the repo, the rule book re-exports it: canonical path in a blockquote at the top, a short quick reference, then a link. It does not duplicate the content.
 - Cross references point outward only. If the target already points back at you, restructure.

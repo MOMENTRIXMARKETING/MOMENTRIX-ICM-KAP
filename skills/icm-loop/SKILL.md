@@ -161,7 +161,7 @@ Authority model: `$ICM_HOME/spec/authority-model.md`.
 
 | Check | check-id | What it verifies |
 |---|---|---|
-| Required sections | `sections` | The root `CONTEXT.md` carries `## Session Close` and the ledger carries its line-kind sections |
+| Required sections | `sections` | The root `CONTEXT.md` carries `## Session Close`. The ledger's sections are declared in `icm.defaults.json` but graded by no script |
 | Adapter shape | `adapters` | `CLAUDE.md` is an alias of `IDENTITY.md`, not a copy that has grown a block |
 
 **Safe fix, applied by you, then reported.** Appending the marked span to a host file that is not generated. Regenerating it when the markers are present. Appending the install use line.

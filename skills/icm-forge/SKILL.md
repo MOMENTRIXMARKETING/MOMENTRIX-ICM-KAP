@@ -100,7 +100,7 @@ Five kinds of finding, and they get different proposals:
 
 **`archive`, a file nobody runs.** A skill or job card with no use line in the archive window on a ledger older than that window. Kind `archive`. Propose moving it out of the tree. It is not part of how this workspace works, and every task pays to route past it.
 
-**`check-write-back`, high use and an empty ledger.** Three or more uses in the recent window and never one miss. Under logged, not perfect. Kind `edit` against the Session Close, same as a starved week, scoped to that one file's use lines.
+**`check-write-back`, high use and an empty ledger.** `check_write_back_uses` or more uses in the recent window (`loop` in `icm.defaults.json`) and never one miss. Under logged, not perfect. Kind `edit` against the Session Close, same as a starved week, scoped to that one file's use lines.
 
 Anything under the threshold is not written up. Say the count out loud so the user can see what is one line short, and leave it in the ledger to mature. A `ghost` row is not a proposal either: say the path, and the next miss line uses the real one.
 

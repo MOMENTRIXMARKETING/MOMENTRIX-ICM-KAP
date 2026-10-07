@@ -241,7 +241,7 @@ shell command runs `sh "$ICM_HOME/scripts/icm-loop.sh" --index <workspace>` and 
 exit 1 when something is waiting. The reading runs on whatever agent you have, in Claude Code
 with `/schedule`, elsewhere with that harness's equivalent:
 
-- **Cadence: weekly.** A hole is one sev 3 miss, or two at sev 2, on the same path, and two
+- **Cadence: weekly.** A hole is `hole_sev3_count` misses at sev 3, or `hole_sev2_count` at sev 2, on the same path (`loop` in `icm.defaults.json`), and two
   misses take about a week to arrive. A daily run mostly reports nothing, and a report that is
   usually empty trains you to skip it.
 - **The routine's prompt is exactly `/icm-forge run`.** Nothing else. No extra instructions, no
