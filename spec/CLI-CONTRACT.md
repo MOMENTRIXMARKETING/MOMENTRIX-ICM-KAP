@@ -678,7 +678,7 @@ The archetype names match `skills/icm-scaffold/SKILL.md` exactly. There are thre
 | `wiki/log.md` | create | no | no | yes |
 | `_config/grounding.md` | create | no | no | yes |
 
-Numbered stage folders are **not** an install row. They are created by `/icm-stage add`.
+Numbered stage folders are **not** an install row. They are created by `/icm-stage <stage-name>`.
 
 **BUILD.** The root `CONTEXT.md` routing table contains only rows whose destination exists in
 the chosen archetype. A routing table that points at `raw/CONTEXT.md` in a `quick` install is a
@@ -686,7 +686,7 @@ route-check failure on a tree the toolkit generated seconds earlier.
 
 **DELETE.** `README.md`'s "What lands in your project" block is wrong twice: it omits `output/`
 and it promises a `01_.../` stage folder that never appears. Rewrite it against this table and
-mark stage folders as "only via `/icm-stage add`".
+mark stage folders as "only via `/icm-stage <stage-name>`".
 
 ---
 

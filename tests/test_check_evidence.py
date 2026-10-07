@@ -243,9 +243,9 @@ class FidelityCheckTest(WikiTestCase):
 class BoundaryMatchingTest(WikiTestCase):
     def setUp(self):
         super().setUp()
-        (self.root / "raw" / "t").mkdir(parents=True)
+        (self.root / "raw" / "t").mkdir(parents=True, exist_ok=True)
         (self.root / "raw" / "t" / "numbers.md").write_text(BOUNDARY_RAW)
-        (self.root / "wiki" / "t").mkdir(parents=True)
+        (self.root / "wiki" / "t").mkdir(parents=True, exist_ok=True)
         (self.root / "wiki" / "t" / "a.md").write_text(BOUNDARY_ARTICLE)
         (self.root / "wiki" / "index.md").write_text("# Knowledge Base Index\n")
         (self.root / "wiki" / "log.md").write_text("# Wiki Log\n")
@@ -285,9 +285,9 @@ class DateBoundaryTest(WikiTestCase):
 class NumberCoverageTest(WikiTestCase):
     def setUp(self):
         super().setUp()
-        (self.root / "raw" / "t").mkdir(parents=True)
+        (self.root / "raw" / "t").mkdir(parents=True, exist_ok=True)
         (self.root / "raw" / "t" / "plain.md").write_text(PLAIN_RAW)
-        (self.root / "wiki" / "t").mkdir(parents=True)
+        (self.root / "wiki" / "t").mkdir(parents=True, exist_ok=True)
         (self.root / "wiki" / "t" / "a.md").write_text(PLAIN_ARTICLE)
         (self.root / "wiki" / "index.md").write_text("# Knowledge Base Index\n")
         (self.root / "wiki" / "log.md").write_text("# Wiki Log\n")
@@ -408,7 +408,7 @@ class RawEscapeTest(WikiTestCase):
         (self.root / "raw").mkdir()
         (self.root / "notes").mkdir()
         (self.root / "notes" / "support.md").write_text("The release reached 654K users.\n")
-        (self.root / "wiki" / "t").mkdir(parents=True)
+        (self.root / "wiki" / "t").mkdir(parents=True, exist_ok=True)
         (self.root / "wiki" / "t" / "a.md").write_text(ESCAPE_ARTICLE)
         (self.root / "wiki" / "index.md").write_text("# Knowledge Base Index\n")
         (self.root / "wiki" / "log.md").write_text("# Wiki Log\n")
@@ -418,7 +418,7 @@ class RawEscapeTest(WikiTestCase):
 
 class NoMaterialParsingTest(WikiTestCase):
     def test_heading_inside_fence_does_not_suppress(self):
-        (self.root / "raw" / "t").mkdir(parents=True)
+        (self.root / "raw" / "t").mkdir(parents=True, exist_ok=True)
         (self.root / "raw" / "t" / "orphan.md").write_text("# Orphan\n")
         (self.root / "wiki").mkdir()
         (self.root / "wiki" / "index.md").write_text("# Knowledge Base Index\n")
@@ -431,7 +431,7 @@ class NoMaterialParsingTest(WikiTestCase):
         self.assertIn("raw/t/orphan.md", result.stdout)
 
     def test_prose_mention_in_lint_entry_does_not_suppress(self):
-        (self.root / "raw" / "t").mkdir(parents=True)
+        (self.root / "raw" / "t").mkdir(parents=True, exist_ok=True)
         (self.root / "raw" / "t" / "orphan.md").write_text("# Orphan\n")
         (self.root / "wiki").mkdir()
         (self.root / "wiki" / "index.md").write_text("# Knowledge Base Index\n")
@@ -718,10 +718,12 @@ EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
 
 class ExamplesSmokeTest(WikiTestCase):
     def test_examples_have_zero_suspects(self):
-        raw_src = EXAMPLES_DIR / "raw" / "2026-08-30-icm-defaults-budgets.md"
         article_src = EXAMPLES_DIR / "wiki" / "icm-defaults-budgets.md"
         (self.root / "raw").mkdir(parents=True, exist_ok=True)
-        (self.root / "raw" / raw_src.name).write_text(raw_src.read_text())
+        # Every reading ships: a raw file is never rewritten, a new dated one
+        # is added and the article recompiled, so the smoke test copies them all.
+        for raw_src in sorted((EXAMPLES_DIR / "raw").glob("*-icm-defaults-budgets.md")):
+            (self.root / "raw" / raw_src.name).write_text(raw_src.read_text())
         (self.root / "wiki").mkdir(parents=True, exist_ok=True)
         (self.root / "wiki" / article_src.name).write_text(article_src.read_text())
         (self.root / "wiki" / "index.md").write_text("# Knowledge Base Index\n")
@@ -759,6 +761,77 @@ class RawInventoryTest(WikiTestCase):
         result = run_checker(self.root)
         self.assertNotIn("raw/misc/notes.md", result.stdout)
         self.assertIn("raw/other/notes.md", result.stdout)
+
+
+RAW_HEADER = "# S\n\n> Source: x\n> Collected: 2026-01-01\n> Published: x\n\n"
+ART_HEADER = "# A\n\n> Sources: X\n> Raw: [s](../../raw/t/src.md)\n\n"
+
+
+class PairTestCase(WikiTestCase):
+    """One article, one raw, same body unless a test says otherwise."""
+
+    def pair(self, article_body: str, raw_body: str | None = None, article_bytes: bytes | None = None):
+        (self.root / "raw" / "t").mkdir(parents=True, exist_ok=True)
+        (self.root / "wiki" / "t").mkdir(parents=True, exist_ok=True)
+        (self.root / "wiki" / "index.md").write_text("# I\n")
+        (self.root / "wiki" / "log.md").write_text("# L\n")
+        (self.root / "raw" / "t" / "src.md").write_text(RAW_HEADER + (raw_body if raw_body is not None else article_body))
+        article = self.root / "wiki" / "t" / "a.md"
+        if article_bytes is not None:
+            article.write_bytes(article_bytes)
+        else:
+            article.write_text(ART_HEADER + article_body)
+
+
+class TokenBoundaryTest(PairTestCase):
+    def test_date_shaped_substrings_of_longer_tokens_are_not_candidates(self):
+        body = "Call 1300-655-506, ref 1234567-89, spec 8601-2004, part 2026-123.\n"
+        self.pair(body)
+        result = run_checker(self.root)
+        self.assertIn("0 fidelity suspect(s)", result.stdout)
+        self.assertNotIn("1300-65", result.stdout)
+        self.assertNotIn("4567-89", result.stdout)
+
+    def test_real_iso_dates_still_checked(self):
+        self.pair("Shipped on 2026-05-01.\n", raw_body="Shipped on 2026-06-01.\n")
+        result = run_checker(self.root)
+        self.assertIn("2026-05-01", result.stdout)
+
+    def test_european_decimal_is_one_token(self):
+        self.pair("Price 1.000,50 EUR.\n")
+        result = run_checker(self.root)
+        self.assertIn("0 fidelity suspect(s)", result.stdout)
+        self.pair("Price 1.000,50 EUR.\n", raw_body="Price 1.000,75 EUR.\n")
+        result = run_checker(self.root)
+        self.assertIn("1.000,50", result.stdout)
+
+
+class EncodingTest(PairTestCase):
+    def test_bom_article_is_read(self):
+        self.pair("", article_bytes=b"\xef\xbb\xbf" + (ART_HEADER + "42K.\n").encode())
+        (self.root / "raw" / "t" / "src.md").write_text(RAW_HEADER + "42K\n")
+        result = run_checker(self.root)
+        self.assertNotIn("no Raw field", result.stdout)
+        self.assertIn("0 evidence error(s)", result.stdout)
+
+    def test_non_utf8_raw_is_an_evidence_error_not_a_crash(self):
+        self.pair("42K.\n")
+        (self.root / "raw" / "t" / "src.md").write_bytes(RAW_HEADER.encode() + b"caf\xe9 42K\n")
+        (self.root / "raw" / "t" / "good.md").write_text(RAW_HEADER + "42K\n")
+        (self.root / "wiki" / "t" / "b.md").write_text(
+            "# B\n\n> Sources: X\n> Raw: [s](../../raw/t/good.md)\n\n42K.\n"
+        )
+        result = run_checker(self.root)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn("## Summary", result.stdout)
+        self.assertIn("not valid UTF-8", result.stdout)
+        self.assertIn("1 evidence error(s)", result.stdout)
+
+    def test_non_utf8_article_is_an_evidence_error_not_a_crash(self):
+        self.pair("", article_bytes=(ART_HEADER + "caf").encode() + b"\xe9\n")
+        result = run_checker(self.root)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn("not valid UTF-8", result.stdout)
 
 
 if __name__ == "__main__":

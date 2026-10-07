@@ -91,8 +91,8 @@ case "$TODAY" in
     [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) : ;;
     *) printf 'FAIL --today wants YYYY-MM-DD, got: %s\n' "$TODAY" >&2; exit 2 ;;
 esac
-_td_m=${TODAY#*-}; _td_m=${_td_m%-*}; _td_d=${TODAY##*-}
-if [ "${_td_m#0}" -lt 1 ] || [ "${_td_m#0}" -gt 12 ] || [ "${_td_d#0}" -lt 1 ] || [ "${_td_d#0}" -gt 31 ]; then
+_td_y=${TODAY%%-*}; _td_m=${TODAY#*-}; _td_m=${_td_m%-*}; _td_d=${TODAY##*-}
+if ! icm_is_calendar_date "$_td_y" "${_td_m#0}" "${_td_d#0}"; then
     printf 'FAIL --today is not a calendar date: %s\n' "$TODAY" >&2
     exit 2
 fi
@@ -105,8 +105,7 @@ if [ "$MODE" = block ]; then
     exit 0
 fi
 
-[ -d "$TARGET" ] || icm_die "no such directory: $TARGET"
-TARGET=$(icm_abspath "$TARGET")
+TARGET=$(icm_require_target "$TARGET") || exit 2
 icm_init "$TARGET"
 icm_trap_default
 
@@ -118,6 +117,7 @@ ARCHIVE_DAYS=$(icm_json_num "$ICM_DEFAULTS" loop.archive_days 60)
 SEV3_N=$(icm_json_num "$ICM_DEFAULTS" loop.hole_sev3_count 1)
 SEV2_N=$(icm_json_num "$ICM_DEFAULTS" loop.hole_sev2_count 2)
 RECUR_N=$(icm_json_num "$ICM_DEFAULTS" loop.recurrence_rewrite_count 2)
+CWB_N=$(icm_json_num "$ICM_DEFAULTS" loop.check_write_back_uses 3)
 
 LEDGER_FILE="$TARGET/$LEDGER"
 [ -f "$LEDGER_FILE" ] || icm_die "no ledger at $LEDGER. nothing to index. run: sh \"\$ICM_HOME/scripts/icm-plan.sh\" then icm-apply.sh, or /icm-log miss"
@@ -165,10 +165,18 @@ done
 awk -F '|' \
     -v today="$TODAY" -v starve="$STARVE_DAYS" -v recent="$RECENT_DAYS" \
     -v archive="$ARCHIVE_DAYS" -v sev3n="$SEV3_N" -v sev2n="$SEV2_N" \
-    -v recurn="$RECUR_N" -v disk="$DISK" -v mode="$MODE" -v ledger="$LEDGER" \
+    -v recurn="$RECUR_N" -v cwbn="$CWB_N" -v disk="$DISK" -v mode="$MODE" -v ledger="$LEDGER" \
     -v target="$TARGET" -v icmhome="$ICM_HOME" '
 function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
-function isdate(s) { return s ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ }
+function isdate(s,   y, m, d, dim) {
+    if (s !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/) return 0
+    y = substr(s, 1, 4) + 0; m = substr(s, 6, 2) + 0; d = substr(s, 9, 2) + 0
+    if (m < 1 || m > 12 || d < 1) return 0
+    dim = 31
+    if (m == 4 || m == 6 || m == 9 || m == 11) dim = 30
+    if (m == 2) dim = ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) ? 29 : 28
+    return d <= dim
+}
 function dn(s,   y, m, d, a, yy, mm) {
     y = substr(s, 1, 4) + 0; m = substr(s, 6, 2) + 0; d = substr(s, 9, 2) + 0
     a = int((14 - m) / 12); yy = y + 4800 - a; mm = m + 12 * a - 3
@@ -212,6 +220,9 @@ BEGIN {
     if (sel == "Use") {
         nm = trim($4); p = trim($5)
         if (p == "") p = nm
+        # A Use line with neither a name nor a path is a private shape, not a
+        # row: contract 3.6 says such a line is silently not counted.
+        if (p == "") next
         seen(p); if (!(p in kind)) kind[p] = "?"
         if (!(p in name)) name[p] = nm
         nuse++
@@ -272,11 +283,19 @@ END {
         # A ledger path outside the three kinds the walk collects (a spec, a
         # script, a doc) is still a real file, and a toolkit skill lives in
         # the toolkit, not the workspace. Ask both disks before calling it a
-        # ghost. Quotes in a path are escaped for the shell.
+        # ghost. The path is data anyone can append to the ledger, so it goes
+        # to the shell inside single quotes, where $(...), backticks and $VAR
+        # are bytes and nothing else; a single quote in the path becomes '\''.
+        # \047 is the single quote, spelled so because this awk program is
+        # itself inside shell single quotes. Split and rejoin rather than
+        # gsub, because a gsub replacement string re-reads backslashes and
+        # awks disagree on how many survive. No apostrophe in this comment:
+        # it would end the shell quoting around the program.
         if (!(p in ondisk) && p != "none") {
-            q = p; gsub(/"/, "\\\"", q)
-            if (system("[ -f \"" target "/" q "\" ]") == 0) { ondisk[p] = 1; kind[p] = "other" }
-            else if (system("[ -f \"" icmhome "/" q "\" ]") == 0) { ondisk[p] = 1; kind[p] = "toolkit skill" }
+            nq = split(p, qparts, "\047"); q = qparts[1]
+            for (qi = 2; qi <= nq; qi++) q = q "\047\\\047\047" qparts[qi]
+            if (system("[ -f \047" target "/" q "\047 ]") == 0) { ondisk[p] = 1; kind[p] = "other" }
+            else if (system("[ -f \047" icmhome "/" q "\047 ]") == 0) { ondisk[p] = 1; kind[p] = "toolkit skill" }
         }
         k = kind[p]
         v = "ok"
@@ -285,7 +304,7 @@ END {
         else if (recur[p] >= recurn) v = "rewrite"
         else if (osev3[p] >= sev3n || osev2[p] >= sev2n) v = "hole"
         else if ((k == "skill" || k == "job card") && ledger_age >= archive && uses60[p] == 0) v = "archive"
-        else if ((k == "skill" || k == "job card") && uses30[p] >= 3 && misstotal[p] == 0) v = "check-write-back"
+        else if ((k == "skill" || k == "job card") && uses30[p] >= cwbn && misstotal[p] == 0) v = "check-write-back"
         else if ((k == "skill" || k == "job card") && uses60[p] == 0 && misstotal[p] == 0) v = "unlogged"
         if (v != "ok" && v != "unlogged") waiting = 1
         u30 = (k == "rule book") ? "-" : uses30[p] + 0
@@ -302,7 +321,7 @@ END {
     printf "| ghost | The ledger names a path that is not on disk. Ghost wins over hole and rewrite, so the forge never proposes an edit to a file that does not exist | Fix the path in future lines, or the file was moved without a patched line |\n"
     printf "| uncovered | Misses logged against none | No file covers this ground. Placement question: what kind, what path |\n"
     printf "| archive | Ledger older than %d days and no use line in that window | It is not part of how you work. Archive it |\n", archive
-    printf "| check-write-back | 3 or more uses in %d days and never one miss | Under logged, not perfect. Fix the Session Close before touching the file |\n", recent
+    printf "| check-write-back | %d or more uses in %d days and never one miss | Under logged, not perfect. Fix the Session Close before touching the file |\n", cwbn, recent
     printf "| unlogged | On disk, no use and no miss yet, ledger younger than %d days | Nothing yet. Young, not dead |\n", archive
     printf "| ok | None of the above | Nothing |\n"
     exit waiting

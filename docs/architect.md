@@ -113,7 +113,7 @@ itself rather than quietly absorbing a department's job.
 
 `architect` is a workspace **shape**, not a fourth install manifest.
 `icm-plan.sh --archetype` takes `quick`, `full` and `wiki` only. You install `full` at the root,
-then add one department at a time with `/icm-context` and `/icm-stage add`, and each department
+then add one department at a time with `/icm-context` and `/icm-stage <stage-name>`, and each department
 repeats the pattern inside itself.
 
 Start with one department. A tree with one real department and honest reports beats a tree with

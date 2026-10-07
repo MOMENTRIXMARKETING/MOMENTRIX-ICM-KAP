@@ -100,7 +100,7 @@ Five kinds of finding, and they get different proposals:
 
 **`archive`, a file nobody runs.** A skill or job card with no use line in the archive window on a ledger older than that window. Kind `archive`. Propose moving it out of the tree. It is not part of how this workspace works, and every task pays to route past it.
 
-**`check-write-back`, high use and an empty ledger.** Three or more uses in the recent window and never one miss. Under logged, not perfect. Kind `edit` against the Session Close, same as a starved week, scoped to that one file's use lines.
+**`check-write-back`, high use and an empty ledger.** `check_write_back_uses` or more uses in the recent window (`loop` in `icm.defaults.json`) and never one miss. Under logged, not perfect. Kind `edit` against the Session Close, same as a starved week, scoped to that one file's use lines.
 
 Anything under the threshold is not written up. Say the count out loud so the user can see what is one line short, and leave it in the ledger to mature. A `ghost` row is not a proposal either: say the path, and the next miss line uses the real one.
 
@@ -143,6 +143,8 @@ Kind is one of `edit`, `new`, `archive`, `rewrite`. The Evidence block is pasted
 
 Ids run `FP-<date>-NN`, numbered within the day. Order proposals by highest severity first, then by count.
 
+**Decide, before the first block is written, whether a human is in this turn.** No human means a scheduled run, a `claude -p` run, or `ICM_UNATTENDED=1` set in the environment. The skill text cannot see the `-p` flag from inside the prompt, so a wrapper that schedules the run sets that variable; treat any turn where nobody can answer a question as unattended. On an unattended run every Status line is written `- Status: proposed (unattended run)`, never bare `proposed`, so nobody later reads silence as consent.
+
 Once a proposal block is written, its body is never edited again. The `Status` line is the only line the forge ever changes, and only in `approve` mode.
 
 ### Step 6. Append the weekly review block
@@ -175,7 +177,7 @@ A blocker in the workaround column of two different task lines is a system hole.
 
 Call lines close with that column blank on purpose. It is filled at the weekly review, and it is filled from the human's answer.
 
-List every call line whose last column is empty and ask, one line each: did you change anything because of this call? Write only what you are told. If nobody answers, leave every one of them blank and note it in the report. A blank is correct data. A guess is corrupt data, and a corrupt necessity count is how a trigger gets loosened by mistake.
+List every call line whose last column is empty and ask, one line each: did you change anything because of this call? Write only what you are told. If nobody answers, leave every one of them blank and note it in the report. On an unattended run (Step 5 decided this) do not ask at all: leave every one blank and write the line "necessity column skipped: unattended run" into the report. A blank is correct data. A guess is corrupt data, and a corrupt necessity count is how a trigger gets loosened by mistake.
 
 ### Step 8. Threshold proposals
 
@@ -185,7 +187,7 @@ A threshold change is a proposal, written into `_log/FORGE-PROPOSALS.md` like an
 
 ### Step 9. Say what the index says
 
-End the run with the index summary, verdict words and counts only, and the one sentence a human needs to decide whether to sit down with `/icm-forge show` today or on Sunday. Same proposal rejected three cycles for the same reason: the misses are real and the framing is wrong. Stop re-proposing it and take it to the human as one sharp question.
+End the run with the index summary, verdict words and counts only, and the one sentence a human needs to decide whether to sit down with `/icm-forge show` today or on Sunday. An unattended run says so in that summary, and says the necessity column was skipped. Same proposal rejected three cycles for the same reason: the misses are real and the framing is wrong. Stop re-proposing it and take it to the human as one sharp question.
 
 ---
 
@@ -246,7 +248,7 @@ Exit 0 clean, 1 findings, 2 usage or environment error. `--only <id>` selects on
 printf '| %s | Patched | %s | %s |\n' "$(date +%Y-%m-%d)" "$BOOK" "$FPID" >> _log/LOOP-LEDGER.md
 ```
 
-Every miss against that path dated on or before this line is closed. A miss after it is open again, and one that starts `RECURRENCE:` is the fix failing.
+Every miss against that path dated before this line is closed. A miss dated the same day as the patch, or after it, counts open, because the index cannot order two lines that share a date. A miss after it is open again, and one that starts `RECURRENCE:` is the fix failing.
 
 ---
 
@@ -258,8 +260,8 @@ The weekly run is a scheduled task. Two halves, and the first needs no model at 
 - **The reading runs on whatever agent you have.** The prompt is exactly `/icm-forge run`. Nothing else. In Claude Code that is a `/schedule` entry; in another harness it is that harness's equivalent, pointed at the same workspace. The skill text is the instruction set; the harness only has to load it.
 - **Cadence:** weekly. Two sev 2 misses on one path take about a week to accumulate. Daily runs mostly report nothing and train you to skip the output. Monthly, and the fault has shipped four more times.
 - **The cron only runs the forge.** It never runs `approve`. It cannot: there is no human in a scheduled turn, and approval is defined as a human in the turn saying an id out loud. A scheduled run that finds five holes writes five proposals and stops.
-- **Mark the origin.** Proposals from an unattended run are written `Status: proposed (unattended run)`, so nobody later reads silence as consent.
-- **Leave the necessity column blank** on an unattended run, and say in the report that it was skipped.
+- **Mark the origin.** Proposals from an unattended run are written `Status: proposed (unattended run)`, so nobody later reads silence as consent. Step 5 of `run` makes that decision; the skill cannot see a `-p` flag, so set `ICM_UNATTENDED=1` in the environment of the scheduled command and the decision is made for it.
+- **Leave the necessity column blank** on an unattended run, and say in the report that it was skipped. Step 7 of `run` does both.
 - **The output is a queue, not a decision.** You read it when you sit down, with `/icm-forge show`, and act on it with `/icm-forge approve`.
 
 Approval stays with the human whether the run was scheduled or typed. The schedule changes when the forge looks. It changes nothing about who decides.

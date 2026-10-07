@@ -145,7 +145,7 @@ The wiki archetype carries the grounding invariant: every load-bearing fact in a
 
 - Write only what the interview and the disk support. Do not invent a folder, a task, or a status.
 - Every folder in the workspace map gets a comment saying what it holds. The map is a fenced block, because `icm-check.sh --drift` reads the first fenced block in `IDENTITY.md` and compares it to the real tree.
-- Required headings per file kind are in `icm.defaults.json` under `required_sections`. Missing one is a check failure, not a style choice.
+- Required headings per file kind are in `icm.defaults.json` under `required_sections`. For `IDENTITY.md` and every `CONTEXT.md` a missing one is a check failure; for rule books, the wiki index and log, and the ledger the list is the shape to write, graded by you, not by a script.
 - Character budgets come from `$ICM_HOME/spec/budgets.md`. A file over its ceiling is a failure. Cut the file.
 - If canonical content already exists elsewhere in the repo, the rule book re-exports it: canonical path in a blockquote at the top, a short quick reference, then a link. It does not duplicate the content.
 - Cross references point outward only. If the target already points back at you, restructure.
@@ -163,9 +163,11 @@ Only if answer 9 asked for them. **An adapter is an alias, never a copy.** Copyi
 @IDENTITY.md
 @CONTEXT.md
 
-Read IDENTITY.md first, then CONTEXT.md, then the job card in the folder you are working in. Nothing else loads by default.
+Read IDENTITY.md first, then CONTEXT.md, then the job card in the folder you are working in. Nothing else loads by default. Before your last reply, run the Session Close in CONTEXT.md.
 <!-- icm:end -->
 ```
+
+That block is the one `icm_body_claude_block` in `scripts/icm_lib.sh` writes; copy it from there, not from here, if the two ever differ. The last sentence is the write-back obligation, and the root `CONTEXT.md` you scaffold from `interview-templates/CONTEXT.root.md.tmpl` carries the matching `## Session Close` section, which `icm-check.sh --sections` requires.
 
 `AGENTS.md`, `GEMINI.md`, `.cursorrules` and `.windsurfrules` take the loose form: the checker only requires that they mention `IDENTITY.md` somewhere. One sentence pointing the reader at `IDENTITY.md` and then at `CONTEXT.md` is enough, and it is the whole file. Never paste the body of `IDENTITY.md` into any of them; a second source of truth is exactly the failure the layer 0 file exists to prevent.
 

@@ -94,7 +94,7 @@ Plan does two separate things and it is worth keeping them apart in your head.
 
 Those five rule book filenames are the whole set. There are no others. Numbered stage folders are not an install row at all; they come from `skills/icm-stage/SKILL.md`.
 
-Note for anyone reading `skills/icm-scaffold/SKILL.md` next: `icm-plan.sh` takes no archetype flag. Every install writes the table above. The `quick`, `full` and `wiki` archetypes belong to the scaffold interview, where a human decides what gets written by hand.
+Note for anyone reading `skills/icm-scaffold/SKILL.md` next: `icm-plan.sh --archetype quick|full|wiki` picks which rows of the table above are written, and the default is `quick`, which writes none of the `raw/`, `wiki/`, `output/` or `_config/grounding.md` rows. `spec/CLI-CONTRACT.md` section 7 owns the three row sets. A retrofit that wants the knowledge pair passes `--archetype wiki`; the scaffold interview is where a human decides which archetype a new workspace gets.
 
 **It surveys your tree, and reports.** Plan walks the target two levels deep, prunes `excluded_globs`, skips the directories the install manifest owns, and emits one `SURVEY` row per surviving folder. `SURVEY` is not a disposition: apply ignores every survey row and never writes a job card. The verdicts are `has-card`, `staged`, `card` and `none`, and the script says out loud what they are worth:
 

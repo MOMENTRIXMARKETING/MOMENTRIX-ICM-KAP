@@ -203,7 +203,7 @@ interview; `icm-plan.sh --archetype ID` picks one on the retrofit path.
 
 `architect` is a workspace **shape**, not a fourth install manifest.
 `icm-plan.sh --archetype` takes `quick`, `full` and `wiki` only. You build the architect shape
-on top of a `full` install, one department at a time, with `/icm-context` and `/icm-stage add`.
+on top of a `full` install, one department at a time, with `/icm-context` and `/icm-stage <stage-name>`.
 It is Pattern 24 in [`spec/CONVENTIONS.md`](spec/CONVENTIONS.md).
 [`docs/architect.md`](docs/architect.md) says why it works and where the obvious version of it
 goes wrong, and [`examples/architect-company/`](examples/architect-company) is a worked tree.
@@ -241,7 +241,7 @@ shell command runs `sh "$ICM_HOME/scripts/icm-loop.sh" --index <workspace>` and 
 exit 1 when something is waiting. The reading runs on whatever agent you have, in Claude Code
 with `/schedule`, elsewhere with that harness's equivalent:
 
-- **Cadence: weekly.** A hole is one sev 3 miss, or two at sev 2, on the same path, and two
+- **Cadence: weekly.** A hole is `hole_sev3_count` misses at sev 3, or `hole_sev2_count` at sev 2, on the same path (`loop` in `icm.defaults.json`), and two
   misses take about a week to arrive. A daily run mostly reports nothing, and a report that is
   usually empty trains you to skip it.
 - **The routine's prompt is exactly `/icm-forge run`.** Nothing else. No extra instructions, no
@@ -259,7 +259,9 @@ approve anything, because approval is defined as a human in the turn naming a pr
 id, and there is no human in a scheduled turn. So a run that finds five holes writes five
 proposals and stops. Proposals from an unattended run are written
 `Status: proposed (unattended run)`, so nobody later reads silence as consent, and the "was the
-call necessary" column is left blank rather than guessed.
+call necessary" column is left blank rather than guessed. The skill cannot see from inside the
+prompt whether a human is present, so set `ICM_UNATTENDED=1` in the environment of the scheduled
+command (the launchd job, the cron line, the `claude -p` wrapper) and it marks every proposal.
 
 The output is a queue, not a decision. You read it when you sit down, with `/icm-forge show`,
 and act on it with `/icm-forge approve <id>`, which is the only mode in which a rule book
@@ -297,7 +299,7 @@ your project
 ```
 
 Numbered stage folders are **not** part of any install. You get one only when you ask for it,
-with `/icm-stage add`. Job cards for folders you already have are written by `/icm-context`.
+with `/icm-stage <stage-name>`. Job cards for folders you already have are written by `/icm-context`.
 
 `CLAUDE.md` and `.gitignore` are the two paths that are edited rather than created. Everything
 else on the list is written only where nothing exists.

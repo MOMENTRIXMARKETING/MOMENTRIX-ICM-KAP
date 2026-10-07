@@ -20,7 +20,7 @@
     "layer4_varies": true
   },
   "excluded_globs": [
-    ".git", ".github", ".claude", ".icm",
+    ".git", ".github", ".claude", ".icm", ".in_use",
     "node_modules", "venv", ".venv", "__pycache__", ".pytest_cache",
     "dist", "build", "out", ".next", ".nuxt", ".cache",
     "vendor", "target", ".terraform", "coverage", ".DS_Store"
@@ -69,6 +69,7 @@
     "archive_days": 60,
     "hole_sev3_count": 1,
     "hole_sev2_count": 2,
-    "recurrence_rewrite_count": 2
+    "recurrence_rewrite_count": 2,
+    "check_write_back_uses": 3
   }
 }

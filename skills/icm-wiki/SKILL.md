@@ -205,7 +205,7 @@ No script applies any of these. You run the search, you make the edit, and you s
 
 - Target missing → search `wiki/`. One match, fix it. Zero matches, remove the link, because a dead cross reference is not load-bearing. Several matches, report it.
 
-`icm-check.sh --routes` will not find any of these for you. It walks only files literally named `CONTEXT.md`, so no link inside a wiki article is checked by any script.
+`icm-check.sh --routes` will not find any of these for you. It walks only files literally named `CONTEXT.md`. `icm-check.sh --links` does walk every `.md` under the target, wiki articles included, and fails any relative link whose target is not on disk; what no script checks is whether the link points at the *right* article, so the sweep above is still yours.
 
 ### Mechanical reports, never fixed
 
@@ -306,7 +306,7 @@ Every row in that table is a *report*. The script never edits a wiki file and ne
 **Not checked by anything.** Say so rather than implying a machine is watching.
 
 - Whether `wiki/index.md` agrees with the files on disk. Nothing in `scripts/` reads the index, and `check_evidence.py` skips `index.md` and `log.md` by design. The index sweep in this file is yours.
-- Any link inside a wiki article. `icm-check.sh --routes` walks only files named `CONTEXT.md`.
+- Whether a link inside a wiki article points at the right article. `icm-check.sh --links` only proves the target exists on disk; `--routes` walks only files named `CONTEXT.md`.
 - The one-level nesting rule under `wiki/` and `raw/`. You check it with `find -type d` or nobody does.
 - The compile-time locate-before-write rule. No script watches you write. It is the grounding invariant's only load-bearing enforcement, and it is instruction, not machinery. Treat it accordingly.
 

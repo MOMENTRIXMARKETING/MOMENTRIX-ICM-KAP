@@ -1693,6 +1693,21 @@ REALBYTES=$(wc -c < "$BC/probe.md" | tr -d ' ')
 LIBBYTES=$(. "$SCRIPTS/icm_lib.sh" >/dev/null 2>&1; icm_chars "$BC/probe.md")
 assert_eq "the checker counts bytes, not characters, on multibyte input" "$LIBBYTES" "$REALBYTES"
 
+# locale: a file holding an invalid UTF-8 sequence must not kill the walk.
+# Under a UTF-8 locale macOS awk aborts on it ("towc: multibyte conversion
+# failure") and the checker died with exit 2 and no summary. icm_lib.sh pins
+# LC_ALL=C, so the run below forces the bad locale from outside and expects
+# the library to override it. (GitHub issue 5.)
+BL=$(fixture "badlocale")
+mkdir -p "$BL/_config" "$BL/_log"
+printf '# x\n\n## Workspace Map\n\n```\nx/\n├── _config/\n├── _log/\n├── bad.md\n├── CONTEXT.md\n└── IDENTITY.md\n```\n' > "$BL/IDENTITY.md"
+printf '# x\n' > "$BL/CONTEXT.md"
+printf '# note\n\n| a | b\342\210\n| 2 |\n' > "$BL/bad.md"
+run env LC_ALL=en_AU.UTF-8 LANG=en_AU.UTF-8 sh "$SCRIPTS/icm-check.sh" --placeholders --fences --budgets "$BL"
+assert_rc "an invalid UTF-8 byte in a .md file does not abort the checker under a UTF-8 locale" 0
+assert_out "the walk past a non-UTF-8 file still reaches the summary" "result: clean"
+assert_not_out "no awk multibyte conversion failure leaks out" "multibyte conversion failure"
+
 # adapter shape: the adapter icm-scaffold documents must pass --adapters
 AD=$(fixture "adaptershape")
 run "$SCRIPTS/icm-plan.sh" --quiet "$AD"
@@ -1837,6 +1852,190 @@ run "$SCRIPTS/icm-loop.sh" --index --starve "$LP"
 assert_rc "two modes at once is a usage error" 2
 run "$SCRIPTS/icm-loop.sh" --today 2026-13-40 "$LP"
 assert_rc "a malformed --today date is refused" 2
+
+# ------------------------------------------------ the 2026-10 defect hunt --
+# Each block below is a defect reproduced on ee91520 and fixed on the same
+# branch. The fixture is the reproduction; the assertion is the contract line.
+
+printf '\n%s\n' '-- hunt: the ledger is data, never a command --'
+HI=$(fixture "hunt inject")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HI"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HI"
+printf '| 2026-10-01 | Miss | 3 | $(touch "%s/PWNED") | what | fix |\n' "$HI" >> "$HI/_log/LOOP-LEDGER.md"
+printf '| 2026-10-01 | Use | x | `touch "%s/PWNED2"` | t | o | 0 |\n' "$HI" >> "$HI/_log/LOOP-LEDGER.md"
+printf "| 2026-10-01 | Use | q | it's.md | t | o | 0 |\n" >> "$HI/_log/LOOP-LEDGER.md"
+touch "$HI/it's.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HI"
+assert_nofile "a \$(...) in a ledger path column is never executed" "$HI/PWNED"
+assert_nofile "a backtick command in a ledger path column is never executed" "$HI/PWNED2"
+assert_out "a path holding a single quote still resolves on disk" "\`it's.md\` | 1 | 1 | 2026-10-01 | 0 | 0 | 0 | - | ok |"
+
+printf '\n%s\n' '-- hunt: .in_use is tool state (issue 3) --'
+HU=$(fixture "hunt inuse")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HU"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HU"
+mkdir "$HU/.in_use"
+run "$SCRIPTS/icm-check.sh" --drift "$HU"
+assert_rc "a plugin install's .in_use lock directory is not a drift finding" 0
+assert_not_out "the drift check never names .in_use" "does not document: .in_use"
+if grep -q -x '\.in_use' "$ROOT/spec/excluded-folders.md" && grep -q '"\.in_use"' "$ROOT/icm.defaults.json"; then
+    t_pass "excluded_globs and its human rendering both carry .in_use"
+else
+    t_fail "excluded_globs and its human rendering both carry .in_use" "one side is missing it"
+fi
+
+printf '\n%s\n' '-- hunt: drift compares whole names --'
+HD=$(fixture "hunt drift names")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HD"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HD"
+mkdir "$HD/log"
+run "$SCRIPTS/icm-check.sh" --drift "$HD"
+assert_rc "a real log/ is not vouched for by the map's _log/ row" 1
+assert_out "the undocumented entry is named whole" "does not document: log"
+
+printf '\n%s\n' '-- hunt: links accept a title and %20 --'
+HL=$(fixture "hunt links")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HL"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HL"
+mkdir "$HL/01 - notes"
+printf 'See [m](IDENTITY.md "the map"), [n](01%%20-%%20notes/) and [bad](nope.md).\n' > "$HL/README.md"
+run "$SCRIPTS/icm-check.sh" --links "$HL"
+assert_not_out "a link title is not part of the path" 'IDENTITY.md "the map"'
+assert_not_out "%20 in a link is a space on disk" "01%20-%20notes"
+assert_out "a dead link still fails" "does not exist: nope.md"
+
+printf '\n%s\n' '-- hunt: check and loop refuse what they cannot read --'
+HR=$(fixture "hunt unreadable")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HR"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HR"
+chmod 0300 "$HR"
+run "$SCRIPTS/icm-check.sh" "$HR"
+assert_rc "the checker exits 2 on a target it cannot list, never clean" 2
+run "$SCRIPTS/icm-loop.sh" "$HR"
+assert_rc "the loop exits 2 on a target it cannot list" 2
+chmod 0700 "$HR"
+HF=$(fixture "hunt icm file")
+touch "$HF/.icm"
+run "$SCRIPTS/icm-check.sh" "$HF"
+assert_rc "a .icm that is a file is a preflight refusal in the checker too" 2
+
+printf '\n%s\n' '-- hunt: the quick map documents only what quick installs --'
+HQ=$(fixture "hunt quick map")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HQ"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HQ"
+if grep -q "grounding.md" "$HQ/IDENTITY.md"; then
+    t_fail "a quick install's map does not document _config/grounding.md, which it never writes" "$(grep -n grounding "$HQ/IDENTITY.md")"
+else
+    t_pass "a quick install's map does not document _config/grounding.md, which it never writes"
+fi
+HQW=$(fixture "hunt wiki map")
+run "$SCRIPTS/icm-plan.sh" --quiet --archetype wiki "$HQW"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HQW"
+if grep -q "grounding.md" "$HQW/IDENTITY.md" && [ -f "$HQW/_config/grounding.md" ]; then
+    t_pass "a wiki install's map documents the grounding.md it writes"
+else
+    t_fail "a wiki install's map documents the grounding.md it writes" "$(grep -n grounding "$HQW/IDENTITY.md"; ls "$HQW/_config")"
+fi
+
+printf '\n%s\n' '-- hunt: rollback closes once the kept file is gone --'
+HK=$(fixture "hunt rollback kept")
+printf 'mine\n' > "$HK/CLAUDE.md"
+run "$SCRIPTS/icm-plan.sh" --quiet "$HK"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HK"
+printf 'edited\n' >> "$HK/IDENTITY.md"
+run "$SCRIPTS/icm-rollback.sh" "$HK"
+assert_out "the edited file is kept" "kept     IDENTITY.md"
+run "$SCRIPTS/icm-rollback.sh" "$HK"
+assert_not_out "a file already restored is not reported as edited" "kept     CLAUDE.md"
+assert_out "a file already restored is named as such" "CLAUDE.md already holds its pre-image"
+rm "$HK/IDENTITY.md"
+run "$SCRIPTS/icm-rollback.sh" "$HK"
+assert_rc "deleting the kept file by hand closes the run, as the note promises" 0
+HK_MARK=$(ls "$HK"/.icm/backup/*/ROLLED-BACK 2>/dev/null | head -n 1)
+assert_file "the run carries its ROLLED-BACK marker" "$HK_MARK"
+
+printf '\n%s\n' '-- hunt: open items O2 O3 O4 O6 O7 O8 --'
+# O4: a fresh install must not warn on its own rule book
+HO=$(fixture "hunt fresh warn")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HO"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HO"
+run "$SCRIPTS/icm-check.sh" --budgets --sections "$HO"
+assert_not_out "a fresh install carries no budget warning on its own rule books" "over the rulebook.md target"
+HO_MISS=""
+for h in "## Quick Reference" "## One Home Per Fact" "## Where A Learned Thing Lives" "## When a rule is wrong"; do
+    grep -q -x -F -- "$h" "$HO/_config/conventions.md" || HO_MISS="$HO_MISS $h"
+done
+if [ -z "$HO_MISS" ]; then
+    t_pass "the trimmed conventions book still carries every heading required_sections lists for it"
+else
+    t_fail "the trimmed conventions book still carries every heading required_sections lists for it" "missing:$HO_MISS"
+fi
+
+# O2: the check-write-back threshold comes from icm.defaults.json
+CWB=$(icm_json_num "$ROOT/icm.defaults.json" loop.check_write_back_uses 0)
+assert_eq "loop.check_write_back_uses exists in icm.defaults.json" "$CWB" "3"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HO"
+assert_out "the index legend cites the configured check-write-back count" "| check-write-back | 3 or more uses"
+if grep -q "uses30\[p\] >= 3" "$SCRIPTS/icm-loop.sh"; then
+    t_fail "no verdict threshold is a literal in icm-loop.sh" "$(grep -n 'uses30\[p\] >= 3' "$SCRIPTS/icm-loop.sh")"
+else
+    t_pass "no verdict threshold is a literal in icm-loop.sh"
+fi
+
+# O6: --today and the ledger want a date that exists
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-02-30 "$HO"
+assert_rc "--today 2026-02-30 is refused" 2
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-04-31 "$HO"
+assert_rc "--today 2026-04-31 is refused" 2
+run "$SCRIPTS/icm-loop.sh" --starve --today 2024-02-29 "$HO"
+assert_rc "--today 2024-02-29 is a real leap day" 0
+printf '| 2026-13-45 | Use | bogus | _config/style.md | t | o | 0 |\n' >> "$HO/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HO"
+assert_not_out "a ledger line dated 2026-13-45 is not counted" "2026-13-45"
+
+# O8: a truncated Use line is a private shape, not a row
+printf '| 2026-10-05 | Use |\n' >> "$HO/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --today 2026-10-07 "$HO"
+assert_not_out "a Use line with no name and no path makes no index row" "|  | ? | \`\` |"
+
+# O7: CRLF is named, not misdiagnosed
+HC=$(fixture "hunt crlf")
+mkdir -p "$HC/skills/foo"
+printf -- '---\r\nname: foo\r\ndescription: "x"\r\nuser-invocable: true\r\n---\r\n# Foo\r\n' > "$HC/skills/foo/SKILL.md"
+run "$SCRIPTS/icm-plan.sh" --quiet "$HC"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HC"
+run "$SCRIPTS/icm-check.sh" --frontmatter "$HC"
+assert_out "a CRLF SKILL.md is reported as CRLF" "CRLF line endings"
+assert_not_out "a CRLF SKILL.md is not reported as missing frontmatter" "line 1 is not ---"
+
+# O3: the shipped budgets example reads the defaults file, not a memory of it
+NEWRAW=$(ls "$ROOT"/examples/raw/*-icm-defaults-budgets.md | sort | tail -n 1)
+O3_BAD=""
+for k in IDENTITY.md CONTEXT.root.md CONTEXT.stage.md CONTEXT.folder.md rulebook.md wiki_article.md; do
+    t=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.target_chars" 0)
+    c=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.ceiling_chars" 0)
+    grep -q -F -- "- $k: target $t, ceiling $c" "$NEWRAW" || O3_BAD="$O3_BAD $k"
+done
+ft=$(icm_json_num "$ROOT/icm.defaults.json" loading_budget.fixed_total 0)
+grep -q -F -- "fixed_total as $ft" "$NEWRAW" || O3_BAD="$O3_BAD fixed_total"
+grep -q -F -- "| Layer 1 routing at a workspace root | $(icm_json_num "$ROOT/icm.defaults.json" budgets.CONTEXT.root.md.target_chars 0) |" "$ROOT/examples/wiki/icm-defaults-budgets.md" || O3_BAD="$O3_BAD wiki-table"
+if [ -z "$O3_BAD" ]; then
+    t_pass "the newest budgets raw reading and its article match icm.defaults.json"
+else
+    t_fail "the newest budgets raw reading and its article match icm.defaults.json" "stale:$O3_BAD"
+fi
+# and spec/budgets.md's table restates nothing the defaults do not say
+O3_SPEC=""
+for k in IDENTITY.md CONTEXT.root.md CONTEXT.stage.md CONTEXT.folder.md rulebook.md wiki_article.md; do
+    t=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.target_chars" 0)
+    c=$(icm_json_num "$ROOT/icm.defaults.json" "budgets.$k.ceiling_chars" 0)
+    grep -E -q -- "^\| \`$k\` \|.*\| $t \| $c \|" "$ROOT/spec/budgets.md" || O3_SPEC="$O3_SPEC $k"
+done
+if [ -z "$O3_SPEC" ]; then
+    t_pass "every row of the table in spec/budgets.md equals icm.defaults.json"
+else
+    t_fail "every row of the table in spec/budgets.md equals icm.defaults.json" "drifted:$O3_SPEC"
+fi
 
 # ---------------------------------------------------------------- the tally --
 
