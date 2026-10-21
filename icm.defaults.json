@@ -62,6 +62,12 @@
     "forge_proposals": "_log/FORGE-PROPOSALS.md",
     "skill_index": "_log/SKILL-INDEX.md"
   },
+  "librarian": {
+    "note": "Read by scripts/icm_librarian.py, optional python3 tier. Days are calendar days back from today.",
+    "silent_days": 7,
+    "proposal_age_days": 7,
+    "lint_window_days": 30
+  },
   "loop": {
     "note": "Read by icm-loop.sh. Days are calendar days back from today. Sev thresholds decide when the index calls a hole.",
     "starve_days": 7,
