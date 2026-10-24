@@ -365,6 +365,13 @@ load-bearing literal in a `wiki/` article against the `raw/` files that article 
 needs `python3` 3.10 or newer. If `python3` is missing, `scripts/icm-check.sh` skips it, says
 so, and still passes on everything else. Nothing in the toolkit depends on it being there.
 
+A second optional extra, same tier. `scripts/icm_librarian.py` compiles the continuity layer:
+`_log/HANDOFF.md`, the one page any agent reads on arrival, plus a skill registry and a wiki
+ingest queue. It reports miss lines in a private shape, folders changed with no ledger line
+naming them (silent sessions), forge proposals past their age, second ledgers and stale wiki
+articles. Run it from a scheduler after `icm-loop.sh --index`. Thresholds sit under
+`librarian` in `icm.defaults.json`. It never writes outside `_log/`.
+
 ---
 
 ## Where the numbers live
@@ -427,6 +434,7 @@ ICM_HOME=$(pwd)
 sh tests/run-tests.sh                  # the POSIX harness
 sh "$ICM_HOME/scripts/icm-check.sh" .  # the checker, on this repo
 python3 tests/test_check_evidence.py   # optional, stdlib unittest, no pytest
+python3 tests/test_icm_librarian.py    # optional, stdlib unittest, no pytest
 ```
 
 Both of the first two must be green before anything ships. Test fixtures deliberately live
