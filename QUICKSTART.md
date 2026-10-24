@@ -376,8 +376,10 @@ Then the order that works:
 
 ```sh
 # 1. prune the noise first: add _old, zz-archive and friends, by name, to
-#    excluded_globs in icm.defaults.json (no slash; ? stands for a space),
-#    then re-plan. cheapest ten minutes here.
+#    excluded_globs in an icm.defaults.json at your project root (no slash;
+#    ? stands for a space), then re-plan. a list there replaces the
+#    toolkit's whole, so copy the toolkit's entries in first. cheapest ten
+#    minutes here.
 sh "$ICM_HOME/scripts/icm-plan.sh" .
 
 # 2. install the top layers only. zero files moved.

@@ -12,7 +12,7 @@
 # POSIX sh only. No bashisms. Tested with: sh -n scripts/icm_lib.sh
 #
 # What lives here:
-#   json      icm_json_get / icm_json_list / icm_json_num / icm_json_globs_ok
+#   json      icm_json_get / icm_json_list / icm_json_num / icm_json_parse / icm_json_globs_ok / icm_json_merge
 #   walking   icm_top_entries / icm_walk / icm_walk_files / icm_walk_md / icm_excluded
 #   counting  icm_chars / icm_lines
 #   markdown  icm_fm_get / icm_fm_block / icm_first_fence_block / icm_fence_count
@@ -60,6 +60,17 @@ ICM_JSON_CACHE=""
 # The keys whose entries are globs, checked by icm_json_globs_ok at every
 # load. Key names, not values: the entries live in icm.defaults.json.
 ICM_GLOB_KEYS="excluded_globs never_write"
+# The keys a workspace icm.defaults.json cannot simply overwrite, read by
+# icm_json_merge. Key names, not values. spec/CLI-CONTRACT.md 3.0 names each.
+#   own        the toolkit's identity. A workspace copy is dropped.
+#   union      every list under these. A workspace may add an entry, never remove one.
+#   intersect  a workspace may drop an entry, never add one: enforce sooner, never relax.
+#   person     set per person in the environment or .icm/local.json. A committed
+#              value is dropped with a warn.
+ICM_OWN_KEYS="toolkit slug version"
+ICM_UNION_KEYS="secrets archive.immutable archive.append_only"
+ICM_INTERSECT_KEYS="checks.warn_first"
+ICM_PERSON_KEYS="share who"
 
 # ------------------------------------------------------------------- basics --
 
@@ -267,27 +278,67 @@ icm_count() {
 # Flatten a JSON document to "dotted.path<TAB>value" lines.
 # Keys that contain dots (IDENTITY.md) simply become part of the path, so a
 # lookup is always by the exact flattened string.
+# icm_json_flatten <file> [lists-file]: with a second argument, the dotted
+# path of every list, empty ones included, also goes to that file, one per
+# line. The merge needs it: an empty list emits no value line of its own.
+# A file that is not one JSON object (empty, cut off, a bare word, a missing
+# comma, text after the last brace) stops at its first fault: status 1, and
+# the fault, with its line, on stderr. The lines before it are no use.
 icm_json_flatten() {
-    awk '
+    awk -v lf="${2:-}" '
     { s = s $0 "\n" }
     END {
         # The dotted path is rebuilt inline at each emit. An awk subroutine would
         # read better, but the bashism sweep matches that keyword anywhere in
         # this file and awk has no other way to spell it.
-        n = length(s); i = 1; depth = 0
+        # w is what the grammar wants next: top (the opening {), kc (a key or
+        # }), k (a key), co (a :), v (a value), vc (a value or ]), cc (a comma
+        # or the closing bracket), end (nothing more). A token that does not fit
+        # breaks the walk, and the fault is named after it.
+        n = length(s); i = 1; depth = 0; w = "top"; err = ""
         while (i <= n) {
             c = substr(s, i, 1)
             if (c == " " || c == "\t" || c == "\r" || c == "\n") { i++; continue }
-            if (c == "{") { depth++; typ[depth] = "o"; expk[depth] = 1; ky[depth] = ""; i++; continue }
-            if (c == "[") { depth++; typ[depth] = "a"; idx[depth] = 0; i++; continue }
+            if (w == "end") { break }
+            if (c == "{") {
+                if (w != "top" && w != "v" && w != "vc") { break }
+                depth++; typ[depth] = "o"; ky[depth] = ""; w = "kc"; i++; continue
+            }
+            if (c == "[") {
+                if (w != "v" && w != "vc") { break }
+                if (lf != "" && depth >= 1) {
+                    P = ""
+                    for (d = 1; d <= depth; d++) {
+                        if (typ[d] == "o") { P = (P == "" ? ky[d] : P "." ky[d]) }
+                        else               { P = (P == "" ? idx[d] "" : P "." idx[d]) }
+                    }
+                    print P > lf
+                }
+                depth++; typ[depth] = "a"; idx[depth] = 0; w = "vc"; i++; continue
+            }
+            if (c == "}") {
+                if (typ[depth] != "o" || (w != "kc" && w != "cc")) { break }
+            }
+            if (c == "]") {
+                if (typ[depth] != "a" || (w != "vc" && w != "cc")) { break }
+            }
             if (c == "}" || c == "]") {
                 depth--
                 if (depth >= 1 && typ[depth] == "a") { idx[depth]++ }
+                w = (depth == 0 ? "end" : "cc")
                 i++; continue
             }
-            if (c == ",") { if (typ[depth] == "o") { expk[depth] = 1 } i++; continue }
-            if (c == ":") { expk[depth] = 0; i++; continue }
+            if (c == ",") {
+                if (w != "cc") { break }
+                w = (typ[depth] == "o" ? "k" : "v")
+                i++; continue
+            }
+            if (c == ":") {
+                if (w != "co") { break }
+                w = "v"; i++; continue
+            }
             if (c == "\"") {
+                if (w != "kc" && w != "k" && w != "v" && w != "vc") { break }
                 j = i + 1; str = ""
                 while (j <= n) {
                     ch = substr(s, j, 1)
@@ -301,8 +352,9 @@ icm_json_flatten() {
                     if (ch == "\"") { break }
                     str = str ch; j++
                 }
+                if (j > n) { err = "a string that never closes"; break }
                 i = j + 1
-                if (typ[depth] == "o" && expk[depth] == 1) { ky[depth] = str }
+                if (w == "kc" || w == "k") { ky[depth] = str; w = "co" }
                 else {
                     P = ""
                     for (d = 1; d <= depth; d++) {
@@ -311,16 +363,20 @@ icm_json_flatten() {
                     }
                     printf "%s\t%s\n", P, str
                     if (typ[depth] == "a") { idx[depth]++ }
+                    w = "cc"
                 }
                 continue
             }
+            if (w != "v" && w != "vc") { break }
             j = i
             while (j <= n) {
                 ch = substr(s, j, 1)
                 if (ch == "," || ch == "]" || ch == "}" || ch == " " || ch == "\t" || ch == "\r" || ch == "\n") { break }
                 j++
             }
-            val = substr(s, i, j - i); i = j
+            val = substr(s, i, j - i)
+            if (val !~ /^(true|false|null|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][-+]?[0-9]+)?)$/) { break }
+            i = j
             P = ""
             for (d = 1; d <= depth; d++) {
                 if (typ[d] == "o") { P = (P == "" ? ky[d] : P "." ky[d]) }
@@ -328,13 +384,52 @@ icm_json_flatten() {
             }
             printf "%s\t%s\n", P, val
             if (typ[depth] == "a") { idx[depth]++ }
+            w = "cc"
+        }
+        # Name the fault: the token the walk broke on, or the end it reached
+        # too soon. The line is counted up to where that token starts.
+        if (i <= n || err != "") {
+            if (err == "") {
+                if (index("{}[],:", c) > 0) { tok = c }
+                else if (c == "\"") { tok = "a string" }
+                else {
+                    j = i
+                    while (j <= n && index(",]}:\"{[ \t\r\n", substr(s, j, 1)) == 0) { j++ }
+                    tok = substr(s, i, (j - i > 24 ? 24 : j - i))
+                }
+                if (tok != "a string") { tok = "\"" tok "\"" }
+                if (w == "end")      { err = tok " after the closing }" }
+                else if (w == "top") { err = tok " where the opening { belongs" }
+                else if (w == "kc")  { err = tok " where a key or } belongs" }
+                else if (w == "k")   { err = tok " where a key belongs" }
+                else if (w == "co")  { err = tok " where a : belongs" }
+                else if (w == "v")   { err = tok " where a value belongs" }
+                else if (w == "vc")  { err = tok " where a value or ] belongs" }
+                else { err = tok " where a comma or a closing " (typ[depth] == "o" ? "}" : "]") " belongs" }
+            }
+            pre = substr(s, 1, i)
+            err = "line " (gsub(/\n/, "", pre) + 1) ": " err
+        } else if (w == "top") {
+            err = "it holds no JSON object"
+        } else if (w != "end") {
+            err = "it ends inside an object or a list"
+        }
+        if (err != "") {
+            print err | "cat 1>&2"
+            close("cat 1>&2")
+            exit 1
         }
     }
     ' "$1"
 }
 
 # Flatten one defaults file into the cache. Returns 2, after a FAIL line,
-# when a glob entry is refused; the cache is then gone, so nothing reads it.
+# when the file cannot be read, is not valid JSON or holds a refused glob
+# entry; the cache is then gone, so nothing reads it.
+# A workspace icm.defaults.json is merged over the toolkit's own file first
+# (icm_json_merge), so the cache always holds the merged view, and every key
+# the workspace file lacks comes from the toolkit. A warn line on stderr
+# names each workspace key the merge ignored.
 icm_json_load() {
     icm_tmp_init
     if [ "$ICM_JSON_SRC" = "$1" ] && [ -f "$ICM_JSON_CACHE" ]; then
@@ -343,12 +438,200 @@ icm_json_load() {
     [ -f "$1" ] || icm_die "no such defaults file: $1"
     ICM_JSON_CACHE="$ICM_TMPDIR/defaults.flat"
     ICM_JSON_SRC=""
-    icm_json_flatten "$1" > "$ICM_JSON_CACHE"
-    if ! icm_json_globs_ok "$ICM_JSON_CACHE" "$1"; then
-        rm -f "$ICM_JSON_CACHE"
+    rm -f "$ICM_JSON_CACHE"
+    _jl_base=$(icm_json_base "$1")
+    # An unreadable file would flatten to nothing and the merge would carry
+    # on with the toolkit alone, so it is a refusal, like a bad glob.
+    for _jl_f in "$1" "$_jl_base"; do
+        if [ -n "$_jl_f" ] && [ ! -r "$_jl_f" ]; then
+            printf 'FAIL cannot read %s (check its permissions). nothing was walked or written.\n' "$_jl_f" >&2
+            return 2
+        fi
+    done
+    # So would a file that is not valid JSON, or worse, merge as junk.
+    _jl_t="$ICM_TMPDIR/defaults.toolkit"
+    _jl_w="$ICM_TMPDIR/defaults.workspace"
+    if [ -n "$_jl_base" ]; then
+        icm_json_parse "$_jl_base" "$_jl_t" || return 2
+    fi
+    icm_json_parse "$1" "$_jl_w" || return 2
+    if [ -z "$_jl_base" ]; then
+        icm_json_globs_ok "$_jl_w.flat" "$1" || return 2
+        mv "$_jl_w.flat" "$ICM_JSON_CACHE"
+        ICM_JSON_SRC="$1"
+        return 0
+    fi
+    # Each file is held to the glob alphabet on its own, so a refusal names
+    # the file that holds the bad entry.
+    if ! icm_json_globs_ok "$_jl_t.flat" "$_jl_base" || ! icm_json_globs_ok "$_jl_w.flat" "$1"; then
         return 2
     fi
+    icm_json_merge "$_jl_t" "$_jl_w" "$1" > "$ICM_JSON_CACHE"
+    if [ -s "$_jl_w.warn" ]; then
+        cat "$_jl_w.warn" >&2
+    fi
     ICM_JSON_SRC="$1"
+}
+
+# icm_json_parse <file> <stem>: flatten <file> into <stem>.flat and its list
+# paths into <stem>.lists. When <file> is not valid JSON, <stem>.err holds
+# the fault and a FAIL line naming the file goes to stderr, status 2.
+icm_json_parse() {
+    : > "$2.lists"
+    if icm_json_flatten "$1" "$2.lists" > "$2.flat" 2> "$2.err"; then
+        return 0
+    fi
+    printf 'FAIL %s is not valid JSON (%s). nothing was walked or written. fix the file, then rerun.\n' \
+        "$1" "$(head -n 1 "$2.err")" >&2
+    return 2
+}
+
+# icm_json_base <defaults file> -> the toolkit's own icm.defaults.json when
+# <file> is a workspace icm.defaults.json to merge over it, else nothing. The
+# toolkit's file itself, or any file of another name, loads alone.
+icm_json_base() {
+    case "$1" in
+        icm.defaults.json|*/icm.defaults.json) ;;
+        *) return 0 ;;
+    esac
+    [ -n "${ICM_HOME:-}" ] && [ -f "$ICM_HOME/icm.defaults.json" ] || return 0
+    _jb_t=$(icm_abspath "$ICM_HOME/icm.defaults.json")
+    [ "$(icm_abspath "$1")" = "$_jb_t" ] && return 0
+    printf '%s\n' "$_jb_t"
+}
+
+# icm_json_merge <toolkit stem> <workspace stem> <workspace file>
+# Each stem names three files: <stem>.flat (icm_json_flatten output),
+# <stem>.lists (its list paths), and, for the workspace, <stem>.warn, which
+# this writes. The merged flat lines go to stdout.
+#
+# Key by key, the workspace wins. A list the workspace sets replaces the
+# toolkit's list whole, empty included. The four key lists above are the
+# exceptions: own keys stay the toolkit's, a union list is the toolkit's
+# entries then the workspace's new ones, an intersect list keeps only the
+# toolkit entries the workspace also lists, and a person key in a committed
+# file is dropped. A workspace value under a union or intersect key that is
+# not a list entry is dropped too. Every drop but an own key is one warn line.
+# A list is renumbered when it is rebuilt, so icm_json_list reads it in order.
+icm_json_merge() {
+    : > "$2.warn"
+    awk -F '\t' -v src="$3" -v wf="$2.warn" \
+        -v ok="$ICM_OWN_KEYS" -v uk="$ICM_UNION_KEYS" \
+        -v ik="$ICM_INTERSECT_KEYS" -v pk="$ICM_PERSON_KEYS" '
+    BEGIN {
+        no = split(ok, O, " "); nu = split(uk, U, " ")
+        ni = split(ik, I, " "); np = split(pk, PK, " ")
+    }
+    pass == 1 { tl[$0] = 1; next }
+    pass == 2 { wl[$0] = 1; next }
+    {
+        # pass 3 is the toolkit, pass 4 the workspace. A line with no tab is
+        # the rest of a value that held a newline, and follows its line.
+        n++; side[n] = pass; line[n] = $0
+        t = index($0, "\t")
+        if (t == 0) { cont[n] = 1; next }
+        key[n] = substr($0, 1, t - 1); val[n] = substr($0, t + 1)
+    }
+    END {
+        # The class of every line: own, person, union or inter (an entry of a
+        # protected list), fixedu or fixedi (anything else under one), plain.
+        for (j = 1; j <= n; j++) {
+            if (cont[j]) { cls[j] = cls[j - 1]; arr[j] = arr[j - 1]; root[j] = root[j - 1]; continue }
+            k = key[j]; cls[j] = "plain"; arr[j] = ""; root[j] = ""; el = ""
+            if (match(k, /\.[0-9]+$/)) {
+                el = substr(k, 1, RSTART - 1)
+                if (side[j] == 3 && !(el in tl)) { el = "" }
+                if (side[j] == 4 && !(el in wl)) { el = "" }
+            }
+            for (x = 1; x <= no; x++) { if (k == O[x]) { cls[j] = "own" } }
+            for (x = 1; x <= np; x++) {
+                if (k == PK[x] || index(k, PK[x] ".") == 1) { cls[j] = "person"; root[j] = PK[x] }
+            }
+            for (x = 1; x <= nu; x++) {
+                if (k == U[x] || index(k, U[x] ".") == 1) {
+                    cls[j] = "fixedu"; root[j] = U[x]
+                    if (el != "") { cls[j] = "union"; arr[j] = el }
+                }
+            }
+            for (x = 1; x <= ni; x++) {
+                if (k == I[x] || index(k, I[x] ".") == 1) {
+                    cls[j] = "fixedi"; root[j] = I[x]
+                    if (el == I[x]) { cls[j] = "inter"; arr[j] = el; inter[el] = 1 }
+                }
+            }
+            if (side[j] == 4 && cls[j] == "plain") { wplain[k] = 1 }
+        }
+        # The toolkit lines, minus every plain key the workspace sets and every
+        # line inside a list the workspace sets. Protected lists are collected.
+        for (j = 1; j <= n; j++) {
+            if (side[j] != 3) { continue }
+            if (cont[j]) { if (shown) { print line[j] } continue }
+            c = cls[j]; k = key[j]; shown = 0
+            if (c == "union" || c == "inter") {
+                a = arr[j]; v = val[j]
+                if (!(a in seen)) { seen[a] = 1; order[++m] = a }
+                if (!((a, v) in has)) { has[a, v] = 1; lv[a, ++lc[a]] = v }
+                tv[a, v] = 1
+                continue
+            }
+            if (c == "plain") {
+                if (k in wplain) { continue }
+                drop = 0; o = 0
+                while ((p = index(substr(k, o + 1), ".")) > 0) {
+                    o += p
+                    pre = substr(k, 1, o - 1)
+                    if (substr(k, o + 1, 1) ~ /[0-9]/ && (pre in wl)) { drop = 1; break }
+                }
+                if (drop) { continue }
+            }
+            print line[j]; shown = 1
+        }
+        # The workspace lines. Plain ones win. A union entry is added once. An
+        # intersect entry only filters. The rest are dropped, said once per key.
+        for (j = 1; j <= n; j++) {
+            if (side[j] != 4) { continue }
+            c = cls[j]
+            if (c == "plain") { print line[j]; continue }
+            if (cont[j] || c == "own") { continue }
+            a = arr[j]; v = val[j]
+            if (c == "union") {
+                if (!(a in seen)) { seen[a] = 1; order[++m] = a }
+                if (!((a, v) in has)) { has[a, v] = 1; lv[a, ++lc[a]] = v }
+                continue
+            }
+            if (c == "inter") {
+                want[a, v] = 1
+                if (!((a, v) in tv) && !((a, v) in said)) {
+                    said[a, v] = 1
+                    printf "warn key %s in %s lists %s, which the toolkit enforces. a workspace may enforce a rule sooner, never relax one, so %s stays enforced.\n", a, src, v, v > wf
+                }
+                continue
+            }
+            w = key[j]
+            if (match(w, /\.[0-9]+$/) && (substr(w, 1, RSTART - 1) in wl)) { w = substr(w, 1, RSTART - 1) }
+            if (w in said) { continue }
+            said[w] = 1
+            if (c == "person") {
+                printf "warn key %s in %s is ignored. %s is set per person, in the environment or in .icm/local.json, never in a committed file.\n", w, src, root[j] > wf
+            } else if (c == "fixedu") {
+                printf "warn key %s in %s is ignored. %s is union only: a workspace may add list entries there, never change or remove one.\n", w, src, root[j] > wf
+            } else {
+                printf "warn key %s in %s is ignored. %s takes a list, and a workspace may only drop entries from it.\n", w, src, root[j] > wf
+            }
+        }
+        # The protected lists, renumbered from 0. An intersect list the
+        # workspace sets keeps only the toolkit entries it also lists.
+        for (x = 1; x <= m; x++) {
+            a = order[x]; e = 0
+            for (y = 1; y <= lc[a]; y++) {
+                v = lv[a, y]
+                if ((a in inter) && (a in wl) && !((a, v) in want)) { continue }
+                printf "%s.%d\t%s\n", a, e, v
+                e++
+            }
+        }
+    }
+    ' pass=1 "$1.lists" pass=2 "$2.lists" pass=3 "$1.flat" pass=4 "$2.flat"
 }
 
 # icm_json_globs_ok <flattened cache> <source file>
@@ -536,6 +819,8 @@ icm_is_owned_dir() {
 # True when every direct file in a directory carries an extension listed under
 # asset_extensions in icm.defaults.json. With no such key nothing is ever
 # asset-only, because the list has exactly one home and this is not it.
+# The list is matched one whole line at a time with grep -x -F, never split
+# into words, so an entry such as * is a word and never a glob on the cwd.
 icm_asset_only() {
     _ao_dir="$1"
     _ao_exts=$(icm_json_list "$ICM_DEFAULTS" asset_extensions)
@@ -549,11 +834,8 @@ icm_asset_only() {
             *.*) _ao_e=$(printf '%s' "${_ao_b##*.}" | tr 'A-Z' 'a-z') ;;
             *)   return 1 ;;
         esac
-        _ao_hit=0
-        for _ao_x in $_ao_exts; do
-            [ "$_ao_e" = "$_ao_x" ] && { _ao_hit=1; break; }
-        done
-        [ "$_ao_hit" -eq 1 ] || return 1
+        [ -n "$_ao_e" ] || return 1
+        printf '%s\n' "$_ao_exts" | grep -q -x -F -- "$_ao_e" || return 1
     done
     [ "$_ao_seen" -eq 1 ]
 }

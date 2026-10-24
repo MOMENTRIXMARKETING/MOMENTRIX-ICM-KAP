@@ -358,9 +358,11 @@ tree. Do not apply yet.
 **2. Prune the noise before you fix anything else.**
 
 A messy tree almost always has junk the default globs do not know about: an `_old/` folder, a
-`zz-archive/`, a `Copy of Copy of/`. Add them by name to `excluded_globs` in
-[`../icm.defaults.json`](../icm.defaults.json) and re-plan: `_old`, `zz-archive`,
-`Copy?of?Copy?of`. An entry takes no slash, and `?` stands for a space. Anything outside the
+`zz-archive/`, a `Copy of Copy of/`. Add them by name to `excluded_globs` in an
+`icm.defaults.json` at your project root and re-plan: `_old`, `zz-archive`, `Copy?of?Copy?of`.
+That file overlays the toolkit's [`../icm.defaults.json`](../icm.defaults.json) key by key, and
+a list in it replaces the toolkit's list whole, so start from a copy of the toolkit's
+`excluded_globs`. An entry takes no slash, and `?` stands for a space. Anything outside the
 alphabet in [`../spec/excluded-folders.md`](../spec/excluded-folders.md) is refused, exit 2.
 Every later step gets cheaper and quieter. This is the highest-leverage ten minutes in the
 whole process.

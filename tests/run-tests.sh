@@ -2265,6 +2265,339 @@ else
     printf 'note no git here, the attribute read back was skipped\n'
 fi
 
+printf '\n%s\n' '-- S02: defaults merge, the toolkit under the workspace --'
+# The toolkit's icm.defaults.json loads first and a workspace's own file
+# overlays it key by key. Before S02 the workspace file replaced the toolkit's
+# whole, so a workspace written at 1.0.0 never saw a key the toolkit added
+# later. The file below is the 1.0.0 icm.defaults.json, verbatim.
+S02_OLD="$WORK/s02 defaults 1.0.0.json"
+cat > "$S02_OLD" <<'S02_EOF'
+{
+  "toolkit": "Momentrix ICM KAP Toolkit",
+  "slug": "momentrix-icm-kap-toolkit",
+  "version": "1.0.0",
+  "budgets": {
+    "IDENTITY.md":        { "target_chars": 3200, "ceiling_chars": 6000 },
+    "CONTEXT.root.md":    { "target_chars": 3200, "ceiling_chars": 8000 },
+    "CONTEXT.stage.md":   { "target_chars": 1200, "ceiling_chars": 2000, "ceiling_lines": 80 },
+    "CONTEXT.folder.md":  { "target_chars": 1200, "ceiling_chars": 2000 },
+    "rulebook.md":        { "target_chars": 2000, "ceiling_chars": 4000 },
+    "wiki_article.md":    { "target_chars": 8000, "ceiling_chars": 16000 }
+  },
+  "loading_budget": {
+    "note": "Chars, not tokens. 4 chars ~= 1 token. Layers 0+1+2+3 are the fixed cost.",
+    "layer0_identity": 3200,
+    "layer1_context": 3200,
+    "layer2_stage": 1200,
+    "layer3_rulebooks": 4000,
+    "fixed_total": 11600,
+    "layer4_varies": true
+  },
+  "excluded_globs": [
+    ".git", ".github", ".claude", ".icm",
+    "node_modules", "venv", ".venv", "__pycache__", ".pytest_cache",
+    "dist", "build", "out", ".next", ".nuxt", ".cache",
+    "vendor", "target", ".terraform", "coverage", ".DS_Store"
+  ],
+  "never_write": [
+    ".git", "node_modules", "venv", ".venv", "__pycache__",
+    "dist", "build", ".next", ".claude"
+  ],
+  "asset_extensions": [
+    "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp", "tif", "tiff",
+    "mp3", "wav", "m4a", "mp4", "mov", "avi", "webm",
+    "zip", "gz", "tgz", "bz2", "7z", "rar",
+    "ttf", "otf", "woff", "woff2", "eot",
+    "psd", "ai", "sketch", "fig", "dmg", "iso", "bin", "exe"
+  ],
+  "required_sections": {
+    "IDENTITY.md":     ["## Workspace Map", "## Rules"],
+    "CONTEXT.root.md": ["## Routing", "## Session Start", "## Rule Books"],
+    "CONTEXT.stage.md":["## Purpose", "## Inputs", "## Process", "## Outputs", "## Routing"],
+    "_config/conventions.md":     ["## Quick Reference", "## One Home Per Fact", "## When a rule is wrong"],
+    "_config/glossary.md":        ["## Workspace Vocabulary", "## Domain Terms", "## When a rule is wrong"],
+    "_config/voice.md":           ["## Voice", "## Honesty", "## Hard Constraints", "## When a rule is wrong"],
+    "_config/style.md":           ["## Quick Reference", "## Structure", "## Code Fences", "## When a rule is wrong"],
+    "_config/grounding.md":       ["## The invariant", "## The rules", "## Article shape", "## What enforces this", "## When a rule is wrong"],
+    "wiki/index.md":              ["## How a row gets here", "## Article shape"],
+    "wiki/log.md":                ["## Format", "## Entries"],
+    "_log/LOOP-LEDGER.md":        ["## Task lines", "## Call lines", "## Weekly review"],
+    "_log/FORGE-PROPOSALS.md":    ["## Proposals", "## Authority"]
+  },
+  "frontmatter": {
+    "required_keys": ["name", "description"],
+    "banned_keys": ["user_invocable", "allowed_tools"],
+    "name_must_equal_dirname": true
+  },
+  "log": {
+    "ledger": "_log/LOOP-LEDGER.md",
+    "runlog": "_log/LOOP-RUNLOG-<task>.md",
+    "wiki_log": "wiki/log.md",
+    "forge_proposals": "_log/FORGE-PROPOSALS.md"
+  }
+}
+S02_EOF
+
+# s02_list <toolkit root> <workspace> <key>: the merged value or list on one
+# line, read in a subshell with its own work dir, so the harness cache is
+# never touched. Stderr is dropped; s02_load keeps it.
+s02_list() {
+    (
+        ICM_HOME="$1"
+        ICM_TMPDIR="$WORK/s02 tmp"
+        ICM_JSON_SRC=""
+        rm -rf "$ICM_TMPDIR"
+        mkdir -p "$ICM_TMPDIR"
+        if icm_json_get "$2/icm.defaults.json" "$3" > "$ICM_TMPDIR/one" 2>/dev/null; then
+            tr '\n' ' ' < "$ICM_TMPDIR/one"
+        else
+            icm_json_list "$2/icm.defaults.json" "$3" 2>/dev/null | tr '\n' ' '
+        fi
+    )
+}
+
+# s02_load <toolkit root> <workspace>: every line a load prints, into OUT.
+s02_load() {
+    OUT=$(
+        ICM_HOME="$1"
+        ICM_TMPDIR="$WORK/s02 tmp"
+        ICM_JSON_SRC=""
+        rm -rf "$ICM_TMPDIR"
+        mkdir -p "$ICM_TMPDIR"
+        icm_json_load "$2/icm.defaults.json" 2>&1
+    )
+    RC=$?
+}
+
+# A workspace at 1.0.0 runs every mode of every script: exit 0 or 1 (a finding
+# or a decision waiting), never 2 (refused) and never 3 (aborted).
+S02_A=$(fixture "s02 old workspace")
+run "$SCRIPTS/icm-plan.sh" --quiet "$S02_A"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S02_A"
+cp "$S02_OLD" "$S02_A/icm.defaults.json"
+s02_mode() {
+    _s2_s="$1"
+    shift
+    run "$SCRIPTS/$_s2_s" "$@" "$S02_A"
+    if [ "$RC" -le 1 ]; then
+        t_pass "a 1.0.0 workspace defaults file runs $_s2_s $*"
+    else
+        t_fail "a 1.0.0 workspace defaults file runs $_s2_s $*" "exit $RC
+$OUT"
+    fi
+}
+s02_mode icm-check.sh
+s02_mode icm-check.sh --self
+s02_mode icm-plan.sh
+s02_mode icm-plan.sh --quiet --archetype full
+s02_mode icm-apply.sh --dry-run
+s02_mode icm-apply.sh --no-check
+s02_mode icm-rollback.sh --list
+s02_mode icm-rollback.sh
+s02_mode icm-loop.sh --index --today 2026-10-24
+s02_mode icm-loop.sh --starve --today 2026-10-24
+s02_mode icm-loop.sh --block
+
+# The keys 1.0.0 never had come from the toolkit, read through the workspace
+# file. The 1.0.0 lists replace the toolkit lists whole.
+assert_eq "a key 1.0.0 lacks comes from the toolkit: log.skill_index" \
+    "$(s02_list "$ROOT" "$S02_A" log.skill_index)" "$(icm_json_get "$ROOT/icm.defaults.json" log.skill_index) "
+assert_eq "a key 1.0.0 lacks comes from the toolkit: loop.starve_days" \
+    "$(s02_list "$ROOT" "$S02_A" loop.starve_days)" "$(icm_json_get "$ROOT/icm.defaults.json" loop.starve_days) "
+assert_eq "a 1.0.0 list replaces the toolkit list whole" \
+    "$(s02_list "$ROOT" "$S02_A" required_sections.CONTEXT.root.md)" "## Routing ## Session Start ## Rule Books "
+assert_eq "a 1.0.0 number overrides the toolkit number" \
+    "$(s02_list "$ROOT" "$S02_A" budgets.CONTEXT.root.md.target_chars)" "3200 "
+
+# A stub toolkit makes the toolkit layer visible through a real script. It is
+# this toolkit's scripts beside its own defaults with a different index path
+# and a different version.
+S02_TK="$WORK/s02 toolkit"
+rm -rf "$S02_TK"
+mkdir -p "$S02_TK/scripts"
+cp "$SCRIPTS"/*.sh "$S02_TK/scripts/"
+sed -e 's|"_log/SKILL-INDEX.md"|"_log/STUB-INDEX.md"|' \
+    -e 's|"version": "[^"]*"|"version": "9.9.9-stub"|' \
+    "$ROOT/icm.defaults.json" > "$S02_TK/icm.defaults.json"
+run "$S02_TK/scripts/icm-loop.sh" --index --today 2026-10-24 "$S02_A"
+assert_file "the loop writes the index where the toolkit's newer key says" "$S02_A/_log/STUB-INDEX.md"
+run "$S02_TK/scripts/icm-check.sh" --self "$S02_A"
+assert_out "the version is the toolkit's, never a workspace copy's" "9.9.9-stub"
+assert_not_out "a workspace copy of the toolkit's own keys is dropped without a warn" "warn key version"
+
+# A workspace list replaces the toolkit list whole, empty included.
+S02_L=$(fixture "s02 list replace")
+run "$SCRIPTS/icm-plan.sh" --quiet "$S02_L"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S02_L"
+mkdir -p "$S02_L/node_modules/pkg" "$S02_L/only-this"
+printf 'See [gone](nm-gone.md).\n' > "$S02_L/node_modules/pkg/x.md"
+printf 'See [gone](mine-gone.md).\n' > "$S02_L/only-this/y.md"
+printf '{ "excluded_globs": ["only-this"], "asset_extensions": [] }\n' > "$S02_L/icm.defaults.json"
+assert_eq "a workspace list replaces the toolkit list whole" \
+    "$(s02_list "$ROOT" "$S02_L" excluded_globs)" "only-this "
+assert_eq "an empty workspace list replaces the toolkit list too" \
+    "$(s02_list "$ROOT" "$S02_L" asset_extensions)" ""
+assert_eq "a list the workspace leaves out stays the toolkit's" \
+    "$(s02_list "$ROOT" "$S02_L" never_write)" "$(icm_json_list "$ROOT/icm.defaults.json" never_write | tr '\n' ' ')"
+run "$SCRIPTS/icm-check.sh" --links "$S02_L"
+assert_out "the walk follows the workspace list: node_modules is read" "nm-gone.md"
+assert_not_out "the walk follows the workspace list: its own entry prunes" "mine-gone.md"
+
+# Protected keys. secrets and the archive lists are union only, warn_first is
+# an intersection, share and who are per person. A second stub toolkit holds
+# only stub protected keys, so these asserts stay exact when S04, S10 and S19
+# add the real keys. Every workspace attempt to get round them is in one file.
+S02_TP="$WORK/s02 toolkit protected"
+rm -rf "$S02_TP"
+mkdir -p "$S02_TP"
+cat > "$S02_TP/icm.defaults.json" <<'S02_EOF'
+{
+  "toolkit": "stub toolkit",
+  "version": "9.9.9-stub",
+  "excluded_globs": [".git"],
+  "never_write": [".git"],
+  "secrets": { "patterns": ["AKIA", "BEGIN-KEY"] },
+  "archive": { "immutable": ["raw"], "append_only": ["log.ledger"] },
+  "checks": { "warn_first": ["stub.one", "stub.two"] }
+}
+S02_EOF
+S02_P=$(fixture "s02 protected")
+cat > "$S02_P/icm.defaults.json" <<'S02_EOF'
+{
+  "version": "0.0.1",
+  "secrets": { "patterns": ["MINE", "AKIA"], "mode": "off" },
+  "archive": { "immutable": [], "append_only": ["notes", "log.ledger"] },
+  "checks": { "warn_first": ["stub.two", "stub.three"] },
+  "share": { "dest": "shared-folder", "mode": "folder" },
+  "who": "someone"
+}
+S02_EOF
+assert_eq "a workspace adds a secrets pattern and removes none" \
+    "$(s02_list "$S02_TP" "$S02_P" secrets.patterns)" "AKIA BEGIN-KEY MINE "
+assert_eq "a workspace cannot empty archive.immutable" \
+    "$(s02_list "$S02_TP" "$S02_P" archive.immutable)" "raw "
+assert_eq "a workspace adds to archive.append_only and keeps the toolkit entry once" \
+    "$(s02_list "$S02_TP" "$S02_P" archive.append_only)" "log.ledger notes "
+assert_eq "a workspace may drop a warn_first id but never add one" \
+    "$(s02_list "$S02_TP" "$S02_P" checks.warn_first)" "stub.two "
+assert_eq "a workspace cannot change a scalar under secrets" \
+    "$(s02_list "$S02_TP" "$S02_P" secrets.mode)" ""
+assert_eq "a committed share.dest never reaches the merged defaults" \
+    "$(s02_list "$S02_TP" "$S02_P" share.dest)" ""
+assert_eq "a committed who never reaches the merged defaults" \
+    "$(s02_list "$S02_TP" "$S02_P" who)" ""
+assert_eq "a workspace version never replaces the toolkit's" \
+    "$(s02_list "$S02_TP" "$S02_P" version)" "9.9.9-stub "
+s02_load "$S02_TP" "$S02_P"
+assert_rc "a protected-key attempt is a warn, never a refusal" 0
+assert_out "a committed share.dest is ignored with a warn" "warn key share.dest in $S02_P/icm.defaults.json is ignored"
+assert_out "a committed who is ignored with a warn" "warn key who in $S02_P/icm.defaults.json is ignored"
+assert_out "a scalar under secrets is ignored with a warn" "warn key secrets.mode in $S02_P/icm.defaults.json is ignored"
+assert_out "a warn_first id the toolkit enforces stays enforced, with a warn" "lists stub.three"
+run "$SCRIPTS/icm-check.sh" --self "$S02_P"
+assert_out "a real check run shows the share.dest warn" "warn key share.dest"
+assert_rc "the check still runs under a committed share.dest" 0
+
+# The real toolkit too: an id it never holds in warn_first is never added,
+# whether or not the toolkit has a warn_first yet.
+S02_W=$(fixture "s02 warn first")
+printf '{ "checks": { "warn_first": ["stub.never-a-rule"] } }\n' > "$S02_W/icm.defaults.json"
+case " $(s02_list "$ROOT" "$S02_W" checks.warn_first)" in
+    *" stub.never-a-rule "*) t_fail "the real toolkit never takes a warn_first id from a workspace" "stub.never-a-rule was added" ;;
+    *) t_pass "the real toolkit never takes a warn_first id from a workspace" ;;
+esac
+s02_load "$ROOT" "$S02_W"
+assert_out "the ignored warn_first id is named" "lists stub.never-a-rule"
+
+# An unreadable workspace file would flatten to nothing and leave the toolkit
+# alone in charge, so it is a refusal. Root reads a mode 000 file anyway.
+if [ "$AM_ROOT" -eq 0 ]; then
+    S02_U=$(fixture "s02 unreadable")
+    printf '{ "excluded_globs": [".git"] }\n' > "$S02_U/icm.defaults.json"
+    chmod 000 "$S02_U/icm.defaults.json"
+    run "$SCRIPTS/icm-check.sh" "$S02_U"
+    assert_rc "an unreadable workspace icm.defaults.json is refused, exit 2" 2
+    assert_out "the refusal names the file" "FAIL cannot read $S02_U/icm.defaults.json"
+    chmod 644 "$S02_U/icm.defaults.json"
+else
+    printf 'note running as root, the unreadable defaults test was skipped\n'
+fi
+
+# So would a file that is not valid JSON, or it would merge as junk, and the
+# self check would still say it parses. Each fault is a refusal naming the file.
+S02_J=$(fixture "s02 not json")
+s02_bad() {
+    printf '%s' "$2" > "$S02_J/icm.defaults.json"
+    run "$SCRIPTS/icm-check.sh" --self "$S02_J"
+    assert_rc "$1 is refused, exit 2" 2
+    assert_out "$1: the refusal names the file" "FAIL $S02_J/icm.defaults.json is not valid JSON"
+}
+s02_bad "a workspace icm.defaults.json holding not json" 'not json
+'
+s02_bad "an empty workspace icm.defaults.json" ''
+s02_bad "a workspace icm.defaults.json cut off at a list" '{ "a": ['
+s02_bad "a workspace icm.defaults.json with text after its last brace" '{ "a": 1 } junk'
+s02_bad "a workspace icm.defaults.json missing a comma" '{ "a": 1 "b": 2 }'
+s02_bad "a workspace icm.defaults.json with a trailing comma" '{ "a": [1,] }'
+s02_bad "a workspace icm.defaults.json with a bare word for a value" '{ "a": yes }'
+printf '{\n  "excluded_globs": [\n    ".git"\n    "node_modules"\n  ]\n}\n' > "$S02_J/icm.defaults.json"
+run "$SCRIPTS/icm-plan.sh" --quiet "$S02_J"
+assert_rc "the plan refuses a workspace icm.defaults.json that is not valid JSON" 2
+assert_out "the refusal names the line of the first fault" "line 4: a string where a comma or a closing ] belongs"
+assert_nofile "a refused plan wrote nothing" "$S02_J/.icm"
+printf '{ "a": [true, false, null, -1, 2.5e3, 0], "b": {}, "c": [], "d": "x\\"y" }\n' > "$S02_J/icm.defaults.json"
+s02_load "$ROOT" "$S02_J"
+assert_rc "valid JSON of every value shape still loads" 0
+assert_eq "every value shape flattens as before" \
+    "$(s02_list "$ROOT" "$S02_J" a) $(s02_list "$ROOT" "$S02_J" d)" "true false null -1 2.5e3 0  x\"y "
+
+# The toolkit file is held to the same rule, with or without a workspace file.
+S02_TB="$WORK/s02 toolkit broken"
+rm -rf "$S02_TB"
+mkdir -p "$S02_TB/scripts"
+cp "$SCRIPTS"/*.sh "$S02_TB/scripts/"
+sed '$d' "$ROOT/icm.defaults.json" > "$S02_TB/icm.defaults.json"
+run "$S02_TB/scripts/icm-check.sh" --self "$S02_J"
+assert_rc "a toolkit icm.defaults.json that is cut off is refused under a workspace file, exit 2" 2
+assert_out "the refusal names the toolkit file" "s02 toolkit broken/icm.defaults.json is not valid JSON (it ends inside an object or a list)"
+S02_E=$(fixture "s02 no defaults")
+run "$S02_TB/scripts/icm-check.sh" --self "$S02_E"
+assert_rc "a toolkit icm.defaults.json that is cut off is refused alone, exit 2" 2
+assert_out "the lone refusal names the toolkit file" "s02 toolkit broken/icm.defaults.json is not valid JSON"
+
+# Lists are read one per line, never split or expanded by the shell (G3). An
+# asset_extensions entry * once expanded against the cwd, so a file named txt
+# there made a folder of .txt files read as assets.
+S02_G=$(fixture "s02 asset glob")
+mkdir -p "$S02_G/media" "$S02_G/cwd"
+printf 'x\n' > "$S02_G/media/a.txt"
+printf 'x\n' > "$S02_G/cwd/txt"
+printf '{ "asset_extensions": ["*"] }\n' > "$S02_G/icm.defaults.json"
+S02_R=$(
+    cd "$S02_G/cwd" || exit 1
+    ICM_TMPDIR="$WORK/s02 tmp"
+    ICM_JSON_SRC=""
+    rm -rf "$ICM_TMPDIR"
+    mkdir -p "$ICM_TMPDIR"
+    icm_init "$S02_G" 2>/dev/null
+    if icm_asset_only "$S02_G/media"; then printf 'asset\n'; else printf 'not\n'; fi
+)
+assert_eq "an asset_extensions entry * is a word, never a glob on the cwd" "$S02_R" "not"
+
+# The four key lists in scripts/icm_lib.sh are the leash. CLI-CONTRACT 3.0
+# names every key in them, so the two never drift.
+S02_B=$(awk '/Defaults merge\./ { on = 1; print; next } on && /^(- |$|#)/ { exit } on' "$ROOT/spec/CLI-CONTRACT.md")
+if [ -n "$S02_B" ] && [ -n "$ICM_OWN_KEYS" ] && [ -n "$ICM_UNION_KEYS" ] \
+    && [ -n "$ICM_INTERSECT_KEYS" ] && [ -n "$ICM_PERSON_KEYS" ]; then
+    S02_MISS=""
+    for S02_K in $ICM_OWN_KEYS $ICM_UNION_KEYS $ICM_INTERSECT_KEYS $ICM_PERSON_KEYS; do
+        printf '%s\n' "$S02_B" | grep -q -F -- "\`$S02_K\`" || S02_MISS="$S02_MISS $S02_K"
+    done
+    assert_eq "CLI-CONTRACT 3.0 names every protected defaults key" "$S02_MISS" ""
+else
+    t_fail "CLI-CONTRACT 3.0 names every protected defaults key" "no Defaults merge bullet, or a key list in icm_lib.sh is empty"
+fi
+
 # ---------------------------------------------------------------- the tally --
 
 printf '\n%s\n' '-- summary --'

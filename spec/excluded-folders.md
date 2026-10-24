@@ -269,3 +269,13 @@ workspace and the real problem is that it is in the wrong place.
 Adding to `never_write` needs a stronger reason than adding to `excluded_globs`. Ask what
 breaks if a file is written there. If the honest answer is "nothing, it is just untidy", it
 belongs in `excluded_globs` alone.
+
+### One workspace's own list
+
+The list above is the toolkit's. One workspace can change its own list without touching the
+toolkit: put an `icm.defaults.json` at the workspace root holding the key. The toolkit's file
+loads first and the workspace file overlays it key by key, so a key the workspace file lacks
+still comes from the toolkit. A list is the exception to that: a workspace `excluded_globs` or
+`never_write` replaces the toolkit's list whole. Start from a copy of the toolkit's entries you
+still want, then add yours. An entry in the workspace file is held to the same alphabet, and
+the refusal names that file. `spec/CLI-CONTRACT.md` section 3.0 holds the whole merge rule.

@@ -288,10 +288,15 @@ link_tokens() {
 
 c_self() {
     printf '%s\n' '-- self --'
-    if icm_json_get "$ICM_DEFAULTS" toolkit >/dev/null 2>&1; then
+    # The parse is judged on the file's own flatten. The merged view always
+    # has a toolkit key from the toolkit, so it cannot say this file parses.
+    _c_d="$ICM_TMPDIR/self.defaults"
+    if ! icm_json_parse "$ICM_DEFAULTS" "$_c_d" 2>/dev/null; then
+        icm_fail "icm.defaults.json did not parse: $(head -n 1 "$_c_d.err")"
+    elif icm_json_get "$ICM_DEFAULTS" toolkit >/dev/null 2>&1; then
         icm_ok "icm.defaults.json parses, toolkit is $ICM_TOOLKIT $ICM_VERSION"
     else
-        icm_fail "icm.defaults.json did not parse"
+        icm_fail "icm.defaults.json parses but names no toolkit"
     fi
     for _c_k in excluded_globs never_write; do
         if icm_json_list "$ICM_DEFAULTS" "$_c_k" | grep -q .; then
