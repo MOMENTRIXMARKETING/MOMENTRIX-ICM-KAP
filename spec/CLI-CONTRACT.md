@@ -126,6 +126,34 @@ Five scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
   name starts with `-`, or that cannot be traversed, exits 2 with a named message, never a raw
   shell error and never exit 1.
 - **BUILD.** `[ -e "$TARGET/.icm" ] && [ ! -d "$TARGET/.icm" ]` is a preflight refusal, exit 2.
+- **KEEP.** Config is data. No value read from any `icm.defaults.json` reaches `eval`, a
+  command position or a `find` expression string. Every `excluded_globs` and `never_write`
+  entry is checked at load against the alphabet in `spec/excluded-folders.md`. An entry outside
+  it is a preflight refusal, exit 2, with a `FAIL` line naming the key, before any walk or write.
+  The walk passes each entry to `find` as one quoted argument, the operand of `-name`, and
+  never tests the target's own name.
+- **KEEP.** Defaults merge. The toolkit's `icm.defaults.json` loads first. A workspace's own
+  `icm.defaults.json` overlays it key by key, so a key the workspace file lacks comes from the
+  toolkit, and a workspace file written at an older version still sees every newer key. A list
+  the workspace sets replaces the toolkit's list whole, an empty list included. Four kinds of
+  key are the exceptions, and `scripts/icm_lib.sh` holds their names. `toolkit`, `slug` and
+  `version` always come from the toolkit, and a workspace copy is dropped without a word. Every
+  list under `secrets`, `archive.immutable`, `archive.append_only` and `never_write` is a union:
+  a workspace may add an entry, never remove one. `checks.warn_first` is an intersection: a workspace may
+  drop an id, which enforces that rule sooner, and an id it adds is dropped, so it never relaxes
+  one. A workspace that sets `checks.warn_first` at all enforces every rule the toolkit adds
+  there later; leave the key out to follow the toolkit. `share` and `who` are per person: a
+  workspace's committed file never sets them, and they come from the environment or the
+  gitignored `.icm/local.json`.
+  Any other workspace value under one of these keys is dropped too. Each drop, except a copy of
+  the toolkit's own keys, prints one line on stderr: `warn key <key> in <file> is ignored`, or
+  for `checks.warn_first`, `warn key checks.warn_first in <file> lists <id>, which the toolkit
+  enforces`. A warn is never a refusal; the run goes on. Lists are read one entry per line, never
+  with `for x in $(...)`, so the shell never splits an entry or expands it against the cwd.
+  Each file, the toolkit's and the workspace's, must be one JSON object. One that cannot be
+  read, or that is empty, cut off or otherwise not valid JSON, would merge as nothing or as
+  junk, so it is a preflight refusal, exit 2, with a `FAIL` line naming the file and its first
+  fault: `FAIL <file> is not valid JSON (<fault>)`.
 
 ### 3.1 Exit codes
 
@@ -135,7 +163,7 @@ One scheme, all five scripts, documented in `README.md` next to the command list
 |---|---|
 | 0 | Clean. Nothing is waiting on you. |
 | 1 | Finished, and a human decision is waiting. Collisions parked, or rollback kept a file you edited. |
-| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo. |
+| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo, a glob entry in `icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not valid JSON. |
 | 3 | **BUILD.** Aborted part way through. The target may be half changed. `icm-apply.sh` only. |
 
 Exit 3 exists because a crashed apply currently exits 1, which is indistinguishable from the
@@ -343,7 +371,9 @@ four.** One mode flag per invocation; two is a usage error, exit 2. No mode flag
 | `--today DATE` | Count windows back from `DATE`. For tests and replays. Refused unless it is a calendar date. |
 
 Exit: 0 clean. 1 at least one index row carries a verdict other than `ok` or `unlogged`, or the
-window is starved. 2 refused: no ledger at `log.ledger`, bad target, usage error.
+window is starved. 2 refused: no ledger at `log.ledger`, bad target, usage error, a glob entry in
+`icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not
+valid JSON.
 
 **The line shapes it reads** are the ones `skills/icm-log/SKILL.md` and out-of-the-loop's
 `references/ledger.md` define. It selects on the literal in column two: `Miss`, `Use`,
@@ -1016,7 +1046,7 @@ Short rulings on facts that two files currently claim differently.
 |---|---|
 | How is a character counted for a budget? | `wc -c`. It is byte exact and locale independent. `spec/budgets.md` and `spec/authority-model.md` already say so. **BUILD:** change `icm_chars` from `wc -m` to `wc -c` and delete the code comment claiming `wc -m` is the conservative direction. In a UTF-8 locale it is the permissive one, and every generated `IDENTITY.md` contains multibyte box-drawing characters. |
 | Where does the exclusion list come from at runtime? | `icm.defaults.json`, keys `excluded_globs` and `never_write`. `spec/excluded-folders.md` is the human rendering of those keys. **DELETE** every claim that a script reads `spec/excluded-folders.md`; no script does. |
-| Does `never_write` match at any depth? | Yes. **BUILD:** `icm_never_write_ok` wraps the candidate in slashes and tests `case "/$1/" in */"$_w_g"/*) return 1 ;;`, still reading the globs from the JSON. It matches only the first component today, so `docs/sub/node_modules/x.md` passes. |
+| Does `never_write` match at any depth? | Yes. **BUILD:** `icm_never_write_hit` walks each component of the candidate and tests it with `case "$_wh_c" in $_wh_g)`, so an entry is a pattern at any depth. It reads the entries one per line from the JSON, never with `for x in $(...)`. `icm_never_write_ok` is true when it prints nothing. It matched only the first component once, so `docs/sub/node_modules/x.md` passed. |
 | Does any script auto-apply a lint finding? | No. There is no `icm-sync.sh` and there will not be one. **BUILD:** rename `spec/authority-model.md`'s "Auto applied" column to "Applied by", with values `script` and `model, then reported`, and mark every safe-fix row `model, then reported`. Change the four skill headings from "Safe fix, applied without asking" to "Safe fix, applied by you, then reported". An unwatched model wearing a script's authority is exactly what that spec warns against. |
 | What does `scripts/check_evidence.py` need? | `python3` 3.10 or newer. It is optional. Its own tests are stdlib `unittest`, run with `python3 tests/test_check_evidence.py`. **DELETE** `spec/grounding-invariant.md`'s claim that they need `pytest`. |
 | What is the real tool list? | Three tiers, not one flat list. **BUILD** in `README.md` and `BUILD-CONTRACT.md`: (1) always required and POSIX, which must add `basename`, `dirname`, `tr`, `rmdir`, `cmp` and `ls` to the current list; (2) hashing, first found of `shasum` then `sha256sum` then a size-plus-mtime fallback, neither hasher POSIX, and say plainly that the fallback weakens rollback's tamper detection only and not apply's never-overwrite, which is a byte compare; (3) optional and guarded, `git` and `python3`. |
@@ -1074,6 +1104,9 @@ back.
 | byte count | The checker's reported count for a multibyte fixture equals `wc -c`. |
 | adapter shape | The adapter that `skills/icm-scaffold/SKILL.md` documents passes `icm-check.sh --adapters`. |
 | the loop | A fresh apply installs a ledger with `## Lines` and a `CONTEXT.md` with `## Session Close` that passes `--sections`. A fixture ledger produces the pinned verdict words `hole`, `rewrite`, `uncovered`, `ghost`, `unlogged`, `ok` and `archive`, the index run changes no file but the index, `--starve` exits 1 on work with no misses and 0 otherwise, `--block` prints the same bytes as the installed Session Close, no ledger exits 2, two modes exit 2, a non-date `--today` exits 2. |
+| config is data | Three workspace `excluded_globs` entries, two that break out of quoting and one holding `$(...)`, each make check, plan, loop, apply and rollback exit 2 naming the key, and no payload runs. An entry split by an escaped newline and a `never_write` entry outside the alphabet are refused the same way. A wildcard entry still prunes, an entry spelled `-delete` deletes nothing, a target named `build` and an entry `.*` still walk the tree, and no file under `scripts/` calls `eval`. Run from a cwd holding a matching name, the plan survey still drops `.*` and `drafts*` folders, and a `never_write` entry `IDENT?TY.md` refuses `IDENTITY.md`. |
+| CI and line endings | `.github/workflows/ci.yml` runs on every push and pull request with a read-only token and three jobs: ubuntu with dash as `sh`, macos with the BSD userland, and ubuntu with every busybox applet first on `PATH`. Each job runs `sh -n`, and `dash -n` where dash exists, on every script and example shell body, then `sh tests/run-tests.sh`, then `python3 tests/test_check_evidence.py` when python3 3.10 or newer exists, then the checker on the repo. The workflow holds no tab. `.gitattributes` holds `* text=auto eol=lf` and `*.pdf binary`, and `git check-attr` reads both back when git exists. Run as root, the two unlistable-target tests are skipped with a note line, never failed, so the harness can reach FAIL 0 as root. |
+| defaults merge | A workspace holding the 1.0.0 `icm.defaults.json` verbatim runs every mode of every script with exit 0 or 1, reads `log.skill_index` and `loop.starve_days` from the toolkit, and keeps its own lists whole. A stub toolkit beside it proves the toolkit layer through real scripts: the loop writes the index where the toolkit's newer key says, and the check reports the toolkit's version, never the workspace copy's. A workspace list replaces the toolkit list whole, an empty one included, and the walk follows it. Against a second stub toolkit holding only stub protected keys, a workspace cannot remove a `secrets` or `archive` list entry, cannot add a `checks.warn_first` id, cannot set a scalar under a protected key, and a committed `share.dest` or `who` is ignored with a warn line; against the real toolkit a workspace `checks.warn_first` id is never added. Run as a normal user, an unreadable workspace `icm.defaults.json` exits 2 naming the file. A workspace `icm.defaults.json` that is not valid JSON (a bare word, empty, cut off, text after its last brace, a missing or trailing comma) exits 2 naming the file and the line of its first fault, and so does a toolkit file cut off, with or without a workspace file; valid JSON of every value shape still loads. An `asset_extensions` entry `*` is a word, never a glob on the cwd. Section 3.0 names every key in the four lists in `scripts/icm_lib.sh`. |
 
 ### 13.3 The scaffold adapter rule
 

@@ -1,0 +1,5 @@
+# Every text file is LF in the index and in every checkout, so a Windows
+# clone never hands sh a carriage return at the end of each line.
+* text=auto eol=lf
+# The paper is binary: never converted, never diffed as text.
+*.pdf binary

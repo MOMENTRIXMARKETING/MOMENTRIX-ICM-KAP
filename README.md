@@ -357,7 +357,7 @@ One exit code scheme, all five scripts.
 |---|---|
 | 0 | Clean. Nothing is waiting on you. |
 | 1 | Finished, and a human decision is waiting. Collisions parked, or rollback kept a file you edited. |
-| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo. |
+| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo, a glob entry in `icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not valid JSON. |
 | 3 | Aborted part way through. The target may be half changed. `icm-apply.sh` only. |
 
 One optional extra. `scripts/check_evidence.py` is the deep grounding check: it greps every
@@ -371,6 +371,16 @@ so, and still passes on everything else. Nothing in the toolkit depends on it be
 
 Every budget, every skip glob and every required-section list lives in
 [`icm.defaults.json`](icm.defaults.json). Prose never restates them.
+
+A workspace may carry its own `icm.defaults.json` at its root. The toolkit's file loads first
+and the workspace file overlays it key by key, so a workspace written at an older version still
+sees every newer key. A list in the workspace file replaces the toolkit's list whole. A few keys
+are protected. The toolkit's name and version stay the toolkit's. A workspace may add to the
+lists under `secrets`, `archive.immutable`, `archive.append_only` and `never_write`, never
+remove from them. It
+may shorten `checks.warn_first`, never lengthen it. And `share` and `who` are per person, so a
+committed value is ignored with a `warn` line. The whole rule is in
+[`spec/CLI-CONTRACT.md`](spec/CLI-CONTRACT.md) section 3.0.
 
 - Budgets in human form: [`spec/budgets.md`](spec/budgets.md)
 - The one skip list, in human form: [`spec/excluded-folders.md`](spec/excluded-folders.md).
@@ -422,6 +432,15 @@ python3 tests/test_check_evidence.py   # optional, stdlib unittest, no pytest
 Both of the first two must be green before anything ships. Test fixtures deliberately live
 under a path containing a space, so an unquoted variable fails a test here rather than in
 someone else's repo.
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the same gates on every push and
+pull request, three times: ubuntu with dash as `sh`, macos with the BSD userland, and ubuntu
+with every busybox applet first on `PATH`. Each job runs `sh -n` (and `dash -n` where dash
+exists) on every script and example shell body, the harness, the python tests when python3
+3.10 or newer exists, and the checker on this repo. Run as root, the harness skips the two
+tests root cannot fail (root lists a folder it has no read bit on) and says so in a note line.
+[`.gitattributes`](.gitattributes) keeps every text file LF in every checkout, so a Windows
+clone never hands `sh` a carriage return.
 
 ---
 

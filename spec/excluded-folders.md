@@ -118,6 +118,27 @@ asked. If a user request would require it, refuse and say which path and which r
 
 ---
 
+## What an Entry May Hold
+
+An entry in either list is a name, or a glob on a name. It uses one alphabet: letters, digits,
+`.`, `_`, `*`, `?` and `-`. No slash, no space, no quote, no `$`, no bracket. To match a name
+with a space in it, write `?` where the space goes, so `Copy?of*` matches `Copy of notes`.
+An `excluded_globs` entry is tested against each name the walk meets. A `never_write` entry is
+tested against each component of the path about to be written.
+
+Every script checks every entry each time it loads a defaults file, before it walks or writes
+anything. An entry outside the alphabet is a refusal: exit 2, and a `FAIL` line that names the
+key and the entry's place in it.
+
+The reason is that a workspace `icm.defaults.json` is committed data, and anyone can hand you
+one. Nothing read from it may become shell or `find` syntax. No script passes an entry through
+`eval` or builds a `find` expression string from it. Each entry is one quoted argument, the
+operand of `-name`, so even an entry spelled `-delete` stays a name. An entry is tested
+against the names under the target, never the target's own name, so a workspace in a folder
+called `build`, or an entry `.*`, still has its tree walked.
+
+---
+
 ## Using the List in a Script
 
 Two supported ways. Both are POSIX. Pick one and never hand type the globs.
@@ -138,8 +159,9 @@ line, no comments, no trailing spaces. The markers are an interface.
 ### Copy the prune expression
 
 This is what the expression looks like once the globs are substituted in. It is here so you
-can read one, not so a script can copy it: a script builds the same expression from
-`excluded_globs` at run time, which is why this block can never be the thing that drifts.
+can read one, not so a script can copy it. A script passes the same names to `find` at run
+time, each one a separate quoted argument, never a string it builds and never through `eval`.
+That is why this block can never be the thing that drifts.
 
 ```sh
 find . \
@@ -198,24 +220,38 @@ The names are never typed into the test. They are read from `icm.defaults.json` 
 one at a time:
 
 ```sh
-# $1 is the relative path about to be written. True (exit 0) means it may be.
-icm_never_write_ok() {
-    _w_p="/$1/"
-    for _w_g in $(icm_json_list "$ICM_DEFAULTS" never_write); do
-        case "$_w_p" in
-            */"$_w_g"/*) return 1 ;;
+# $1 is the relative path about to be written. Prints the entry that
+# refuses it, or nothing when it may be written.
+icm_never_write_hit() {
+    _wh_list=$(icm_json_list "$ICM_DEFAULTS" never_write)
+    _wh_p="$1"
+    while [ -n "$_wh_p" ]; do
+        _wh_c=${_wh_p%%/*}
+        case "$_wh_p" in
+            */*) _wh_p=${_wh_p#*/} ;;
+            *)   _wh_p="" ;;
         esac
+        [ -n "$_wh_c" ] || continue
+        while IFS= read -r _wh_g; do
+            [ -n "$_wh_g" ] || continue
+            case "$_wh_c" in
+                $_wh_g) printf '%s\n' "$_wh_g"; return 0 ;;
+            esac
+        done <<EOF
+$_wh_list
+EOF
     done
-    return 0
 }
 ```
 
-Two details do the work. Wrapping the candidate in slashes is what makes the first and last
-components match as well as the middle ones. And `case` on a slash-wrapped path is used rather
-than splitting on `/` in a loop, because path components can contain spaces and word splitting
-would break on them.
+Three details do the work. Each component is cut off with `${p%%/*}` and `${p#*/}`, which is
+parameter expansion, not word splitting, so a component with a space in it stays whole. Each
+component is matched against each entry as a `case` pattern, so a wildcard entry such as `_l*`
+refuses `_log/x.md`. And the entries are read one per line with `read -r`, never with
+`for x in $(...)`, so the shell never expands an entry against the cwd it happens to run in.
 
-`scripts/icm_lib.sh` holds that function and every script calls it. The names live in the JSON
+`scripts/icm_lib.sh` holds that function, and `icm_never_write_ok` is true when it prints
+nothing. Every script calls them. The names live in the JSON
 and nowhere else, so there is no fragment here for a script to copy and no second list to go
 stale. A refusal names the path and the rule that refused it.
 
@@ -233,3 +269,13 @@ workspace and the real problem is that it is in the wrong place.
 Adding to `never_write` needs a stronger reason than adding to `excluded_globs`. Ask what
 breaks if a file is written there. If the honest answer is "nothing, it is just untidy", it
 belongs in `excluded_globs` alone.
+
+### One workspace's own list
+
+The list above is the toolkit's. One workspace can change its own list without touching the
+toolkit: put an `icm.defaults.json` at the workspace root holding the key. The toolkit's file
+loads first and the workspace file overlays it key by key, so a key the workspace file lacks
+still comes from the toolkit. A list is the exception to that: a workspace `excluded_globs` or
+`never_write` replaces the toolkit's list whole. Start from a copy of the toolkit's entries you
+still want, then add yours. An entry in the workspace file is held to the same alphabet, and
+the refusal names that file. `spec/CLI-CONTRACT.md` section 3.0 holds the whole merge rule.

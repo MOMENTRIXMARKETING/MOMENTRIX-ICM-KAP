@@ -66,7 +66,7 @@ sh "$ICM_HOME/scripts/icm-plan.sh" .
 | `--quiet` | Write the plan, print only the counts |
 | `-h`, `--help` | Print usage and exit 0 |
 
-The positional target defaults to `.` and may appear in any order among the flags. Exit 0 means the plan is written and nothing needs a decision. Exit 1 means the plan is written and there are collisions or refusals for a human to decide. Exit 2 means it refused before writing anything: a dirty repo without `--allow-dirty`, a bad target, or a usage error.
+The positional target defaults to `.` and may appear in any order among the flags. Exit 0 means the plan is written and nothing needs a decision. Exit 1 means the plan is written and there are collisions or refusals for a human to decide. Exit 2 means it refused before writing anything: a dirty repo without `--allow-dirty`, a bad target, a glob entry in `icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not valid JSON, or a usage error.
 
 ### What plan does, and what it leaves to you
 
@@ -249,7 +249,7 @@ sh "$ICM_HOME/scripts/icm-rollback.sh" --stamp 20260830T000000Z-1234 .
 | `--force` | Roll back a run already marked rolled back |
 | `-h`, `--help` | Print usage and exit 0 |
 
-With no `--stamp` it takes the newest run that has not already been rolled back. Exit 0 fully undone or nothing to undo. Exit 1 something was left alone because you changed it after apply. Exit 2 refused: no backup, bad stamp, usage error.
+With no `--stamp` it takes the newest run that has not already been rolled back. Exit 0 fully undone or nothing to undo. Exit 1 something was left alone because you changed it after apply. Exit 2 refused: no backup, bad stamp, usage error, a glob entry in `icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not valid JSON.
 
 What it reverses, per manifest row:
 
