@@ -132,6 +132,20 @@ Five scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
   it is a preflight refusal, exit 2, with a `FAIL` line naming the key, before any walk or write.
   The walk passes each entry to `find` as one quoted argument, the operand of `-name`, and
   never tests the target's own name.
+- **KEEP.** Path keys stay inside the workspace. A script joins the value of a path key to
+  the target and reads or writes there, so every such value is checked at load. The path keys
+  are every key under `log.`, and `ICM_PATH_KEYS` in `scripts/icm_lib.sh` holds their names; a
+  later key read as a path, such as an `archive` path list, joins it. A value is relative: it
+  starts with neither `/` nor `-`, no part of it is `..`, it holds no newline, and it uses only
+  the glob alphabet in `spec/excluded-folders.md` plus `/`, with `<task>` as its one
+  placeholder. A value that fails is a preflight refusal, exit 2, with a `FAIL` line naming the
+  key, the file and the reason, before any walk, read or write. The value itself is never
+  printed. Each file, the toolkit's and the workspace's, is held to this on its own. At use,
+  `icm_key_path` holds the tree under the value too: a folder on the way that is a symlink is
+  refused, and so is a path the script writes that lies under a `never_write` entry, each with
+  exit 2 naming the key. That `never_write` match ignores case on both sides, since a
+  case-insensitive filesystem, macOS's default, reads `.GIT/hooks/pre-commit` as
+  `.git/hooks/pre-commit`.
 - **KEEP.** Defaults merge. The toolkit's `icm.defaults.json` loads first. A workspace's own
   `icm.defaults.json` overlays it key by key, so a key the workspace file lacks comes from the
   toolkit, and a workspace file written at an older version still sees every newer key. A list
@@ -163,7 +177,7 @@ One scheme, all five scripts, documented in `README.md` next to the command list
 |---|---|
 | 0 | Clean. Nothing is waiting on you. |
 | 1 | Finished, and a human decision is waiting. Collisions parked, or rollback kept a file you edited. |
-| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo, a glob entry in `icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not valid JSON. |
+| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo, a glob entry in `icm.defaults.json` outside its alphabet, a path key in `icm.defaults.json` that leaves the workspace, an `icm.defaults.json` it cannot read or that is not valid JSON. |
 | 3 | **BUILD.** Aborted part way through. The target may be half changed. `icm-apply.sh` only. |
 
 Exit 3 exists because a crashed apply currently exits 1, which is indistinguishable from the
@@ -372,8 +386,9 @@ four.** One mode flag per invocation; two is a usage error, exit 2. No mode flag
 
 Exit: 0 clean. 1 at least one index row carries a verdict other than `ok` or `unlogged`, or the
 window is starved. 2 refused: no ledger at `log.ledger`, bad target, usage error, a glob entry in
-`icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not
-valid JSON.
+`icm.defaults.json` outside its alphabet, a path key in `icm.defaults.json` that leaves the
+workspace or runs through a symlinked folder, an index path under a `never_write` entry, an
+`icm.defaults.json` it cannot read or that is not valid JSON.
 
 **The line shapes it reads** are the ones `skills/icm-log/SKILL.md` and out-of-the-loop's
 `references/ledger.md` define. It selects on the literal in column two: `Miss`, `Use`,
@@ -1107,6 +1122,7 @@ back.
 | config is data | Three workspace `excluded_globs` entries, two that break out of quoting and one holding `$(...)`, each make check, plan, loop, apply and rollback exit 2 naming the key, and no payload runs. An entry split by an escaped newline and a `never_write` entry outside the alphabet are refused the same way. A wildcard entry still prunes, an entry spelled `-delete` deletes nothing, a target named `build` and an entry `.*` still walk the tree, and no file under `scripts/` calls `eval`. Run from a cwd holding a matching name, the plan survey still drops `.*` and `drafts*` folders, and a `never_write` entry `IDENT?TY.md` refuses `IDENTITY.md`. |
 | CI and line endings | `.github/workflows/ci.yml` runs on every push and pull request with a read-only token and three jobs: ubuntu with dash as `sh`, macos with the BSD userland, and ubuntu with every busybox applet first on `PATH`. Each job runs `sh -n`, and `dash -n` where dash exists, on every script and example shell body, then `sh tests/run-tests.sh`, then `python3 tests/test_check_evidence.py` when python3 3.10 or newer exists, then the checker on the repo. The workflow holds no tab. `.gitattributes` holds `* text=auto eol=lf` and `*.pdf binary`, and `git check-attr` reads both back when git exists. Run as root, the two unlistable-target tests are skipped with a note line, never failed, so the harness can reach FAIL 0 as root. |
 | defaults merge | A workspace holding the 1.0.0 `icm.defaults.json` verbatim runs every mode of every script with exit 0 or 1, reads `log.skill_index` and `loop.starve_days` from the toolkit, and keeps its own lists whole. A stub toolkit beside it proves the toolkit layer through real scripts: the loop writes the index where the toolkit's newer key says, and the check reports the toolkit's version, never the workspace copy's. A workspace list replaces the toolkit list whole, an empty one included, and the walk follows it. Against a second stub toolkit holding only stub protected keys, a workspace cannot remove a `secrets` or `archive` list entry, cannot add a `checks.warn_first` id, cannot set a scalar under a protected key, and a committed `share.dest` or `who` is ignored with a warn line; against the real toolkit a workspace `checks.warn_first` id is never added. Run as a normal user, an unreadable workspace `icm.defaults.json` exits 2 naming the file. A workspace `icm.defaults.json` that is not valid JSON (a bare word, empty, cut off, text after its last brace, a missing or trailing comma) exits 2 naming the file and the line of its first fault, and so does a toolkit file cut off, with or without a workspace file; valid JSON of every value shape still loads. An `asset_extensions` entry `*` is a word, never a glob on the cwd. Section 3.0 names every key in the four lists in `scripts/icm_lib.sh`. |
+| path keys confined | A workspace `log.skill_index` of `../outside.md`, `/tmp/x.md` or `a/../../x.md` makes `icm-loop.sh --index`, `icm-check.sh`, `icm-plan.sh`, `icm-apply.sh` and `icm-rollback.sh` exit 2 naming the key, and no file appears beside the workspace or at `/tmp/x.md`. A `log.ledger` of `../ledger.md` makes `--starve` exit 2 before it reads. A value starting with `-`, holding a newline, a space or a `..` part, an empty one, a `<` `>` pair other than `<task>`, a home folder, a new key under `log` and an entry of a list there are each refused at load naming the full key. `<task>` and a deeper relative path still load, and the loop writes the index where a confined key says. A toolkit file with a bad path key is refused naming that file. At use, a committed `_log` that is a symlink and a `log.skill_index` through a symlinked folder each make `--index` exit 2 naming the key with no index written outside, and a `log.skill_index` of `.git/hooks/pre-commit` exits 2 naming the `never_write` entry and leaves the hook byte for byte, while `--starve`, which writes nothing, still runs. `.GIT/hooks/pre-commit` and `.Git/hooks/pre-commit` exit 2 naming `.git` the same way, and a workspace `never_write` entry `Keep*` refuses an index under `keepme`, named as written. Section 3.0 names every entry of `ICM_PATH_KEYS` in `scripts/icm_lib.sh`. |
 
 ### 13.3 The scaffold adapter rule
 

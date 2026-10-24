@@ -74,3 +74,7 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-10-24 | S02 fix round, a defaults file that is not valid JSON is refused | 2 | ship date | 1 | 0/0/1/0 | 0 | none | scripts/icm_lib.sh |
 | 2026-10-24 | Patched | spec/CLI-CONTRACT.md | FP-2026-10-24-04 |
 | 2026-10-24 | S02 follow-up, never_write union only, macOS physical temp path | 2 | ship date | 1 | 0/0/1/0 | 0 | none | scripts/icm_lib.sh |
+| 2026-10-24 | Patched | spec/CLI-CONTRACT.md | FP-2026-10-24-05 |
+| 2026-10-24 | Patched | BUILD-CONTRACT.md | FP-2026-10-24-05 |
+| 2026-10-24 | S02c path keys are confined to the workspace | 2 | ship date | 3 | 0/2/0/0 | 0 | none | scripts/icm_lib.sh |
+| 2026-10-24 | S02c fix round, never_write match at use ignores case, the task placeholder in non-negotiable 5 | 2 | ship date | 1 | 0/0/2/0 | 0 | none | scripts/icm_lib.sh |
