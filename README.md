@@ -357,7 +357,7 @@ One exit code scheme, all five scripts.
 |---|---|
 | 0 | Clean. Nothing is waiting on you. |
 | 1 | Finished, and a human decision is waiting. Collisions parked, or rollback kept a file you edited. |
-| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo. |
+| 2 | Refused before anything was written. Usage error, bad target, missing plan, dirty repo, a glob entry in `icm.defaults.json` outside its alphabet. |
 | 3 | Aborted part way through. The target may be half changed. `icm-apply.sh` only. |
 
 One optional extra. `scripts/check_evidence.py` is the deep grounding check: it greps every

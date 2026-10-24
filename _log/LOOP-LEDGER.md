@@ -60,3 +60,9 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-09-10 | Patched | .claude-plugin/plugin.json | commit ghost-first-same-day-open, human directed edit, no proposal |
 | 2026-09-10 | Use | icm-loop | skills/icm-loop/SKILL.md | audit the loop and fix the index | ok | 3 |
 | 2026-09-10 | loop audit and index fixes | 2 | Date | 0 | 0/4/0/0 | 0 | none | scripts/icm-loop.sh |
+| 2026-10-24 | Miss | 3 | spec/excluded-folders.md | told scripts to build a find expression string from excluded_globs at run time, and the walker passed it to eval, so a committed workspace icm.defaults.json could run code on check | each entry one quoted find argument after a load time alphabet check, and a rule that config is data |
+| 2026-10-24 | Patched | spec/excluded-folders.md | FP-2026-10-24-01 |
+| 2026-10-24 | Patched | spec/CLI-CONTRACT.md | FP-2026-10-24-01 |
+| 2026-10-24 | Patched | BUILD-CONTRACT.md | FP-2026-10-24-01 |
+| 2026-10-24 | S00 config is data, no eval of globs | 2 | ship date | 3 | 0/6/0/0 | 0 | none | scripts/icm_lib.sh |
+| 2026-10-24 | S00 fix round, never_write patterns and safe list reads | 2 | ship date | 1 | 0/0/4/0 | 0 | none | scripts/icm_lib.sh |

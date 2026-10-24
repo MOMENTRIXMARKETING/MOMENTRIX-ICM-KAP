@@ -358,9 +358,12 @@ tree. Do not apply yet.
 **2. Prune the noise before you fix anything else.**
 
 A messy tree almost always has junk the default globs do not know about: an `_old/` folder, a
-`zz-archive/`, a `Copy of Copy of/`. Add them to `excluded_globs` in
-[`../icm.defaults.json`](../icm.defaults.json) and re-plan. Every later step gets cheaper and
-quieter. This is the highest-leverage ten minutes in the whole process.
+`zz-archive/`, a `Copy of Copy of/`. Add them by name to `excluded_globs` in
+[`../icm.defaults.json`](../icm.defaults.json) and re-plan: `_old`, `zz-archive`,
+`Copy?of?Copy?of`. An entry takes no slash, and `?` stands for a space. Anything outside the
+alphabet in [`../spec/excluded-folders.md`](../spec/excluded-folders.md) is refused, exit 2.
+Every later step gets cheaper and quieter. This is the highest-leverage ten minutes in the
+whole process.
 
 **3. Apply the top two layers only.**
 

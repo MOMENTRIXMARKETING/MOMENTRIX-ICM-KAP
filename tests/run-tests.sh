@@ -2037,6 +2037,162 @@ else
     t_fail "every row of the table in spec/budgets.md equals icm.defaults.json" "drifted:$O3_SPEC"
 fi
 
+# ------------------------------------------------ S00 no eval of config --
+
+printf '\n%s\n' '-- S00: no config value reaches eval or find syntax --'
+# A workspace icm.defaults.json is committed data that anyone can hand you.
+# Each payload is one excluded_globs entry. The third ran code through the
+# old eval walker. Every one must now be refused at load, before any walk.
+S00_P="$WORK/s00 payloads"
+cat > "$S00_P" <<'S00_EOF'
+x' -o -exec touch PWNED ; -o -name 'y
+$(touch PWNED)
+x'$(touch${IFS}PWNED)'y
+S00_EOF
+
+# s00_defaults <workspace> <key> <value...>: the toolkit defaults with more
+# entries at the head of a list key. No payload holds a quote. awk -v turns
+# a doubled backslash into one, so a payload can carry a JSON escape.
+s00_defaults() {
+    _s0_w="$1"
+    _s0_k="$2"
+    shift 2
+    awk -v k="\"$_s0_k\": [" -v g="$1" '
+        index($0, k) { print; printf "    \"%s\",\n", g; next }
+        { print }
+    ' "$ROOT/icm.defaults.json" > "$_s0_w/icm.defaults.json"
+    shift
+    for _s0_g in "$@"; do
+        awk -v k="\"$_s0_k\": [" -v g="$_s0_g" '
+            index($0, k) { print; printf "    \"%s\",\n", g; next }
+            { print }
+        ' "$_s0_w/icm.defaults.json" > "$WORK/s00 defaults"
+        mv "$WORK/s00 defaults" "$_s0_w/icm.defaults.json"
+    done
+}
+
+# s00_run <dir> <command...>: run from inside a fixture, so a payload that
+# does fire lands where the assertion looks.
+s00_run() {
+    _s0_d="$1"
+    shift
+    OUT=$( cd "$_s0_d" && "$@" 2>&1 )
+    RC=$?
+}
+
+S00_N=0
+for S00_I in 1 2 3; do
+    S00_G=$(sed -n "${S00_I}p" "$S00_P")
+    S00_X=$(fixture "s00 payload $S00_I")
+    run "$SCRIPTS/icm-plan.sh" --quiet "$S00_X"
+    run "$SCRIPTS/icm-apply.sh" --no-check "$S00_X"
+    s00_defaults "$S00_X" excluded_globs "$S00_G"
+    s00_run "$S00_X" "$SCRIPTS/icm-check.sh" "$S00_X"
+    assert_rc "payload $S00_I: icm-check.sh refuses the defaults, exit 2" 2
+    assert_out "payload $S00_I: icm-check.sh names the key" "key excluded_globs"
+    s00_run "$S00_X" "$SCRIPTS/icm-plan.sh" --quiet "$S00_X"
+    assert_rc "payload $S00_I: icm-plan.sh refuses the defaults, exit 2" 2
+    assert_out "payload $S00_I: icm-plan.sh names the key" "key excluded_globs"
+    s00_run "$S00_X" "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S00_X"
+    assert_rc "payload $S00_I: icm-loop.sh --index refuses the defaults, exit 2" 2
+    assert_out "payload $S00_I: icm-loop.sh --index names the key" "key excluded_globs"
+    s00_run "$S00_X" "$SCRIPTS/icm-apply.sh" --no-check "$S00_X"
+    S00_A=$RC
+    s00_run "$S00_X" "$SCRIPTS/icm-rollback.sh" "$S00_X"
+    if [ "$S00_A" -eq 2 ] && [ "$RC" -eq 2 ]; then
+        t_pass "payload $S00_I: apply and rollback refuse the same defaults"
+    else
+        t_fail "payload $S00_I: apply and rollback refuse the same defaults" "apply $S00_A, rollback $RC"
+    fi
+    if [ -e "$S00_X/PWNED" ] || [ -e "$ROOT/PWNED" ]; then
+        S00_N=$((S00_N + 1))
+    fi
+done
+if [ "$S00_N" -eq 0 ]; then
+    t_pass "no payload created a PWNED file"
+else
+    t_fail "no payload created a PWNED file" "$S00_N payload(s) ran code"
+fi
+
+S00_W=$(fixture "s00 never write")
+run "$SCRIPTS/icm-plan.sh" --quiet "$S00_W"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S00_W"
+s00_defaults "$S00_W" never_write '$(touch PWNED)'
+s00_run "$S00_W" "$SCRIPTS/icm-check.sh" "$S00_W"
+assert_rc "a never_write entry outside the glob alphabet is refused, exit 2" 2
+assert_out "the refusal names never_write" "key never_write"
+assert_nofile "the never_write payload never ran" "$S00_W/PWNED"
+
+# A value split by an escaped newline is refused whole, not cut short.
+s00_defaults "$S00_W" excluded_globs 'ok\\n$(touch PWNED)'
+s00_run "$S00_W" "$SCRIPTS/icm-check.sh" "$S00_W"
+assert_rc "an entry carrying a newline is refused, exit 2" 2
+assert_out "the newline refusal names the key" "key excluded_globs"
+
+# The walk still honours a wildcard glob, and a glob spelled like a find
+# primary is only ever a name.
+S00_OK=$(fixture "s00 safe globs")
+run "$SCRIPTS/icm-plan.sh" --quiet "$S00_OK"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S00_OK"
+mkdir -p "$S00_OK/drafts old"
+printf 'See [gone](nope.md).\n' > "$S00_OK/drafts old/x.md"
+s00_defaults "$S00_OK" excluded_globs 'drafts*'
+s00_run "$S00_OK" "$SCRIPTS/icm-check.sh" --links "$S00_OK"
+assert_rc "a wildcard entry still prunes its folder from the walk" 0
+assert_not_out "the pruned folder is never read" "drafts old"
+s00_defaults "$S00_OK" excluded_globs '-delete'
+snapshot "$S00_OK" > "$WORK/s00 before"
+s00_run "$S00_OK" "$SCRIPTS/icm-check.sh" --links "$S00_OK"
+snapshot "$S00_OK" > "$WORK/s00 after"
+assert_same "an entry spelled -delete is a name, never a find action" "$WORK/s00 before" "$WORK/s00 after"
+assert_out "the walk under an entry spelled -delete still finds the dead link" "nope.md"
+
+# The target's own name is never tested against an entry. A workspace in a
+# folder called build is walked, not pruned whole and reported clean.
+S00_B=$(fixture "s00 root/build")
+run "$SCRIPTS/icm-plan.sh" --quiet "$S00_B"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S00_B"
+printf 'See [gone](nope.md).\n' > "$S00_B/notes.md"
+run "$SCRIPTS/icm-check.sh" --links "$S00_B"
+assert_rc "a target named like an excluded entry is still walked" 1
+assert_out "its dead link is found" "does not exist: nope.md"
+mkdir -p "$S00_B/.hidden"
+printf 'See [gone](hidden-gone.md).\n' > "$S00_B/.hidden/y.md"
+s00_defaults "$S00_B" excluded_globs '.*'
+run "$SCRIPTS/icm-check.sh" --links "$S00_B"
+assert_out "an entry .* prunes dot folders but never the root" "does not exist: nope.md"
+assert_not_out "the dot folder under an entry .* is never read" "hidden-gone.md"
+
+# An entry is a pattern, never a word list for the shell. Run from a folder
+# whose names match the entries, so a reader that lets the shell expand an
+# entry against its own cwd would keep the folders the walk prunes.
+S00_C=$(fixture "s00 cwd")
+mkdir -p "$S00_C/drafts-x"
+S00_D=$(fixture "s00 survey")
+mkdir -p "$S00_D/.hidden" "$S00_D/drafts old"
+printf 'x\n' > "$S00_D/.hidden/a.md"
+printf 'y\n' > "$S00_D/drafts old/b.md"
+s00_defaults "$S00_D" excluded_globs '.*' 'drafts*'
+s00_run "$S00_C" "$SCRIPTS/icm-plan.sh" "$S00_D"
+assert_not_out "the plan survey honours an entry .* from any cwd" ".hidden/"
+assert_not_out "the plan survey honours an entry drafts* from any cwd" "drafts old/"
+
+# A never_write entry is a pattern on each path component, as the spec says,
+# so a wildcard entry refuses its match from any cwd.
+S00_V=$(fixture "s00 never write glob")
+s00_defaults "$S00_V" never_write 'IDENT?TY.md' '_l*'
+s00_run "$S00_V" "$SCRIPTS/icm-plan.sh" "$S00_V"
+assert_out "a never_write entry IDENT?TY.md refuses IDENTITY.md" \
+    "never_write glob in icm.defaults.json (IDENT?TY.md)"
+assert_out "a never_write entry _l* refuses the _log folder" \
+    "never_write glob in icm.defaults.json (_l*)"
+assert_not_out "nothing under a wildcard never_write entry is created" "ledger and proposals, absent"
+if grep -n -E '(^|[^A-Za-z_])eval([^A-Za-z_]|$)' "$SCRIPTS"/*.sh | grep -v '^[^:]*:[0-9]*: *#' | grep -q .; then
+    t_fail "no script under scripts/ calls eval" "$(grep -n 'eval' "$SCRIPTS"/*.sh)"
+else
+    t_pass "no script under scripts/ calls eval"
+fi
+
 # ---------------------------------------------------------------- the tally --
 
 printf '\n%s\n' '-- summary --'

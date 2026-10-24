@@ -375,8 +375,9 @@ after the map exists.
 Then the order that works:
 
 ```sh
-# 1. prune the noise first: add _old/, zz-archive/ and friends to
-#    excluded_globs in icm.defaults.json, then re-plan. cheapest ten minutes here.
+# 1. prune the noise first: add _old, zz-archive and friends, by name, to
+#    excluded_globs in icm.defaults.json (no slash; ? stands for a space),
+#    then re-plan. cheapest ten minutes here.
 sh "$ICM_HOME/scripts/icm-plan.sh" .
 
 # 2. install the top layers only. zero files moved.

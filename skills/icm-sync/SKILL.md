@@ -56,7 +56,7 @@ Then read what the workspace currently claims about itself: `IDENTITY.md`, the r
 sh "$ICM_HOME/scripts/icm-check.sh" .
 ```
 
-Exit 0 is clean. Exit 1 means findings. Exit 2 means a usage or environment error, which is a bug in the command you typed, not a finding about the workspace.
+Exit 0 is clean. Exit 1 means findings. Exit 2 means a usage or environment error, which is a bug in the command you typed, not a finding about the workspace. One exit 2 is about the workspace's config: a glob entry in its `icm.defaults.json` outside the alphabet in `$ICM_HOME/spec/excluded-folders.md`. The `FAIL` line names the key. Show it to the user; never edit the file yourself.
 
 Read the report, do not re-derive it. If you disagree with a finding, that disagreement is a judgment report you raise to the user, not a licence to ignore the row.
 

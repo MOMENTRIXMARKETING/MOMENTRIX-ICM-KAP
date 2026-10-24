@@ -12,8 +12,8 @@
 # POSIX sh only. No bashisms. Tested with: sh -n scripts/icm_lib.sh
 #
 # What lives here:
-#   json      icm_json_get / icm_json_list / icm_json_num  (reads icm.defaults.json)
-#   walking   icm_top_entries / icm_walk_files / icm_walk_md / icm_excluded
+#   json      icm_json_get / icm_json_list / icm_json_num / icm_json_globs_ok
+#   walking   icm_top_entries / icm_walk / icm_walk_files / icm_walk_md / icm_excluded
 #   counting  icm_chars / icm_lines
 #   markdown  icm_fm_get / icm_fm_block / icm_first_fence_block / icm_fence_count
 #   writing   icm_atomic_write / icm_splice
@@ -57,6 +57,9 @@ ICM_TOOLKIT="Momentrix ICM KAP Toolkit"
 ICM_VERSION="0"
 ICM_JSON_SRC=""
 ICM_JSON_CACHE=""
+# The keys whose entries are globs, checked by icm_json_globs_ok at every
+# load. Key names, not values: the entries live in icm.defaults.json.
+ICM_GLOB_KEYS="excluded_globs never_write"
 
 # ------------------------------------------------------------------- basics --
 
@@ -330,6 +333,8 @@ icm_json_flatten() {
     ' "$1"
 }
 
+# Flatten one defaults file into the cache. Returns 2, after a FAIL line,
+# when a glob entry is refused; the cache is then gone, so nothing reads it.
 icm_json_load() {
     icm_tmp_init
     if [ "$ICM_JSON_SRC" = "$1" ] && [ -f "$ICM_JSON_CACHE" ]; then
@@ -337,19 +342,53 @@ icm_json_load() {
     fi
     [ -f "$1" ] || icm_die "no such defaults file: $1"
     ICM_JSON_CACHE="$ICM_TMPDIR/defaults.flat"
+    ICM_JSON_SRC=""
     icm_json_flatten "$1" > "$ICM_JSON_CACHE"
+    if ! icm_json_globs_ok "$ICM_JSON_CACHE" "$1"; then
+        rm -f "$ICM_JSON_CACHE"
+        return 2
+    fi
     ICM_JSON_SRC="$1"
 }
 
-# icm_json_get <file> <flattened.path>  -> value on stdout, exit 1 if absent
+# icm_json_globs_ok <flattened cache> <source file>
+# A workspace icm.defaults.json is committed data that anyone can hand you,
+# so every entry under ICM_GLOB_KEYS is held to one alphabet at load, before
+# any walk. Nothing outside it can become shell or find syntax. The whole rest
+# of the line is tested, not the first tab field, and a line with no tab right
+# after a glob entry is that entry split by a newline. The first bad entry is
+# named, with its key, on a FAIL line, and the status is 1.
+icm_json_globs_ok() {
+    for _jg_k in $ICM_GLOB_KEYS; do
+        _jg_bad=$(awk -v k="$_jg_k" '
+            index($0, "\t") == 0 { if (prev != "") { print prev; exit }; next }
+            {
+                prev = ""
+                key = substr($0, 1, index($0, "\t") - 1)
+                if (key != k && index(key, k ".") != 1) { next }
+                if (substr($0, length(key) + 2) !~ /^[A-Za-z0-9._*?-]+$/) { print key; exit }
+                prev = key
+            }
+        ' "$1")
+        if [ -n "$_jg_bad" ]; then
+            printf 'FAIL key %s in %s holds an entry outside the glob alphabet A-Z a-z 0-9 . _ * ? - (at %s). nothing was walked or written. fix that entry (to match a space, write ?), then rerun.\n' \
+                "$_jg_k" "$2" "$_jg_bad" >&2
+            return 1
+        fi
+    done
+    return 0
+}
+
+# icm_json_get <file> <flattened.path>  -> value on stdout, exit 1 if absent,
+# exit 2 when the file was refused at load (icm_json_list does the same)
 icm_json_get() {
-    icm_json_load "$1"
+    icm_json_load "$1" || exit 2
     awk -F '\t' -v k="$2" '$1 == k { print $2; found = 1; exit } END { if (!found) exit 1 }' "$ICM_JSON_CACHE"
 }
 
 # icm_json_list <file> <flattened.path-of-array>  -> one element per line
 icm_json_list() {
-    icm_json_load "$1"
+    icm_json_load "$1" || exit 2
     awk -F '\t' -v k="$2" '
         index($1, k ".") == 1 {
             rest = substr($1, length(k) + 2)
@@ -370,12 +409,19 @@ icm_json_num() {
 # ------------------------------------------------------------------ walking --
 
 # True (exit 0) when a basename matches one of excluded_globs.
+# The entries are read one per line, never split by the shell, so an entry
+# such as .* or drafts* is a case pattern and never a pathname expansion
+# against the caller's cwd.
 icm_excluded() {
-    for _x_g in $(icm_json_list "$ICM_DEFAULTS" excluded_globs); do
+    _x_list=$(icm_json_list "$ICM_DEFAULTS" excluded_globs)
+    while IFS= read -r _x_g; do
+        [ -n "$_x_g" ] || continue
         case "$1" in
             $_x_g) return 0 ;;
         esac
-    done
+    done <<ICM_EXCLUDED_GLOBS
+$_x_list
+ICM_EXCLUDED_GLOBS
     return 1
 }
 
@@ -383,27 +429,34 @@ icm_excluded() {
 #
 # The test is on ANY path component, not just the first, because a never_write
 # name can appear at any depth: docs/sub/node_modules/x.md and a/.git/config are
-# both refusals. Wrapping the candidate in slashes is what makes the first and
-# last components match too. The globs still come from icm.defaults.json; they
-# are never hand typed here.
+# both refusals. Each component is matched against each entry as a case
+# pattern, so a wildcard entry such as _l* refuses _log/x.md. The globs still
+# come from icm.defaults.json; they are never hand typed here.
 icm_never_write_ok() {
-    _w_p="/$1/"
-    for _w_g in $(icm_json_list "$ICM_DEFAULTS" never_write); do
-        case "$_w_p" in
-            *"/$_w_g/"*) return 1 ;;
-        esac
-    done
-    return 0
+    [ -z "$(icm_never_write_hit "$1")" ]
 }
 
-# The never_write component that refuses a path, for the message. Empty when
-# the path is writable.
+# The never_write entry that refuses a path, for the message. Empty when
+# the path is writable. The components are walked with ${p%%/*} and ${p#*/},
+# and the entries are read one per line, never split by the shell.
 icm_never_write_hit() {
-    _wh_p="/$1/"
-    for _wh_g in $(icm_json_list "$ICM_DEFAULTS" never_write); do
+    _wh_list=$(icm_json_list "$ICM_DEFAULTS" never_write)
+    _wh_p="$1"
+    while [ -n "$_wh_p" ]; do
+        _wh_c=${_wh_p%%/*}
         case "$_wh_p" in
-            *"/$_wh_g/"*) printf '%s\n' "$_wh_g"; return 0 ;;
+            */*) _wh_p=${_wh_p#*/} ;;
+            *)   _wh_p="" ;;
         esac
+        [ -n "$_wh_c" ] || continue
+        while IFS= read -r _wh_g; do
+            [ -n "$_wh_g" ] || continue
+            case "$_wh_c" in
+                $_wh_g) printf '%s\n' "$_wh_g"; return 0 ;;
+            esac
+        done <<ICM_NEVER_WRITE_GLOBS
+$_wh_list
+ICM_NEVER_WRITE_GLOBS
     done
     printf ''
 }
@@ -421,23 +474,33 @@ icm_top_entries() {
           done
 }
 
-# Build the find(1) prune expression from excluded_globs.
-icm_prune_expr() {
-    _p_out=""
-    for _p_g in $(icm_json_list "$ICM_DEFAULTS" excluded_globs); do
-        _p_out="$_p_out -name '$_p_g' -prune -o"
-    done
-    printf '%s\n' "$_p_out"
+# icm_walk <root> <f|d>: every file or directory under a root, as paths
+# relative to it, sorted, exclusions applied. No eval and no expression
+# string. Each excluded_globs entry is one quoted find argument, the operand
+# of -name, so even an entry spelled like a primary stays a name.
+# The walk starts at <root>/. and every prune skips the name ., so the
+# root itself is never pruned: a target called build, or an entry .*, still
+# walks the tree instead of pruning it whole and passing it clean.
+icm_walk() {
+    _wk_root=$(icm_abspath "$1")
+    _wk_type="$2"
+    [ -d "$_wk_root" ] || return 0
+    _wk_globs=$(icm_json_list "$ICM_DEFAULTS" excluded_globs)
+    set -- "$_wk_root/."
+    while IFS= read -r _wk_g; do
+        [ -n "$_wk_g" ] || continue
+        set -- "$@" ! -name . -name "$_wk_g" -prune -o
+    done <<ICM_WALK_GLOBS
+$_wk_globs
+ICM_WALK_GLOBS
+    find "$@" -type "$_wk_type" -print 2>/dev/null \
+        | awk -v p="$_wk_root/./" 'index($0, p) == 1 { print substr($0, length(p) + 1) }' \
+        | sort
 }
 
 # All files under a root, as paths relative to that root, exclusions applied.
 icm_walk_files() {
-    _f_root=$(icm_abspath "$1")
-    [ -d "$_f_root" ] || return 0
-    _f_pr=$(icm_prune_expr)
-    eval "find \"\$_f_root\" $_f_pr -type f -print 2>/dev/null" \
-        | awk -v p="$_f_root/" 'index($0, p) == 1 { print substr($0, length(p) + 1) }' \
-        | sort
+    icm_walk "$1" f
 }
 
 # Every markdown file under a root, relative paths.
@@ -447,12 +510,7 @@ icm_walk_md() {
 
 # Every directory under a root, relative paths, exclusions applied.
 icm_walk_dirs() {
-    _d_root=$(icm_abspath "$1")
-    [ -d "$_d_root" ] || return 0
-    _d_pr=$(icm_prune_expr)
-    eval "find \"\$_d_root\" $_d_pr -type d -print 2>/dev/null" \
-        | awk -v p="$_d_root/" 'index($0, p) == 1 { print substr($0, length(p) + 1) }' \
-        | sort
+    icm_walk "$1" d
 }
 
 # ------------------------------------------------------------------ survey --
@@ -870,8 +928,9 @@ icm_init() {
     icm_tmp_init
     ICM_DEFAULTS=$(icm_defaults_for "$1")
     # Flatten once, in this shell, so every later lookup (including the ones
-    # that run inside subshells and pipelines) hits the cache.
-    icm_json_load "$ICM_DEFAULTS"
+    # that run inside subshells and pipelines) hits the cache. A refused
+    # glob entry stops the run here, exit 2, before any walk or write.
+    icm_json_load "$ICM_DEFAULTS" || { icm_cleanup; exit 2; }
     ICM_TOOLKIT=$(icm_json_get "$ICM_DEFAULTS" toolkit 2>/dev/null) || ICM_TOOLKIT="Momentrix ICM KAP Toolkit"
     ICM_VERSION=$(icm_json_get "$ICM_DEFAULTS" version 2>/dev/null) || ICM_VERSION="0"
     icm_sha_init
