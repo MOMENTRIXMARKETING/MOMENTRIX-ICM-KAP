@@ -423,6 +423,15 @@ Both of the first two must be green before anything ships. Test fixtures deliber
 under a path containing a space, so an unquoted variable fails a test here rather than in
 someone else's repo.
 
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the same gates on every push and
+pull request, three times: ubuntu with dash as `sh`, macos with the BSD userland, and ubuntu
+with every busybox applet first on `PATH`. Each job runs `sh -n` (and `dash -n` where dash
+exists) on every script and example shell body, the harness, the python tests when python3
+3.10 or newer exists, and the checker on this repo. Run as root, the harness skips the two
+tests root cannot fail (root lists a folder it has no read bit on) and says so in a note line.
+[`.gitattributes`](.gitattributes) keeps every text file LF in every checkout, so a Windows
+clone never hands `sh` a carriage return.
+
 ---
 
 ## Attribution

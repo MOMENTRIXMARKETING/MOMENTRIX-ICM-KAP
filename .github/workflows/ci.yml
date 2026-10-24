@@ -1,0 +1,122 @@
+# The gates CONTEXT.md Session Start runs by hand, on every push and pull
+# request, under three userlands. ubuntu runs dash as sh. macos runs the BSD
+# userland. busybox puts every busybox applet first on PATH, so the harness
+# shell and its awk, sed, grep, find and sort are busybox. A red job is not done.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu (dash)
+            os: ubuntu-latest
+            userland: dash
+          - name: macos (BSD)
+            os: macos-latest
+            userland: bsd
+          - name: busybox
+            os: ubuntu-latest
+            userland: busybox
+    env:
+      USERLAND: ${{ matrix.userland }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: busybox applets first on PATH
+        if: matrix.userland == 'busybox'
+        shell: sh -e {0}
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q busybox
+          bb=$(command -v busybox)
+          dir="$RUNNER_TEMP/busybox"
+          mkdir -p "$dir"
+          busybox --list | while IFS= read -r a; do
+              ln -s "$bb" "$dir/$a"
+          done
+          printf '%s\n' "$dir" >> "$GITHUB_PATH"
+
+      - name: the userland under test
+        shell: sh {0}
+        run: |
+          for t in sh awk sed grep find sort; do
+              printf '%-5s %s\n' "$t" "$(command -v "$t")"
+          done
+          bad=0
+          case "$USERLAND" in
+              dash)
+                  case "$(readlink /bin/sh)" in
+                      *dash) ;;
+                      *) printf 'FAIL /bin/sh is not dash\n'; bad=1 ;;
+                  esac ;;
+              busybox)
+                  for t in sh awk sed grep find sort; do
+                      case "$(command -v "$t")" in
+                          "$RUNNER_TEMP/busybox/"*) ;;
+                          *) printf 'FAIL %s is not busybox\n' "$t"; bad=1 ;;
+                      esac
+                  done ;;
+          esac
+          [ "$bad" -eq 0 ]
+
+      - name: sh -n, and dash -n where present, on every script and example shell body
+        shell: sh {0}
+        run: |
+          list="$RUNNER_TEMP/shell bodies"
+          for f in scripts/*.sh tests/run-tests.sh; do
+              printf '%s\n' "$f"
+          done > "$list"
+          find examples -type f \( -name '*.sh' -o -name '*.txt' \) >> "$list"
+          command -v dash >/dev/null 2>&1 || printf 'note no dash here, dash -n skipped\n'
+          bad=0
+          while IFS= read -r f; do
+              case "$f" in
+                  *.sh|*.sh.txt) ;;
+                  *) [ "$(head -n 1 "$f")" = '#!/bin/sh' ] || continue ;;
+              esac
+              for s in sh dash; do
+                  command -v "$s" >/dev/null 2>&1 || continue
+                  if "$s" -n "$f"; then
+                      printf 'ok   %s -n %s\n' "$s" "$f"
+                  else
+                      printf 'FAIL %s -n %s\n' "$s" "$f"
+                      bad=$((bad + 1))
+                  fi
+              done
+          done < "$list"
+          [ "$bad" -eq 0 ]
+
+      - name: the POSIX harness
+        shell: sh {0}
+        run: sh tests/run-tests.sh
+
+      - name: the python tests, when python3 3.10 or newer exists
+        shell: sh {0}
+        run: |
+          if command -v python3 >/dev/null 2>&1 \
+             && python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))'; then
+              python3 tests/test_check_evidence.py
+          else
+              printf 'note no python3 3.10 or newer here, the optional evidence tests were skipped\n'
+          fi
+
+      - name: the self check
+        shell: sh {0}
+        run: |
+          ICM_HOME=$(pwd)
+          export ICM_HOME
+          sh "$ICM_HOME/scripts/icm-check.sh" .

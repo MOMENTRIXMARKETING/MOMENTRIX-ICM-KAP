@@ -17,16 +17,18 @@ momentrix-icm-kap-toolkit/
 ├── QUICKSTART.md            # the sixty-second path: NEW, OVER, TRANSFER
 ├── NOTICE.md                # provenance: the three upstreams
 ├── LICENSE                  # MIT
-├── .gitignore               # keeps the toolkit's scratch folder out of git
-├── .claude-plugin/          # marketplace.json, plugin.json: the install path
+├── .gitignore               # keeps scratch and caches out of git
+├── .gitattributes           # LF only, the PDF binary
+├── .github/                 # CI: dash, BSD, busybox
+├── .claude-plugin/          # the plugin install path
 ├── scripts/                 # POSIX sh: check, plan, apply, rollback, loop, lib
 ├── skills/                  # the nine icm-* skills, one SKILL.md each
-├── spec/                    # layer 3 rule books: layers, budgets, conventions
-├── interview-templates/     # .tmpl material a human fills in; no script reads it
+├── spec/                    # layer 3 rule books: layers, budgets
+├── interview-templates/     # .tmpl a human fills in; no script reads it
 ├── docs/                    # methodology, retrofit, deck copy, the paper
-├── examples/                # worked examples: the raw and wiki pair, whole trees
+├── examples/                # the raw and wiki pair, whole trees
 ├── _log/                    # this repo's own ledger, proposals, index
-└── tests/                   # run-tests.sh, the POSIX harness, plus the python one
+└── tests/                   # the POSIX harness, plus the python one
 ```
 
 ## Layers
@@ -42,7 +44,7 @@ momentrix-icm-kap-toolkit/
 
 ## Why layers 2, 4a and 4b are absent
 
-The toolkit ships every layer and runs 0, 1, 3 and the loop on itself. No stages, no `raw/`, no `wiki/`: this repo makes a toolkit, not knowledge. `examples/` holds worked trees instead. The checker reports the rest absent rather than failing.
+The toolkit ships every layer and runs 0, 1, 3 and the loop on itself. It makes a toolkit, not knowledge, so it has no stages, `raw/` or `wiki/`; `examples/` holds worked trees. The checker reports them absent, not failed.
 
 ## Rules
 

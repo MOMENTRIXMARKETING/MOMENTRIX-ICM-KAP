@@ -66,3 +66,5 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-10-24 | Patched | BUILD-CONTRACT.md | FP-2026-10-24-01 |
 | 2026-10-24 | S00 config is data, no eval of globs | 2 | ship date | 3 | 0/6/0/0 | 0 | none | scripts/icm_lib.sh |
 | 2026-10-24 | S00 fix round, never_write patterns and safe list reads | 2 | ship date | 1 | 0/0/4/0 | 0 | none | scripts/icm_lib.sh |
+| 2026-10-24 | Patched | spec/CLI-CONTRACT.md | FP-2026-10-24-02 |
+| 2026-10-24 | S01 CI on three userlands, LF line endings | 2 | ship date | 4 | 0/2/0/0 | 0 | none | .github/workflows/ci.yml |

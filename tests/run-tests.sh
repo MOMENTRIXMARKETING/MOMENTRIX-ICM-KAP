@@ -1905,15 +1905,21 @@ assert_not_out "%20 in a link is a space on disk" "01%20-%20notes"
 assert_out "a dead link still fails" "does not exist: nope.md"
 
 printf '\n%s\n' '-- hunt: check and loop refuse what they cannot read --'
-HR=$(fixture "hunt unreadable")
-run "$SCRIPTS/icm-plan.sh" --quiet "$HR"
-run "$SCRIPTS/icm-apply.sh" --no-check "$HR"
-chmod 0300 "$HR"
-run "$SCRIPTS/icm-check.sh" "$HR"
-assert_rc "the checker exits 2 on a target it cannot list, never clean" 2
-run "$SCRIPTS/icm-loop.sh" "$HR"
-assert_rc "the loop exits 2 on a target it cannot list" 2
-chmod 0700 "$HR"
+# Root lists a mode 0300 folder anyway, so these two only mean something to
+# a normal user. CI runs them as one.
+if [ "$AM_ROOT" -eq 0 ]; then
+    HR=$(fixture "hunt unreadable")
+    run "$SCRIPTS/icm-plan.sh" --quiet "$HR"
+    run "$SCRIPTS/icm-apply.sh" --no-check "$HR"
+    chmod 0300 "$HR"
+    run "$SCRIPTS/icm-check.sh" "$HR"
+    assert_rc "the checker exits 2 on a target it cannot list, never clean" 2
+    run "$SCRIPTS/icm-loop.sh" "$HR"
+    assert_rc "the loop exits 2 on a target it cannot list" 2
+    chmod 0700 "$HR"
+else
+    printf 'note running as root, the two unlistable target tests were skipped\n'
+fi
 HF=$(fixture "hunt icm file")
 touch "$HF/.icm"
 run "$SCRIPTS/icm-check.sh" "$HF"
@@ -2191,6 +2197,72 @@ if grep -n -E '(^|[^A-Za-z_])eval([^A-Za-z_]|$)' "$SCRIPTS"/*.sh | grep -v '^[^:
     t_fail "no script under scripts/ calls eval" "$(grep -n 'eval' "$SCRIPTS"/*.sh)"
 else
     t_pass "no script under scripts/ calls eval"
+fi
+
+printf '\n%s\n' '-- S01: CI on three userlands, LF line endings --'
+# The gates in CONTEXT.md Session Start ran by hand on one machine. CI runs
+# them on every push and pull request under dash, the macOS BSD userland and
+# busybox applets first on PATH. These asserts read the workflow as text, so
+# they hold offline; the CI run itself is the proof it goes green.
+S01_CI="$ROOT/.github/workflows/ci.yml"
+assert_file "the CI workflow exists" "$S01_CI"
+
+# s01_has <label> <file> <line>: the file holds the line, whole.
+s01_has() {
+    if [ -f "$2" ] && grep -q -x -F -- "$3" "$2"; then
+        t_pass "$1"
+    else
+        t_fail "$1" "$2 has no line: $3"
+    fi
+}
+
+# s01_says <label> <text>: the workflow holds the text somewhere.
+s01_says() {
+    if [ -f "$S01_CI" ] && grep -q -F -- "$2" "$S01_CI"; then
+        t_pass "$1"
+    else
+        t_fail "$1" "$S01_CI does not contain: $2"
+    fi
+}
+
+s01_has "CI runs on every push" "$S01_CI" "  push:"
+s01_has "CI runs on every pull request" "$S01_CI" "  pull_request:"
+s01_has "the CI token is read only" "$S01_CI" "  contents: read"
+s01_says "the ubuntu job runs dash as sh" "name: ubuntu (dash)"
+s01_says "the ubuntu job runs on ubuntu" "os: ubuntu-latest"
+s01_says "the macos job runs the BSD userland" "name: macos (BSD)"
+s01_says "the macos job runs on macos" "os: macos-latest"
+s01_says "the busybox job exists" "name: busybox"
+s01_says "the busybox job links every applet" "busybox --list"
+s01_says "the busybox job puts the applets first on PATH" "GITHUB_PATH"
+s01_says "every job sweeps example shell bodies too" "find examples -type f"
+s01_says "every job runs sh -n and dash -n where present" "for s in sh dash"
+s01_says "every job runs the POSIX harness" "sh tests/run-tests.sh"
+s01_says "every job runs the python tests when python3 exists" "python3 tests/test_check_evidence.py"
+s01_says "every job runs the self check" "sh \"\$ICM_HOME/scripts/icm-check.sh\" ."
+if [ -f "$S01_CI" ] && grep -q "$(printf '\t')" "$S01_CI"; then
+    t_fail "the workflow holds no tab, YAML refuses one" "$(grep -n "$(printf '\t')" "$S01_CI")"
+else
+    t_pass "the workflow holds no tab, YAML refuses one"
+fi
+
+# A CRLF checkout feeds sh a carriage return on every line. LF everywhere,
+# and the paper is binary, never converted.
+s01_has ".gitattributes keeps every text file LF" "$ROOT/.gitattributes" "* text=auto eol=lf"
+s01_has ".gitattributes keeps the PDF binary" "$ROOT/.gitattributes" "*.pdf binary"
+if command -v git >/dev/null 2>&1 && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+    S01_E=$(git -C "$ROOT" check-attr eol -- scripts/icm_lib.sh 2>&1)
+    case "$S01_E" in
+        *"eol: lf") t_pass "git checks a script out with LF endings" ;;
+        *) t_fail "git checks a script out with LF endings" "$S01_E" ;;
+    esac
+    S01_B=$(git -C "$ROOT" check-attr binary -- docs/paper/Interpretable-Context-Methodology.pdf 2>&1)
+    case "$S01_B" in
+        *"binary: set") t_pass "git treats the paper as binary" ;;
+        *) t_fail "git treats the paper as binary" "$S01_B" ;;
+    esac
+else
+    printf 'note no git here, the attribute read back was skipped\n'
 fi
 
 # ---------------------------------------------------------------- the tally --
