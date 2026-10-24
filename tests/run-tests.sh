@@ -25,6 +25,10 @@ fi
 WORK="${TMPDIR:-/tmp}/icm tests $$"
 rm -rf "$WORK"
 mkdir -p "$WORK"
+# The scripts name a target by its physical path (pwd -P). On macOS TMPDIR
+# sits under /var, a symlink to /private/var, and ends in a slash, so resolve
+# the work directory once and every expected path below matches.
+WORK=$(cd "$WORK" && pwd -P)
 # Some fixtures deliberately go read-only, mode 000 or 555, because that is the
 # defect under test. Widen everything back before the sweep, or the sweep fails
 # and leaves the fixtures behind.
@@ -2526,9 +2530,7 @@ if [ "$AM_ROOT" -eq 0 ]; then
     chmod 000 "$S02_U/icm.defaults.json"
     run "$SCRIPTS/icm-check.sh" "$S02_U"
     assert_rc "an unreadable workspace icm.defaults.json is refused, exit 2" 2
-    # The refusal names the physical path: on macOS the temp folder sits
-    # under /var, a symlink to /private/var, and pwd -P resolves it.
-    assert_out "the refusal names the file" "FAIL cannot read $(cd "$S02_U" && pwd -P)/icm.defaults.json"
+    assert_out "the refusal names the file" "FAIL cannot read $S02_U/icm.defaults.json"
     chmod 644 "$S02_U/icm.defaults.json"
 else
     printf 'note running as root, the unreadable defaults test was skipped\n'
