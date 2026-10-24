@@ -72,3 +72,5 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-10-24 | Patched | spec/excluded-folders.md | FP-2026-10-24-03 |
 | 2026-10-24 | S02 defaults merge, the toolkit under the workspace | 2 | ship date | 4 | 0/6/0/0 | 0 | none | scripts/icm_lib.sh |
 | 2026-10-24 | S02 fix round, a defaults file that is not valid JSON is refused | 2 | ship date | 1 | 0/0/1/0 | 0 | none | scripts/icm_lib.sh |
+| 2026-10-24 | Patched | spec/CLI-CONTRACT.md | FP-2026-10-24-04 |
+| 2026-10-24 | S02 follow-up, never_write union only, macOS physical temp path | 2 | ship date | 1 | 0/0/1/0 | 0 | none | scripts/icm_lib.sh |

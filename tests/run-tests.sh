@@ -2509,6 +2509,15 @@ esac
 s02_load "$ROOT" "$S02_W"
 assert_out "the ignored warn_first id is named" "lists stub.never-a-rule"
 
+# never_write keeps .git and its kin out of every write, so a workspace may
+# add an entry and never remove one.
+S02_NW=$(fixture "s02 never write")
+printf '{ "never_write": ["drafts"] }\n' > "$S02_NW/icm.defaults.json"
+case " $(s02_list "$ROOT" "$S02_NW" never_write)" in
+    *" .git "*" drafts "*|*" drafts "*" .git "*) t_pass "a workspace adds to never_write and keeps the toolkit's .git" ;;
+    *) t_fail "a workspace adds to never_write and keeps the toolkit's .git" "got: $(s02_list "$ROOT" "$S02_NW" never_write)" ;;
+esac
+
 # An unreadable workspace file would flatten to nothing and leave the toolkit
 # alone in charge, so it is a refusal. Root reads a mode 000 file anyway.
 if [ "$AM_ROOT" -eq 0 ]; then
@@ -2517,7 +2526,9 @@ if [ "$AM_ROOT" -eq 0 ]; then
     chmod 000 "$S02_U/icm.defaults.json"
     run "$SCRIPTS/icm-check.sh" "$S02_U"
     assert_rc "an unreadable workspace icm.defaults.json is refused, exit 2" 2
-    assert_out "the refusal names the file" "FAIL cannot read $S02_U/icm.defaults.json"
+    # The refusal names the physical path: on macOS the temp folder sits
+    # under /var, a symlink to /private/var, and pwd -P resolves it.
+    assert_out "the refusal names the file" "FAIL cannot read $(cd "$S02_U" && pwd -P)/icm.defaults.json"
     chmod 644 "$S02_U/icm.defaults.json"
 else
     printf 'note running as root, the unreadable defaults test was skipped\n'

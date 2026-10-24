@@ -138,8 +138,8 @@ Five scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
   the workspace sets replaces the toolkit's list whole, an empty list included. Four kinds of
   key are the exceptions, and `scripts/icm_lib.sh` holds their names. `toolkit`, `slug` and
   `version` always come from the toolkit, and a workspace copy is dropped without a word. Every
-  list under `secrets`, `archive.immutable` and `archive.append_only` is a union: a workspace
-  may add an entry, never remove one. `checks.warn_first` is an intersection: a workspace may
+  list under `secrets`, `archive.immutable`, `archive.append_only` and `never_write` is a union:
+  a workspace may add an entry, never remove one. `checks.warn_first` is an intersection: a workspace may
   drop an id, which enforces that rule sooner, and an id it adds is dropped, so it never relaxes
   one. A workspace that sets `checks.warn_first` at all enforces every rule the toolkit adds
   there later; leave the key out to follow the toolkit. `share` and `who` are per person: a

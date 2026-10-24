@@ -68,7 +68,7 @@ ICM_GLOB_KEYS="excluded_globs never_write"
 #   person     set per person in the environment or .icm/local.json. A committed
 #              value is dropped with a warn.
 ICM_OWN_KEYS="toolkit slug version"
-ICM_UNION_KEYS="secrets archive.immutable archive.append_only"
+ICM_UNION_KEYS="secrets archive.immutable archive.append_only never_write"
 ICM_INTERSECT_KEYS="checks.warn_first"
 ICM_PERSON_KEYS="share who"
 

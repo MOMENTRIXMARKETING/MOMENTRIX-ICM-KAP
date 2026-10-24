@@ -376,7 +376,8 @@ A workspace may carry its own `icm.defaults.json` at its root. The toolkit's fil
 and the workspace file overlays it key by key, so a workspace written at an older version still
 sees every newer key. A list in the workspace file replaces the toolkit's list whole. A few keys
 are protected. The toolkit's name and version stay the toolkit's. A workspace may add to the
-lists under `secrets`, `archive.immutable` and `archive.append_only`, never remove from them. It
+lists under `secrets`, `archive.immutable`, `archive.append_only` and `never_write`, never
+remove from them. It
 may shorten `checks.warn_first`, never lengthen it. And `share` and `who` are per person, so a
 committed value is ignored with a `warn` line. The whole rule is in
 [`spec/CLI-CONTRACT.md`](spec/CLI-CONTRACT.md) section 3.0.
