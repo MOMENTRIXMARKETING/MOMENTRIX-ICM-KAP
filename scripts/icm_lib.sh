@@ -12,7 +12,8 @@
 # POSIX sh only. No bashisms. Tested with: sh -n scripts/icm_lib.sh
 #
 # What lives here:
-#   json      icm_json_get / icm_json_list / icm_json_num / icm_json_parse / icm_json_globs_ok / icm_json_merge
+#   json      icm_json_get / icm_json_list / icm_json_num / icm_json_parse / icm_json_globs_ok
+#             icm_json_paths_ok / icm_json_merge
 #   walking   icm_top_entries / icm_walk / icm_walk_files / icm_walk_md / icm_excluded
 #   counting  icm_chars / icm_lines
 #   markdown  icm_fm_get / icm_fm_block / icm_first_fence_block / icm_fence_count
@@ -60,6 +61,12 @@ ICM_JSON_CACHE=""
 # The keys whose entries are globs, checked by icm_json_globs_ok at every
 # load. Key names, not values: the entries live in icm.defaults.json.
 ICM_GLOB_KEYS="excluded_globs never_write"
+# The keys whose values are paths inside the workspace, checked by
+# icm_json_paths_ok at every load. A name ending in . is a prefix: every key
+# under log is a path, so no prose note goes there. Any other name covers that
+# key and its list entries. A later key read as a path joins this list.
+# spec/CLI-CONTRACT.md 3.0 names each.
+ICM_PATH_KEYS="log."
 # The keys a workspace icm.defaults.json cannot simply overwrite, read by
 # icm_json_merge. Key names, not values. spec/CLI-CONTRACT.md 3.0 names each.
 #   own        the toolkit's identity. A workspace copy is dropped.
@@ -424,8 +431,9 @@ icm_json_flatten() {
 }
 
 # Flatten one defaults file into the cache. Returns 2, after a FAIL line,
-# when the file cannot be read, is not valid JSON or holds a refused glob
-# entry; the cache is then gone, so nothing reads it.
+# when the file cannot be read, is not valid JSON, holds a refused glob entry
+# or holds a path value that leaves the workspace; the cache is then gone, so
+# nothing reads it.
 # A workspace icm.defaults.json is merged over the toolkit's own file first
 # (icm_json_merge), so the cache always holds the merged view, and every key
 # the workspace file lacks comes from the toolkit. A warn line on stderr
@@ -457,13 +465,17 @@ icm_json_load() {
     icm_json_parse "$1" "$_jl_w" || return 2
     if [ -z "$_jl_base" ]; then
         icm_json_globs_ok "$_jl_w.flat" "$1" || return 2
+        icm_json_paths_ok "$_jl_w.flat" "$1" || return 2
         mv "$_jl_w.flat" "$ICM_JSON_CACHE"
         ICM_JSON_SRC="$1"
         return 0
     fi
-    # Each file is held to the glob alphabet on its own, so a refusal names
-    # the file that holds the bad entry.
+    # Each file is held to the glob alphabet and the path rule on its own, so
+    # a refusal names the file that holds the bad entry.
     if ! icm_json_globs_ok "$_jl_t.flat" "$_jl_base" || ! icm_json_globs_ok "$_jl_w.flat" "$1"; then
+        return 2
+    fi
+    if ! icm_json_paths_ok "$_jl_t.flat" "$_jl_base" || ! icm_json_paths_ok "$_jl_w.flat" "$1"; then
         return 2
     fi
     icm_json_merge "$_jl_t" "$_jl_w" "$1" > "$ICM_JSON_CACHE"
@@ -662,6 +674,52 @@ icm_json_globs_ok() {
     return 0
 }
 
+# icm_json_paths_ok <flattened cache> <source file>
+# A script joins the value of a path key to the target, "$TARGET/$value", and
+# reads or writes there. So every value under ICM_PATH_KEYS must stay inside
+# the workspace: relative, never starting with / or -, no .. part, no newline,
+# and only the glob alphabet plus /, with <task> its one placeholder. The
+# lines are the ones icm_json_get reads, so a key smuggled in by a newline
+# inside another value is held too. The first bad value is named, by its full
+# key and the reason, on a FAIL line, and the status is 1. The value itself is
+# never printed: it may hold anything, a terminal escape included.
+icm_json_paths_ok() {
+    _jp_bad=$(awk -v ks="$ICM_PATH_KEYS" '
+        BEGIN { nk = split(ks, K, " ") }
+        index($0, "\t") == 0 { if (prev != "") { print "it holds a newline"; print prev; exit }; next }
+        {
+            prev = ""
+            key = substr($0, 1, index($0, "\t") - 1)
+            hit = 0
+            for (x = 1; x <= nk; x++) {
+                k = K[x]
+                if (substr(k, length(k)) == ".") { if (index(key, k) == 1) { hit = 1 } }
+                else if (key == k || index(key, k ".") == 1) { hit = 1 }
+            }
+            if (!hit) { next }
+            v = substr($0, length(key) + 2)
+            r = v
+            gsub(/<task>/, "", r)
+            why = ""
+            if (v == "") { why = "it is empty" }
+            else if (substr(v, 1, 1) == "/") { why = "it starts with /" }
+            else if (substr(v, 1, 1) == "-") { why = "it starts with -" }
+            else if (index("/" v "/", "/../") > 0) { why = "it holds a .. part" }
+            else if (r != "" && r !~ "^[A-Za-z0-9._*?/-]+$") { why = "it holds a character outside the path alphabet" }
+            if (why != "") { print why; print key; exit }
+            prev = key
+        }
+    ' "$1")
+    if [ -n "$_jp_bad" ]; then
+        _jp_why=$(printf '%s\n' "$_jp_bad" | sed -n 1p)
+        _jp_key=$(printf '%s\n' "$_jp_bad" | sed -n 2p)
+        printf 'FAIL key %s in %s is not a path inside the workspace (%s). a path key is relative to the workspace root and uses only A-Z a-z 0-9 . _ * ? - and /, with <task> its one placeholder. nothing was walked, read or written. fix that value, then rerun.\n' \
+            "$_jp_key" "$2" "$_jp_why" >&2
+        return 1
+    fi
+    return 0
+}
+
 # icm_json_get <file> <flattened.path>  -> value on stdout, exit 1 if absent,
 # exit 2 when the file was refused at load (icm_json_list does the same)
 icm_json_get() {
@@ -687,6 +745,46 @@ icm_json_num() {
         ''|*[!0-9]*) printf '%s\n' "$3" ;;
         *)           printf '%s\n' "$_n_v" ;;
     esac
+}
+
+# icm_key_path <target> <key> <fallback> [write] -> the relpath a path key
+# names, held to the tree at use. Load already held the value's text to the
+# workspace; a symlinked folder on the way would still carry a read or a write
+# outside it, so that is a refusal. With write, so is a path under a
+# never_write entry: an index written over .git/hooks/pre-commit keeps the
+# hook's mode and runs. That match ignores case, since macOS reads
+# .GIT/hooks/pre-commit as the same file. Status 2 after a FAIL line naming
+# the key, so call it as X=$(icm_key_path ...) || exit 2.
+icm_key_path() {
+    _kp_v=$(icm_json_get "$ICM_DEFAULTS" "$2" 2>/dev/null) || _kp_v="$3"
+    if _kp_why=$(icm_path_escape "$1" "$_kp_v"); then
+        printf 'FAIL key %s leads %s. nothing was read or written. point it at a real folder inside the workspace, then rerun.\n' \
+            "$2" "$_kp_why" >&2
+        return 2
+    fi
+    # The last part is held too. icm_atomic_write ends in mv -f, and mv onto a
+    # symlink to a folder lands the file inside that folder; a read follows a
+    # link to a file anywhere. So a last part that is a symlink is refused for
+    # a read and a write, and one that is a folder is refused for a write.
+    if [ -L "$1/$_kp_v" ]; then
+        printf 'FAIL key %s names a symlink. nothing was read or written. point it at a real file inside the workspace, then rerun.\n' \
+            "$2" >&2
+        return 2
+    fi
+    if [ "${4:-}" = write ] && [ -d "$1/$_kp_v" ]; then
+        printf 'FAIL key %s names a folder, not a file. nothing was written. point it at a file inside the workspace, then rerun.\n' \
+            "$2" >&2
+        return 2
+    fi
+    if [ "${4:-}" = write ]; then
+        _kp_nw=$(icm_never_write_hit "$_kp_v" nocase)
+        if [ -n "$_kp_nw" ]; then
+            printf 'FAIL key %s points under the never_write entry %s. nothing was written. point it elsewhere in the workspace, then rerun.\n' \
+                "$2" "$_kp_nw" >&2
+            return 2
+        fi
+    fi
+    printf '%s\n' "$_kp_v"
 }
 
 # ------------------------------------------------------------------ walking --
@@ -722,9 +820,15 @@ icm_never_write_ok() {
 # The never_write entry that refuses a path, for the message. Empty when
 # the path is writable. The components are walked with ${p%%/*} and ${p#*/},
 # and the entries are read one per line, never split by the shell.
+# With nocase the match ignores case, for a path a config value chose: on a
+# case-insensitive filesystem, macOS's default, .GIT/hooks is .git/hooks. Both
+# sides are lowered; the message still names the entry as written.
 icm_never_write_hit() {
     _wh_list=$(icm_json_list "$ICM_DEFAULTS" never_write)
     _wh_p="$1"
+    if [ "${2:-}" = nocase ]; then
+        _wh_p=$(printf '%s' "$_wh_p" | tr 'A-Z' 'a-z')
+    fi
     while [ -n "$_wh_p" ]; do
         _wh_c=${_wh_p%%/*}
         case "$_wh_p" in
@@ -734,8 +838,12 @@ icm_never_write_hit() {
         [ -n "$_wh_c" ] || continue
         while IFS= read -r _wh_g; do
             [ -n "$_wh_g" ] || continue
+            _wh_m="$_wh_g"
+            if [ "${2:-}" = nocase ]; then
+                _wh_m=$(printf '%s' "$_wh_g" | tr 'A-Z' 'a-z')
+            fi
             case "$_wh_c" in
-                $_wh_g) printf '%s\n' "$_wh_g"; return 0 ;;
+                $_wh_m) printf '%s\n' "$_wh_g"; return 0 ;;
             esac
         done <<ICM_NEVER_WRITE_GLOBS
 $_wh_list

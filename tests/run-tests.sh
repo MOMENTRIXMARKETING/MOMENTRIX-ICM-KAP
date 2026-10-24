@@ -2611,6 +2611,213 @@ else
     t_fail "CLI-CONTRACT 3.0 names every protected defaults key" "no Defaults merge bullet, or a key list in icm_lib.sh is empty"
 fi
 
+printf '\n%s\n' '-- S02c: path keys are confined to the workspace --'
+# icm-loop.sh writes "$TARGET/$INDEX" with INDEX read from log.skill_index,
+# and reads "$TARGET/$LEDGER" with LEDGER read from log.ledger. Before S02c a
+# committed workspace icm.defaults.json could point either one outside the
+# target. Each workspace sits alone in a box, so a write that escapes it lands
+# beside it, where the assertion looks.
+S02C_TMPX=0
+if [ -e /tmp/x.md ]; then
+    S02C_TMPX=1
+fi
+S02C_N=0
+for S02C_V in '../outside.md' '/tmp/x.md' 'a/../../x.md'; do
+    S02C_N=$((S02C_N + 1))
+    S02C_BOX="$WORK/s02c box $S02C_N"
+    rm -rf "$S02C_BOX"
+    mkdir -p "$S02C_BOX/ws"
+    S02C_X="$S02C_BOX/ws"
+    run "$SCRIPTS/icm-plan.sh" --quiet "$S02C_X"
+    run "$SCRIPTS/icm-apply.sh" --no-check "$S02C_X"
+    printf '{ "log": { "skill_index": "%s" } }\n' "$S02C_V" > "$S02C_X/icm.defaults.json"
+    run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_X"
+    assert_rc "log.skill_index $S02C_V: icm-loop.sh --index refuses, exit 2" 2
+    assert_out "log.skill_index $S02C_V: icm-loop.sh names the key" "key log.skill_index"
+    run "$SCRIPTS/icm-check.sh" "$S02C_X"
+    assert_rc "log.skill_index $S02C_V: icm-check.sh refuses, exit 2" 2
+    assert_out "log.skill_index $S02C_V: icm-check.sh names the key" "key log.skill_index"
+    run "$SCRIPTS/icm-plan.sh" --quiet "$S02C_X"
+    assert_rc "log.skill_index $S02C_V: icm-plan.sh refuses, exit 2" 2
+    assert_out "log.skill_index $S02C_V: icm-plan.sh names the key" "key log.skill_index"
+    run "$SCRIPTS/icm-apply.sh" --no-check "$S02C_X"
+    S02C_A=$RC
+    run "$SCRIPTS/icm-rollback.sh" "$S02C_X"
+    if [ "$S02C_A" -eq 2 ] && [ "$RC" -eq 2 ]; then
+        t_pass "log.skill_index $S02C_V: apply and rollback refuse it too"
+    else
+        t_fail "log.skill_index $S02C_V: apply and rollback refuse it too" "apply $S02C_A, rollback $RC"
+    fi
+    assert_eq "log.skill_index $S02C_V: no file appears outside the workspace" "$(ls -A "$S02C_BOX")" "ws"
+done
+if [ "$S02C_TMPX" -eq 0 ]; then
+    assert_nofile "log.skill_index /tmp/x.md: nothing lands at /tmp/x.md" /tmp/x.md
+else
+    printf 'note /tmp/x.md was there before the run, its absence was not checked\n'
+fi
+
+# A read escapes the same way: the loop counted whatever ledger the key named.
+S02C_R="$WORK/s02c box read"
+rm -rf "$S02C_R"
+mkdir -p "$S02C_R/ws"
+run "$SCRIPTS/icm-plan.sh" --quiet "$S02C_R/ws"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S02C_R/ws"
+cp "$S02C_R/ws/_log/LOOP-LEDGER.md" "$S02C_R/ledger.md"
+printf '{ "log": { "ledger": "../ledger.md" } }\n' > "$S02C_R/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-10-24 "$S02C_R/ws"
+assert_rc "log.ledger ../ledger.md: icm-loop.sh --starve refuses the read, exit 2" 2
+assert_out "log.ledger ../ledger.md: the refusal names the key" "key log.ledger"
+
+# Every key under log is a path key, a new one included, and so is each entry
+# of a list there. The refusal names the key and says why.
+S02C_K=$(fixture "s02c keys")
+s02c_bad() {
+    printf '%s\n' "$3" > "$S02C_K/icm.defaults.json"
+    s02_load "$ROOT" "$S02C_K"
+    assert_rc "$1 is refused at load, exit 2" 2
+    assert_out "$1: the refusal names the key" "FAIL key $2 in $S02C_K/icm.defaults.json"
+}
+s02c_bad "a path key starting with -" log.skill_index '{ "log": { "skill_index": "-rf.md" } }'
+s02c_bad "a path key holding a newline" log.skill_index '{ "log": { "skill_index": "ok.md\n../x.md" } }'
+s02c_bad "a path key holding a space" log.skill_index '{ "log": { "skill_index": "_log/SKILL INDEX.md" } }'
+s02c_bad "an empty path key" log.ledger '{ "log": { "ledger": "" } }'
+s02c_bad "a path key with < > outside the <task> placeholder" log.runlog '{ "log": { "runlog": "_log/<x>.md" } }'
+s02c_bad "a path key with a .. part at its end" log.wiki_log '{ "log": { "wiki_log": "wiki/.." } }'
+assert_out "the refusal says why: a .. part" "it holds a .. part"
+s02c_bad "a new key under log" log.newer '{ "log": { "newer": "../x.md" } }'
+s02c_bad "an entry of a list under log" log.many.1 '{ "log": { "many": ["ok.md", "../x.md"] } }'
+s02c_bad "a path key reaching a home folder" log.ledger '{ "log": { "ledger": "~/x.md" } }'
+
+# The documented placeholder and a deeper relative path still load, and the
+# loop writes the index where a confined key says.
+printf '{ "log": { "runlog": "_log/runs/RUN-<task>.md", "skill_index": "_log/deep/IDX.md" } }\n' > "$S02C_K/icm.defaults.json"
+s02_load "$ROOT" "$S02C_K"
+assert_rc "a relative path key with the <task> placeholder loads" 0
+assert_eq "the placeholder value reads back whole" "$(s02_list "$ROOT" "$S02C_K" log.runlog)" "_log/runs/RUN-<task>.md "
+S02C_G=$(fixture "s02c good")
+run "$SCRIPTS/icm-plan.sh" --quiet "$S02C_G"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S02C_G"
+printf '{ "log": { "skill_index": "_log/deep/IDX.md" } }\n' > "$S02C_G/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_G"
+assert_file "a confined log.skill_index still takes the index where it says" "$S02C_G/_log/deep/IDX.md"
+
+# The toolkit file is held to the same rule, and the refusal names it.
+S02C_TK="$WORK/s02c toolkit"
+rm -rf "$S02C_TK"
+mkdir -p "$S02C_TK/scripts"
+cp "$SCRIPTS"/*.sh "$S02C_TK/scripts/"
+sed 's|"_log/SKILL-INDEX.md"|"../SKILL-INDEX.md"|' "$ROOT/icm.defaults.json" > "$S02C_TK/icm.defaults.json"
+S02C_E=$(fixture "s02c no defaults")
+run "$S02C_TK/scripts/icm-check.sh" --self "$S02C_E"
+assert_rc "a toolkit path key outside the workspace is refused, exit 2" 2
+# The toolkit file is named by its physical path: on macOS the temp folder
+# sits under /var, a symlink to /private/var.
+assert_out "the refusal names the toolkit file" "key log.skill_index in $(cd "$S02C_TK" && pwd -P)/icm.defaults.json"
+
+# Load holds the text of a value. At use the tree under it is held too: a
+# committed _log that is a symlink would carry the ledger read and the index
+# write outside, and an index under .git would replace a hook and keep its
+# mode. The loop refuses each, exit 2, naming the key.
+S02C_S="$WORK/s02c box link"
+rm -rf "$S02C_S"
+mkdir -p "$S02C_S/ws"
+run "$SCRIPTS/icm-plan.sh" --quiet "$S02C_S/ws"
+run "$SCRIPTS/icm-apply.sh" --no-check "$S02C_S/ws"
+mv "$S02C_S/ws/_log" "$S02C_S/elsewhere"
+ln -s ../elsewhere "$S02C_S/ws/_log"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a symlinked _log is refused at use, exit 2" 2
+assert_out "the symlink refusal names the key" "key log.ledger leads outside target"
+assert_nofile "no index lands through the symlink" "$S02C_S/elsewhere/SKILL-INDEX.md"
+rm -f "$S02C_S/ws/_log"
+mv "$S02C_S/elsewhere" "$S02C_S/ws/_log"
+mkdir -p "$S02C_S/out"
+ln -s ../out "$S02C_S/ws/out"
+printf '{ "log": { "skill_index": "out/IDX.md" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a path key through a symlinked folder is refused, exit 2" 2
+assert_out "that refusal names the key" "key log.skill_index leads outside target"
+assert_nofile "no index lands in the folder the symlink names" "$S02C_S/out/IDX.md"
+mkdir -p "$S02C_S/ws/.git/hooks"
+printf '#!/bin/sh\nexit 0\n' > "$S02C_S/ws/.git/hooks/pre-commit"
+chmod 755 "$S02C_S/ws/.git/hooks/pre-commit"
+cp "$S02C_S/ws/.git/hooks/pre-commit" "$WORK/s02c hook before"
+printf '{ "log": { "skill_index": ".git/hooks/pre-commit" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "an index path under never_write is refused, exit 2" 2
+assert_out "that refusal names the key and the entry" "key log.skill_index points under the never_write entry .git"
+assert_same "the hook is untouched" "$WORK/s02c hook before" "$S02C_S/ws/.git/hooks/pre-commit"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-10-24 "$S02C_S/ws"
+assert_rc "--starve writes nothing, so a never_write index path does not stop it" 0
+# On a case-insensitive filesystem, macOS's default, .GIT is .git, so the
+# never_write match at use ignores case on both sides. The message names the
+# entry as written.
+for S02C_V in '.GIT/hooks/pre-commit' '.Git/hooks/pre-commit'; do
+    printf '{ "log": { "skill_index": "%s" } }\n' "$S02C_V" > "$S02C_S/ws/icm.defaults.json"
+    run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+    assert_rc "log.skill_index $S02C_V is refused whatever its case, exit 2" 2
+    assert_out "log.skill_index $S02C_V: the refusal names the entry .git" "key log.skill_index points under the never_write entry .git"
+    assert_same "log.skill_index $S02C_V: the hook is untouched" "$WORK/s02c hook before" "$S02C_S/ws/.git/hooks/pre-commit"
+done
+printf '{ "never_write": ["Keep*"], "log": { "skill_index": "keepme/IDX.md" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a never_write entry with capitals refuses a lower case index path, exit 2" 2
+assert_out "that refusal names the entry as written" "key log.skill_index points under the never_write entry Keep*"
+assert_nofile "no index lands under that entry" "$S02C_S/ws/keepme/IDX.md"
+# The last part of the path is held too. icm_atomic_write ends in mv -f, and
+# mv onto a symlink to a folder lands the file inside that folder, so a
+# committed link as the last part carried the index outside the workspace or
+# under .git. A path key whose last part is a symlink is refused for a read
+# and a write, and one that is a folder is refused for a write, exit 2.
+rm -f "$S02C_S/ws/icm.defaults.json" "$S02C_S/ws/_log/SKILL-INDEX.md"
+mkdir -p "$S02C_S/far"
+printf '{ "log": { "skill_index": "out" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a path key whose last part is a symlink to a folder is refused, exit 2" 2
+assert_out "that refusal names the key and the symlink" "key log.skill_index names a symlink"
+assert_eq "nothing lands in the folder that last part names" "$(ls -A "$S02C_S/out")" ""
+rm -f "$S02C_S/ws/icm.defaults.json"
+ln -s ../../far "$S02C_S/ws/_log/SKILL-INDEX.md"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a committed _log/SKILL-INDEX.md that is a symlink is refused, exit 2" 2
+assert_eq "nothing lands in the folder the default index links to" "$(ls -A "$S02C_S/far")" ""
+rm -f "$S02C_S/ws/_log/SKILL-INDEX.md"
+S02C_H=$(ls -A "$S02C_S/ws/.git/hooks")
+ln -s .git/hooks "$S02C_S/ws/pc"
+printf '{ "log": { "skill_index": "pc" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a last part linking to .git/hooks is refused, exit 2" 2
+assert_eq "nothing new lands in .git/hooks" "$(ls -A "$S02C_S/ws/.git/hooks")" "$S02C_H"
+rm -f "$S02C_S/ws/pc" "$S02C_S/ws/icm.defaults.json"
+mkdir -p "$S02C_S/ws/adir"
+printf '{ "log": { "skill_index": "adir" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a write path key that names a folder is refused, exit 2" 2
+assert_out "that refusal names the key and the folder" "key log.skill_index names a folder"
+assert_eq "nothing lands inside that folder" "$(ls -A "$S02C_S/ws/adir")" ""
+rm -f "$S02C_S/ws/icm.defaults.json"
+mv "$S02C_S/ws/_log/LOOP-LEDGER.md" "$S02C_S/far ledger.md"
+ln -s "../../far ledger.md" "$S02C_S/ws/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a ledger that is a symlink is refused before it is read, exit 2" 2
+assert_out "that refusal names log.ledger" "key log.ledger names a symlink"
+rm -f "$S02C_S/ws/_log/LOOP-LEDGER.md"
+mv "$S02C_S/far ledger.md" "$S02C_S/ws/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-10-24 "$S02C_S/ws"
+assert_rc "the real ledger back in place reads again" 0
+
+# The path key list in scripts/icm_lib.sh and CLI-CONTRACT 3.0 never drift.
+S02C_B=$(awk '/Path keys stay inside the workspace\./ { on = 1; print; next } on && /^(- |$|#)/ { exit } on' "$ROOT/spec/CLI-CONTRACT.md")
+if [ -n "$S02C_B" ] && [ -n "${ICM_PATH_KEYS:-}" ]; then
+    S02C_MISS=""
+    for S02C_P in $ICM_PATH_KEYS; do
+        printf '%s\n' "$S02C_B" | grep -q -F -- "\`$S02C_P" || S02C_MISS="$S02C_MISS $S02C_P"
+    done
+    assert_eq "CLI-CONTRACT 3.0 names every path key" "$S02C_MISS" ""
+else
+    t_fail "CLI-CONTRACT 3.0 names every path key" "no Path keys bullet, or ICM_PATH_KEYS in icm_lib.sh is empty"
+fi
+
 # ---------------------------------------------------------------- the tally --
 
 printf '\n%s\n' '-- summary --'

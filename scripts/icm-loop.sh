@@ -109,8 +109,12 @@ TARGET=$(icm_require_target "$TARGET") || exit 2
 icm_init "$TARGET"
 icm_trap_default
 
-LEDGER=$(icm_json_get "$ICM_DEFAULTS" log.ledger 2>/dev/null) || LEDGER="_log/LOOP-LEDGER.md"
-INDEX=$(icm_json_get "$ICM_DEFAULTS" log.skill_index 2>/dev/null) || INDEX="_log/SKILL-INDEX.md"
+LEDGER=$(icm_key_path "$TARGET" log.ledger "_log/LOOP-LEDGER.md") || exit 2
+_ix_use=read
+if [ "$MODE" = index ]; then
+    _ix_use=write
+fi
+INDEX=$(icm_key_path "$TARGET" log.skill_index "_log/SKILL-INDEX.md" "$_ix_use") || exit 2
 STARVE_DAYS=$(icm_json_num "$ICM_DEFAULTS" loop.starve_days 7)
 RECENT_DAYS=$(icm_json_num "$ICM_DEFAULTS" loop.recent_days 30)
 ARCHIVE_DAYS=$(icm_json_num "$ICM_DEFAULTS" loop.archive_days 60)
