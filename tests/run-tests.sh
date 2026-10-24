@@ -2764,6 +2764,47 @@ run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
 assert_rc "a never_write entry with capitals refuses a lower case index path, exit 2" 2
 assert_out "that refusal names the entry as written" "key log.skill_index points under the never_write entry Keep*"
 assert_nofile "no index lands under that entry" "$S02C_S/ws/keepme/IDX.md"
+# The last part of the path is held too. icm_atomic_write ends in mv -f, and
+# mv onto a symlink to a folder lands the file inside that folder, so a
+# committed link as the last part carried the index outside the workspace or
+# under .git. A path key whose last part is a symlink is refused for a read
+# and a write, and one that is a folder is refused for a write, exit 2.
+rm -f "$S02C_S/ws/icm.defaults.json" "$S02C_S/ws/_log/SKILL-INDEX.md"
+mkdir -p "$S02C_S/far"
+printf '{ "log": { "skill_index": "out" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a path key whose last part is a symlink to a folder is refused, exit 2" 2
+assert_out "that refusal names the key and the symlink" "key log.skill_index names a symlink"
+assert_eq "nothing lands in the folder that last part names" "$(ls -A "$S02C_S/out")" ""
+rm -f "$S02C_S/ws/icm.defaults.json"
+ln -s ../../far "$S02C_S/ws/_log/SKILL-INDEX.md"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a committed _log/SKILL-INDEX.md that is a symlink is refused, exit 2" 2
+assert_eq "nothing lands in the folder the default index links to" "$(ls -A "$S02C_S/far")" ""
+rm -f "$S02C_S/ws/_log/SKILL-INDEX.md"
+S02C_H=$(ls -A "$S02C_S/ws/.git/hooks")
+ln -s .git/hooks "$S02C_S/ws/pc"
+printf '{ "log": { "skill_index": "pc" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a last part linking to .git/hooks is refused, exit 2" 2
+assert_eq "nothing new lands in .git/hooks" "$(ls -A "$S02C_S/ws/.git/hooks")" "$S02C_H"
+rm -f "$S02C_S/ws/pc" "$S02C_S/ws/icm.defaults.json"
+mkdir -p "$S02C_S/ws/adir"
+printf '{ "log": { "skill_index": "adir" } }\n' > "$S02C_S/ws/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --index --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a write path key that names a folder is refused, exit 2" 2
+assert_out "that refusal names the key and the folder" "key log.skill_index names a folder"
+assert_eq "nothing lands inside that folder" "$(ls -A "$S02C_S/ws/adir")" ""
+rm -f "$S02C_S/ws/icm.defaults.json"
+mv "$S02C_S/ws/_log/LOOP-LEDGER.md" "$S02C_S/far ledger.md"
+ln -s "../../far ledger.md" "$S02C_S/ws/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-10-24 "$S02C_S/ws"
+assert_rc "a ledger that is a symlink is refused before it is read, exit 2" 2
+assert_out "that refusal names log.ledger" "key log.ledger names a symlink"
+rm -f "$S02C_S/ws/_log/LOOP-LEDGER.md"
+mv "$S02C_S/far ledger.md" "$S02C_S/ws/_log/LOOP-LEDGER.md"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-10-24 "$S02C_S/ws"
+assert_rc "the real ledger back in place reads again" 0
 
 # The path key list in scripts/icm_lib.sh and CLI-CONTRACT 3.0 never drift.
 S02C_B=$(awk '/Path keys stay inside the workspace\./ { on = 1; print; next } on && /^(- |$|#)/ { exit } on' "$ROOT/spec/CLI-CONTRACT.md")

@@ -762,6 +762,20 @@ icm_key_path() {
             "$2" "$_kp_why" >&2
         return 2
     fi
+    # The last part is held too. icm_atomic_write ends in mv -f, and mv onto a
+    # symlink to a folder lands the file inside that folder; a read follows a
+    # link to a file anywhere. So a last part that is a symlink is refused for
+    # a read and a write, and one that is a folder is refused for a write.
+    if [ -L "$1/$_kp_v" ]; then
+        printf 'FAIL key %s names a symlink. nothing was read or written. point it at a real file inside the workspace, then rerun.\n' \
+            "$2" >&2
+        return 2
+    fi
+    if [ "${4:-}" = write ] && [ -d "$1/$_kp_v" ]; then
+        printf 'FAIL key %s names a folder, not a file. nothing was written. point it at a file inside the workspace, then rerun.\n' \
+            "$2" >&2
+        return 2
+    fi
     if [ "${4:-}" = write ]; then
         _kp_nw=$(icm_never_write_hit "$_kp_v" nocase)
         if [ -n "$_kp_nw" ]; then
