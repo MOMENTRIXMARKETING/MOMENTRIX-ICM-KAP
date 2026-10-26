@@ -23,7 +23,7 @@ Everything below is that sentence with the details filled in.
 | Tier | Who found it | Applied by | Where it goes |
 |---|---|---|---|
 | Safe fix | A script, deterministically | model, then reported | Applied, then counted in the report |
-| Mechanical report | A script, deterministically | model, then reported | The report, for a human to decide |
+| Mechanical report | A script, deterministically | human, after review | The report, for a human to decide |
 | Judgment report | A model, by opinion | model, then reported | A proposal, for a human to approve |
 
 ### Safe fix

@@ -357,7 +357,7 @@ Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against th
 **Not enforced by any script, whatever other documents imply.** Say so rather than implying a machine is watching.
 
 - Apply does **not** refuse a stale plan. There is no mtime comparison. It warns and proceeds.
-- `icm-check.sh` has **no** check for `never_write` or excluded folders. That enforcement lives in plan and apply only, because the checker is report-only and never proposes a write.
+- `icm-check.sh` does not enforce `never_write` as a write guard because it never proposes a write. Plan and apply enforce that guard. Orchestra still reports an Output that matches `never_write` as `SCOPE`, and every checker walk honours the excluded-folder list.
 - `icm-check.sh` has two link checks and they are not the same one. `routes` walks only files literally named `CONTEXT.md` and grades its routing tables. `links` walks every `.md` under the target and grades every markdown link target in it.
 - `icm-check.sh` takes `--only <id>` as well as each generic check's own flag. There are twelve ids; an id outside that set exits 2 and lists them. No arguments and `--all` still select only the original eleven, and `--orchestra-view` is not an id.
 - Nothing reads `wiki/index.md`. Index and disk agreeing is a model-performed safe fix, in `skills/icm-sync/SKILL.md`.

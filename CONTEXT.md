@@ -21,7 +21,7 @@
 
 Unknown job: say so before improvising a row.
 
-For the Orchestra view, run `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .` from the repo root.
+For the Orchestra view, run `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view examples/orchestra-pipeline` from the repo root. The toolkit root itself keeps legacy untyped routes.
 
 ## Session Start
 
