@@ -74,3 +74,15 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-10-24 | S02 fix round, a defaults file that is not valid JSON is refused | 2 | ship date | 1 | 0/0/1/0 | 0 | none | scripts/icm_lib.sh |
 | 2026-10-24 | Patched | spec/CLI-CONTRACT.md | FP-2026-10-24-04 |
 | 2026-10-24 | S02 follow-up, never_write union only, macOS physical temp path | 2 | ship date | 1 | 0/0/1/0 | 0 | none | scripts/icm_lib.sh |
+| 2026-10-26 | Miss | 2 | scripts/icm_lib.sh | generated wiki duplicated grounding loads and made the raw output ambiguous while the incoming directory was unmanaged | one grounding load and a managed raw/incoming output with a generated-workspace gate |
+| 2026-10-26 | Miss | 2 | scripts/icm_lib.sh | skill fallback tested existence before every symlink component, so parent and dangling links bypassed scope | check workspace and selected-home symlinks before fallback and existence |
+| 2026-10-26 | Miss | 2 | scripts/icm_lib.sh | one root NEXT traversal accepted department stages without a route from their nearest pipeline router | traverse NEXT independently from each pipeline router |
+| 2026-10-26 | Miss | 1 | CONTEXT.md | pointed the Orchestra view at the legacy untyped toolkit root | point at the typed Orchestra example and name the legacy boundary |
+| 2026-10-26 | Miss | 1 | skills/icm-retrofit/SKILL.md | denied every checker never_write check after Orchestra added Output scope enforcement | separate the write guard from Orchestra reporting and excluded walks |
+| 2026-10-26 | Miss | 1 | spec/authority-model.md | the tier table said mechanical reports were model applied while the rule said never auto applied | assign mechanical remedies to human review |
+| 2026-10-26 | Use | icm-orchestra | skills/icm-orchestra/SKILL.md | ICM Orchestra review repair and release | ok | 0 |
+| 2026-10-26 | Use | icm-log | skills/icm-log/SKILL.md | ICM Orchestra review repair and release | ok | 0 |
+| 2026-10-26 | ICM Orchestra review repair and release | 3 | customer result | 1 | 0/0/6/0 | 0 | none | tests/orchestra-tests.sh |
+| 2026-10-26 | Bug | icm-generator | 2 | scripts/icm_lib.sh:1516,1600 duplicate load and ambiguous raw output | 0 | 0 | 3/3 | 1 (generated-workspace gate) | GENERATED-wiki-ORCHESTRA | tests/orchestra-tests.sh |
+| 2026-10-26 | Bug | icm-skill-scope | 2 | scripts/icm_lib.sh:3226 fallback preceded component safety | 0 | 0 | 4/4 | 1 (symlink fixtures) | CAP-SKILL-PARENT-SYMLINK-REFUSED | tests/orchestra-tests.sh |
+| 2026-10-26 | Bug | icm-pipeline-router | 2 | scripts/icm_lib.sh:2852 global NEXT traversal | 0 | 0 | 4/4 | 1 (nearest-router fixture) | ROUTE-NEAREST-PIPELINE-ROUTER | tests/orchestra-tests.sh |
