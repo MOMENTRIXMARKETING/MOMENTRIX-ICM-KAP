@@ -1,5 +1,6 @@
 ---
 name: icm-forge
+version: 1.0.0
 description: "This skill should be used when the user asks to 'run the forge', 'what are we getting wrong', 'do the weekly review', 'read the ledger for patterns', 'which skills are dying', 'show the proposals', or 'approve that proposal', and by the weekly cron whose prompt is exactly '/icm-forge run'. Reads _log/LOOP-LEDGER.md and the index icm-loop.sh compiles from it, ranks the rule books, job cards and skills that keep missing by severity, applies the kill rules, and writes the smallest edit that would have prevented each miss to _log/FORGE-PROPOSALS.md. It proposes. The human approves. It never edits a rule book, a job card or a skill on its own."
 user-invocable: true
 argument-hint: "run | show | approve"

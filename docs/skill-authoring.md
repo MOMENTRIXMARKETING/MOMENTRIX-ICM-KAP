@@ -19,6 +19,7 @@ Every SKILL.md starts on line 1 with `---`. Not a heading, not a comment, not a 
 ```
 ---
 name: <MUST equal the directory name>
+version: 1.0.0
 description: "This skill should be used when the user asks to '<trigger>', '<trigger>', or '<trigger>'. <What it does, in one or two sentences.>"
 user-invocable: true
 argument-hint: "<mode> (default) | <mode> | <mode>"
@@ -27,7 +28,8 @@ argument-hint: "<mode> (default) | <mode> | <mode>"
 
 Required keys and banned keys are declared in
 [`../icm.defaults.json`](../icm.defaults.json) under `frontmatter`. That file is the authority.
-The checker reads it, this document only explains it.
+The checker reads it, this document only explains it. Shared toolkit skills carry `version`;
+it is not a new globally required key for unrelated third-party skills.
 
 ### `name`
 
@@ -48,6 +50,17 @@ better.
 
 Never rename a directory without changing `name` in the same commit. A renamed folder with a
 stale `name` is the exact defect described at the top of this page.
+
+### `version`
+
+Use `version: 1.0.0` on every shared skill in this repository. Do not add `version` to the
+generic required-key list merely to impose that convention on an unrelated third-party skill.
+
+An Orchestra Preflight `Skill` row is different: it declares one exact version for that skill.
+The checker resolves the workspace copy first, then `$ICM_HOME`, and requires matching `name:`
+and `version:` metadata. A missing or mismatched version is `MISSING CAPABILITY`. Do not use a
+range and do not let a home copy hide a mismatch in the workspace copy. See
+[`../spec/ORCHESTRA.md`](../spec/ORCHESTRA.md).
 
 ### `description`
 
@@ -132,6 +145,29 @@ Reference, never duplicate. If the skill needs a budget, it points at
 [`../spec/excluded-folders.md`](../spec/excluded-folders.md) for the skip list. A skill that
 restates either one has created a second authority that will drift, and drift silently, because
 nothing compares them.
+
+## Orchestra-aware skills
+
+A skill that selects or executes Orchestra jobs must keep selection, readiness, and execution
+separate. [`../spec/ORCHESTRA.md`](../spec/ORCHESTRA.md) owns the semantics and
+[`../spec/CLI-CONTRACT.md`](../spec/CLI-CONTRACT.md) owns the command shapes.
+
+- Select by semantic task with the user. Ambiguous labels or candidates stop before writes.
+- Bind only declared `00-intake` external inputs with `--input NAME=PATH` to existing workspace
+  material, never a credential file, secret store, or inline secret. Supply trusted actual
+  versions with `--tool-version NAME=VERSION`, never the string copied from the requirement.
+- Use the literal strict form `icm-check.sh --orchestra --job CARD` through the shared
+  `$ICM_HOME` invocation. Relay RUN, every MISSING row, or a refusal faithfully.
+- Preflight is report-only and not a general write lease. RUN means ready to start, never job
+  success or external approval. Execution reads declared Inputs and writes declared Outputs
+  plus only the existing Session Close ledger.
+- Use `--orchestra-view` for fresh workflow and knowledge projections. Never create a stored
+  graph or backlink index.
+- Remember compatibility: there are twelve check ids, while no arguments and `--all` retain
+  the original eleven generic checks. Orchestra is explicit, and the view is not a check id.
+
+Do not make Preflight a generic required section or version a generic third-party requirement.
+Those obligations arise only when Orchestra is selected.
 
 ---
 
@@ -230,16 +266,27 @@ under the ceiling, split it and add a pointer rather than shipping something ove
 
 ## Before you ship a skill
 
-Run this, and read all of it:
+Run the legacy check and read all of it:
 
 ```sh
 sh "$ICM_HOME/scripts/icm-check.sh" .
 ```
 
+When the workspace uses Orchestra, validate structure and preflight the selected job separately:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" .
+```
+
+Use real intake bindings and trusted actual tool attestations where declared. Relay MISSING
+without hiding it and do not execute the job as a side effect of either check.
+
 Then check by eye what the script cannot:
 
 - [ ] Line 1 is `---`.
 - [ ] `name` matches the directory name character for character.
+- [ ] Shared toolkit skills carry `version: 1.0.0`; unrelated third-party skills are not forced to add it.
 - [ ] `description` is third person and quotes at least three real triggers.
 - [ ] `user-invocable` is hyphenated.
 - [ ] No `user_invocable`, no `allowed_tools`, no `allowed-tools`.
@@ -250,3 +297,5 @@ Then check by eye what the script cannot:
 - [ ] Nothing in `_config/` is called a skill.
 - [ ] Every claim the skill makes about disk comes from a script it ran.
 - [ ] The skill cannot overwrite anything.
+- [ ] Orchestra RUN is not described as success, a write lease, or external approval.
+- [ ] No Session Close block was reworded, shortened, or duplicated.

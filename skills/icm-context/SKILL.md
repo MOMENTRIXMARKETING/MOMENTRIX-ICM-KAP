@@ -1,5 +1,6 @@
 ---
 name: icm-context
+version: 1.0.0
 description: "This skill should be used when the user asks to 'fill the context gaps', 'which folders are missing a CONTEXT.md', 'add job cards', 'this folder has no context file', 'complete layer 2 coverage', or names 'icm-context'. It walks the tree honouring the excluded globs in icm.defaults.json, finds folders that warrant a job card and lack one, and writes them from the interview templates. It never overwrites an existing CONTEXT.md."
 user-invocable: true
 argument-hint: "report | create"
@@ -38,10 +39,11 @@ ICM_HOME="${ICM_HOME:-${CLAUDE_PLUGIN_ROOT:-$HOME/src/momentrix-icm-kap-toolkit}
 | File | Why |
 |---|---|
 | `$ICM_HOME/spec/CLI-CONTRACT.md` | The command names, artifact paths and vocabulary. Authoritative over this file. |
+| `$ICM_HOME/spec/ORCHESTRA.md` | Typed cards, graph findings, intake, capabilities, numbering, and scope. |
 | `$ICM_HOME/spec/excluded-folders.md` | The human rendering of `excluded_globs`. This is the only skip list. Never restate it, never extend it inline, cite it. |
 | `$ICM_HOME/spec/budgets.md` | The ceilings for `CONTEXT.folder.md` and `CONTEXT.stage.md`. Never state a budget as a number in your prose. |
 | `$ICM_HOME/spec/layers.md` | What layer 2 is for, and what belongs in layer 3 instead. |
-| `$ICM_HOME/spec/CONVENTIONS.md` | The stage contract shape, one-way cross references, routing not content. |
+| `$ICM_HOME/spec/CONVENTIONS.md` | The generic stage contract shape and routing-not-content boundary. |
 | `$ICM_HOME/icm.defaults.json` | `required_sections` for `CONTEXT.stage.md`, `excluded_globs`, and `never_write`. |
 
 ## Step 1: Find the root
@@ -97,12 +99,14 @@ When the test is genuinely ambiguous, list the folder as **needs classification*
 
 | Folder kind | Template | Shape |
 |---|---|---|
-| Stage folder: numbered, or a named step in the pipeline | `$ICM_HOME/interview-templates/CONTEXT.stage.md.tmpl` | The stage contract. Every heading listed under `required_sections["CONTEXT.stage.md"]` in `icm.defaults.json` is mandatory |
-| Working folder: holds real work, is not a pipeline stage | `$ICM_HOME/interview-templates/CONTEXT.folder.md.tmpl` | Purpose, contents, routing |
+| Stage folder in one of the four Orchestra layouts | `$ICM_HOME/interview-templates/CONTEXT.stage.md.tmpl` | The five generic sections plus Orchestra Preflight and typed Routing when Orchestra is selected |
+| Working folder: holds real work, is not a pipeline stage | `$ICM_HOME/interview-templates/CONTEXT.folder.md.tmpl` | Purpose, contents, typed routing where the card routes an Orchestra pipeline |
 | Container folder: holds other folders and nothing else | `$ICM_HOME/interview-templates/CONTEXT.folder.md.tmpl`, routing section dropped | Purpose and a contents table. A container that routes is just a duplicate index |
 | Reference folder: layer 3 material, ten or more files | `$ICM_HOME/interview-templates/CONTEXT.folder.md.tmpl` | Purpose plus a summary table, one row per file. This is the index that keeps layer 3 cheap to load |
 
-Every card whose filename is `CONTEXT.md` is measured against the stage budget and the stage required sections by the checker, whatever kind you decided it is. If you write a folder card that omits the stage headings, `icm-check.sh --sections` will fail it. Either write the five headings or expect the finding and own it in your report.
+The four stage layouts are root direct, root `stages/`, department direct, and department `stages/`. A card outside those shapes is not silently promoted to an Orchestra stage. Pipeline identity is the nearest routing card plus the physical stage container, so equal prefixes in different pipelines do not collide.
+
+Every card whose filename is `CONTEXT.md` is measured against the stage budget and the stage required sections by the checker, whatever kind you decided it is. If you write a folder card that omits the stage headings, `icm-check.sh --sections` will fail it. Either write the five headings or expect the finding and own it in your report. Orchestra adds Preflight without making it a generic required section.
 
 ## Step 6: Write the card
 
@@ -115,11 +119,14 @@ For each folder that warrants one:
 
 **Content rules**
 
-- **Do not invent.** Only what exists on disk or is documented nearby. An empty Inputs row is honest. A plausible fabricated one is not.
+- **Do not invent.** Only what exists on disk or is documented nearby. An empty Inputs row is honest. A plausible fabricated one is not. Unknown capabilities, versions, and no-touch paths are questions, not defaults to imagine.
 - **Route, do not teach.** A job card answers what is this folder, what do I load, what is the process. It never holds the reference material itself. No definitions, no rules, no extended examples. If you are writing more than a sentence of explanation, that content belongs in a layer 3 file the card points at.
 - **Be specific about sections.** An Inputs row says which part of a file to load, not just the file. "the Voice Rules section of `_config/voice.md`" costs the reader far less than the whole file.
-- **Every path in the card must resolve.** `icm-check.sh --routes` reads path-shaped tokens out of every file named `CONTEXT.md` and fails on one that is not on disk. This is the one check that watches job cards closely, so use it.
-- **Point outward only.** If the file you are referencing already references this folder, restructure rather than close the loop.
+- **Every path in the card must resolve.** `icm-check.sh --routes` keeps the legacy path check. Explicit Orchestra validation also rejects ambiguous file-relative and root-relative candidates instead of choosing one.
+- **Type every Orchestra route.** Root, department, and stage Routing tables carry a trailing Edge column. Path-bearing rows use exactly `LOAD`, `NEXT`, or `REWORK`; non-path stops use `-` for destination and Edge. REWORK targets an earlier card in routing-table order, not merely a smaller prefix.
+- **Declare capabilities and scope.** Orchestra stage cards carry Preflight rows for `Tool`, `Skill`, `No touch`, or the standalone `None` declaration. Tool and Skill versions are exact. No touch means no read and no write. Inputs define read scope and Outputs define write scope.
+- **Keep external input at intake.** Optional `00-intake` is first in its pipeline and is the only card whose Inputs may contain `@NAME`. Positive stages use declared workspace inputs. Never rename or renumber intake from this skill.
+- **Separate workflow from knowledge.** Inputs and Load first derive LOAD dependencies, NEXT is control flow, and REWORK is backward repair. Ordinary Markdown links elsewhere are knowledge links and may be informational cycles. Do not impose a blanket one-way reference ban or create a stored graph or backlink index.
 - **Stay under the ceiling** in `$ICM_HOME/spec/budgets.md`. A card over budget is a failing card, and the fix is cutting it, never raising the budget.
 - **Three to five routing rows.** Cover the common tasks. A routing table that covers everything covers nothing.
 - Lowercase folder names. No em dashes.
@@ -146,11 +153,20 @@ In `create` mode, after writing:
 
 ```sh
 sh "$ICM_HOME/scripts/icm-check.sh" .
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .
 ```
 
-Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify one fix, pass that check's own flag, for example `--sections` or `--routes`, or select it by id with `--only routes`.
+Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify one legacy fix, pass that check's own flag, for example `--sections` or `--routes`, or select it by id with `--only routes`. The default and `--all` retain the original eleven generic checks; structural Orchestra is explicit and separate.
 
-Every card you just wrote must pass. A card that fails its own check is a bug, not a warning: fix it and re-run. Findings against files you did not write are open work and you say so explicitly rather than letting them sit in the same list.
+Every card you just wrote must pass its applicable generic and structural checks. A card that fails its own check is a bug, not a warning: fix it and re-run. Findings against files you did not write are open work and you say so explicitly rather than letting them sit in the same list.
+
+For each new Orchestra stage, finish with post-authoring strict preflight:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" .
+```
+
+Use the full workspace-relative card path. Add declared intake bindings and trusted actual tool attestations with `skills/icm-orchestra/SKILL.md`, then relay RUN or every MISSING row without executing. Missing runtime material remains open work and never becomes a licence to write it here.
 
 One finding you should expect and should not be surprised by: a new job card in a folder the workspace map does not mention makes `--drift` fail, because the map in `IDENTITY.md` must document every folder that holds a card. Adding the folder to the map is a `skills/icm-sync/SKILL.md` fix, not yours, so report it and route it.
 
@@ -227,6 +243,9 @@ Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against `s
 | Placeholders | `placeholders` | No unfilled double-brace placeholder survives in live prose, outside any `*.tmpl` file and outside code fences and backticks |
 | Code fences | `fences` | The card's backtick and tilde fence counts are even |
 | Workspace map drift | `drift` | Every folder that holds a job card is named in the fenced workspace map in `IDENTITY.md` |
+| Orchestra structure | `orchestra` | Explicit typed card grammar, four layouts, numbering, workflow and knowledge projections, capabilities, scope, and ambiguity |
+
+There are twelve check ids. The default and `--all` retain only the original eleven generic ids; `orchestra` is explicit, and `--orchestra-view` is a separate mode rather than an id.
 
 **Not checked by anything.** The overwrite ban is one of these, so state it as instruction and not as machinery.
 

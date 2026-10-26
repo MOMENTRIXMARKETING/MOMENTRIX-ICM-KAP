@@ -27,7 +27,12 @@ These are fixed. They mean the same thing in every ICM workspace and they are no
 |---|---|
 | rule book | a file in `_config/`. Reference material: what is true and what is allowed. Never called a skill. |
 | skill | only a `skills/<name>/SKILL.md`. Procedure the model runs. |
-| job card | a stage or folder `CONTEXT.md` at layer 2. Purpose, Inputs, Process, Outputs, Routing. |
+| job card | a stage or folder `CONTEXT.md` at layer 2. Purpose, Inputs, Process, Outputs, Routing; Orchestra adds Preflight. |
+| preflight | the report-only readiness check for one selected job. Never a general write lease. |
+| RUN | the selected job is ready to start. Never completed work, correct output, or external approval. |
+| 00-intake | optional reserved first card for intake and preflight; the only place external `@NAME` inputs may be declared. |
+| no touch | a Preflight path the selected job may neither read nor write. |
+| Orchestra view | the on-demand `--orchestra-view` projection of workflow and knowledge edges, never a stored index. |
 | layer | one of the numbered ICM levels, 0 through 4b. Defined in `spec/layers.md`. |
 | raw | layer 4a. Immutable source material. Never edited, never rewritten. |
 | wiki | layer 4b. Compiled articles, each grounded in raw. |

@@ -1,5 +1,6 @@
 ---
 name: icm-loop
+version: 1.0.0
 description: "This skill should be used when the user asks to 'make this system recursive', 'install the loop', 'add the write back', 'overlay this on', 'get the agents logging their mistakes', 'is the loop firing', 'prove it fired', or 'why is the ledger empty'. Installs the Session Close, the one block that makes a workspace log its own misses, into whatever file the host loads on every run, proves it fired with a deliberate miss, and checks it for starvation afterwards. Works on an ICM workspace, on a repo that has never seen the toolkit, on a Codex or Cursor project, on an n8n flow, or on a human SOP. Not for logging a miss (icm-log) or reading the ledger for patterns (icm-forge)."
 user-invocable: true
 argument-hint: "install | prove | starve | block"

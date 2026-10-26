@@ -1,5 +1,6 @@
 ---
 name: icm-sync
+version: 1.0.0
 description: "This skill should be used when the user asks to 'sync ICM', 'lint the workspace', 'check for drift', 'the routing is out of date', 'IDENTITY.md is stale', 'fix the broken links', or names 'icm-sync'. It runs scripts/icm-check.sh, then repairs exactly what the report names: safe fixes applied by you and reported, mechanical findings reported and never fixed, judgment findings proposed."
 user-invocable: true
 argument-hint: "lint | update"
@@ -37,6 +38,7 @@ ICM_HOME="${ICM_HOME:-${CLAUDE_PLUGIN_ROOT:-$HOME/src/momentrix-icm-kap-toolkit}
 |---|---|
 | `$ICM_HOME/spec/authority-model.md` | The three tiers below. Authoritative when this file and that file disagree. |
 | `$ICM_HOME/spec/CLI-CONTRACT.md` | The command names, flags and vocabulary every skill is allowed to use. |
+| `$ICM_HOME/spec/ORCHESTRA.md` | Typed graph findings, capabilities, intake, and scope, all report-only. |
 | `$ICM_HOME/spec/excluded-folders.md` | The human rendering of `excluded_globs`. Never restate the list. |
 | `$ICM_HOME/spec/budgets.md` | Every character budget. Never state one as a number in your prose. |
 | `$ICM_HOME/spec/layers.md` | Which layer each file belongs to, and which files may reference which. |
@@ -56,9 +58,17 @@ Then read what the workspace currently claims about itself: `IDENTITY.md`, the r
 sh "$ICM_HOME/scripts/icm-check.sh" .
 ```
 
+When the workspace uses Orchestra cards, also run structural validation as a separate invocation:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .
+```
+
+No arguments and explicit `--all` still select only the original eleven generic checks. Orchestra is the twelfth id and is never folded into that legacy default. Never mix generic selections and Orchestra modes in one command.
+
 Exit 0 is clean. Exit 1 means findings. Exit 2 means a usage or environment error, which is a bug in the command you typed, not a finding about the workspace. Two exit 2s are about the workspace's config: a glob entry in its `icm.defaults.json` outside the alphabet in `$ICM_HOME/spec/excluded-folders.md`, and an `icm.defaults.json` the script cannot read or that is not valid JSON. The `FAIL` line names the key or the file. Show it to the user; never edit the file yourself.
 
-Read the report, do not re-derive it. If you disagree with a finding, that disagreement is a judgment report you raise to the user, not a licence to ignore the row.
+Read the report, do not re-derive it. If you disagree with a finding, that disagreement is a judgment report you raise to the user, not a licence to ignore the row. Structural `CARD`, `NUMBERING`, `ROUTE`, `LOAD`, `NEXT`, `REWORK`, `INPUT`, `CAPABILITY`, `SCOPE`, and `AMBIGUOUS` findings remain typed in your report. `DEPTH` and knowledge information do not become failures by implication.
 
 ### Running one check
 
@@ -69,9 +79,9 @@ sh "$ICM_HOME/scripts/icm-check.sh" --routes .
 sh "$ICM_HOME/scripts/icm-check.sh" --only routes .
 ```
 
-`--only` takes exactly one id and may be repeated. An id that is not one of the eleven prints `FAIL unknown check id: <id>`, lists all eleven, and exits 2. Flags can be combined and the positional target can appear in any order.
+`--only` takes exactly one id and may be repeated. An id outside the twelve prints `FAIL unknown check id: <id>`, lists all twelve, and exits 2. Generic flags can be combined and the positional target can appear in any order. `--orchestra-view` is a separate deterministic view mode, not a check id and not a stored index.
 
-The report is never writable. `icm-check.sh` writes nothing inside the target, ever, in any mode. Everything in tier 1 below is applied by **you**, with your own edits, and then reported.
+The report is never writable. `icm-check.sh` writes nothing inside the target, ever, in any mode. Everything in tier 1 below is applied by **you**, with your own edits, and then reported. Strict preflight through `/icm-orchestra preflight` is equally report-only and is not a general write lease.
 
 `scripts/check_evidence.py` is the optional deep check. `icm-check.sh` runs it under `--evidence` when both `python3` and a `wiki/` directory exist, and reports the skip when either is missing. A skipped evidence check is never presented as a pass, and nothing in this toolkit requires python or node to work.
 
@@ -116,8 +126,11 @@ A machine is certain something is wrong and equally certain that the repair requ
 | A raw file with nothing compiled from it and no `No material` disposition in the log | It is a backlog reminder, not an error |
 | A surviving double-brace placeholder | Only the user has the value |
 | An unbalanced code fence | An odd fence count means a block is open somewhere and only reading tells you where |
+| An Orchestra card, numbering, route, LOAD, NEXT, or REWORK finding | Changing the typed workflow, order, or producer relationship is design, not a safe textual repair |
+| An Orchestra input, capability, scope, or ambiguity finding | Materialising input, substituting a version, widening scope, or choosing a candidate needs a separate decision |
+| A strict `MISSING` row of any type | Preflight reports readiness only; sync never executes the job or converts the row into a safe fix |
 
-Findings that came in from a retrofit `ADOPT` row belong here too. A file you inherited failing a check is open work, not a failure of the sync.
+Findings that came in from a retrofit `ADOPT` row belong here too. A file you inherited failing a check is open work, not a failure of the sync. Knowledge cycles, knowledge orphans, backlinks, and `DEPTH` notes stay informational exactly as the Orchestra envelope marks them.
 
 ### Tier 3: Judgment reports. Always a proposal.
 
@@ -150,9 +163,18 @@ In `lint` mode you skip this step entirely and say so plainly: "no files were ch
 
 ```sh
 sh "$ICM_HOME/scripts/icm-check.sh" .
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .
 ```
 
-Every tier 1 fix must be gone from the second report. A safe fix that did not clear is not safe, so revert it and reclassify the finding as tier 2. Two attempts at the same finding is the ceiling. A third is how a small drift becomes a hardened mistake.
+Run the second command only when Orchestra applies, and never mix its mode with a generic selection. After changing an Orchestra stage card, also run strict preflight for that full workspace-relative card:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" .
+```
+
+Use `skills/icm-orchestra/SKILL.md` for declared bindings and trusted actual tool attestations. Relay RUN or every MISSING row and execute nothing. Strict preflight does not broaden the edits allowed in `update` mode.
+
+Every tier 1 fix must be gone from the second applicable report. A safe fix that did not clear is not safe, so revert it and reclassify the finding as tier 2. Two attempts at the same finding is the ceiling. A third is how a small drift becomes a hardened mistake.
 
 ## Step 6: Report
 
@@ -219,7 +241,7 @@ Do not invent a third log format. Two exist and both are already specified.
 
 Per `$ICM_HOME/spec/authority-model.md`. This is the full check table the rest of the toolkit refers back to, and every row was verified against `scripts/icm-check.sh` in this checkout.
 
-**Machine-enforced.** `scripts/icm-check.sh` finds these. There are eleven check ids and no others. Each one has a flag of the same name, and `--only <id>` selects one by id.
+**Machine-enforced.** `scripts/icm-check.sh` finds these. There are twelve check ids. Each generic check has a flag of the same name, and `--only <id>` selects one by id. No arguments and `--all` still select only the original eleven; `orchestra` is explicit and `--orchestra-view` is not an id.
 
 | Check | check-id | What the script actually verifies | Tier of the fix |
 |---|---|---|---|
@@ -234,6 +256,7 @@ Per `$ICM_HOME/spec/authority-model.md`. This is the full check table the rest o
 | Code fences | `fences` | Every `.md` under the target has an even number of backtick fence lines and an even number of tilde fence lines | 2, mechanical |
 | Placeholders | `placeholders` | No unfilled double-brace placeholder survives in live prose in any `.md` under the target. Any `*.tmpl` file is exempt, because it is interview material a human fills in, and so is anything inside a code fence or backticks, which is documentation quoting the syntax | 2, mechanical |
 | Grounding invariant, optional | `evidence` | Runs `scripts/check_evidence.py` when both `python3` and a `wiki/` directory exist, and relays its report. Skipped otherwise, and the skip is always printed rather than counted as a pass | 2, mechanical |
+| Orchestra structure | `orchestra` | Explicit typed cards, graph projections, layouts, numbering, capabilities, scope, and ambiguity. Strict preflight maps these to its public MISSING types | 2, mechanical |
 
 **Named by no script.** These are real concerns and the toolkit has no machine for them. Do not file them under machine-enforced, and do not name a check id for them, because none exists.
 

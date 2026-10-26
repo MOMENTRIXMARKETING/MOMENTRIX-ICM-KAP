@@ -16,6 +16,8 @@
 |---|---|
 | Headings | sentence case, `##` for sections, `###` sparingly, never skip a level |
 | Tables | header row plus separator row, pipes at both ends, no blank cells |
+| Orchestra routing | trailing `Edge`; path rows use `LOAD`, `NEXT`, or `REWORK`, non-path stops use dashes |
+| Preflight | Kind, Reference, Version columns; exact Tool and Skill versions, `No touch` Version `-`, standalone `None` when empty |
 | Links | relative. Same folder: `file.md`. Sibling folder: `../other/file.md` |
 | Dates | ISO, `YYYY-MM-DD`, always |
 | Numbers | as written in the source, units attached, no rounding without saying so |
@@ -43,7 +45,7 @@ Count the fences in a file before saving. An odd number means one is unclosed.
 
 ## Metadata Headers
 
-Files that carry provenance open with a blockquote header before the first section. Field order does not vary: source, then dates, then anything else. Formats for raw files, articles, archive pages and the index are in `templates/wiki/`. Do not invent a fourth variant.
+Files that carry provenance open with a blockquote header before the first section. Field order does not vary: source, then dates, then anything else. Formats for raw files, articles, archive pages and the index are in `interview-templates/wiki/`. Do not invent a fourth variant.
 
 ## Tables Over Prose
 

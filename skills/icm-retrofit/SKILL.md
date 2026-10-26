@@ -1,5 +1,6 @@
 ---
 name: icm-retrofit
+version: 1.0.0
 description: "This skill should be used when the user asks to 'retrofit ICM', 'add ICM to this project', 'drop ICM onto an existing repo', 'tidy this folder tree into stages', 'neaten this mess', 'plan the ICM changes first', or names 'icm-retrofit'. It runs scripts/icm-plan.sh to write .icm/plan.txt, shows the CREATE / ADOPT / COLLIDE / SKIP / REFUSE diff plus the tree survey, waits for an explicit yes, then runs scripts/icm-apply.sh. Collisions are parked in .icm/proposed/ and scripts/icm-rollback.sh undoes one apply run."
 user-invocable: true
 argument-hint: "plan | apply | rollback"
@@ -47,10 +48,11 @@ Every one of these lives in the toolkit, not in the user's project. Read them wi
 | File | Why |
 |---|---|
 | `$ICM_HOME/spec/CLI-CONTRACT.md` | The command names, flags, artifact paths and vocabulary. Where this file and that file disagree, that file wins. |
+| `$ICM_HOME/spec/ORCHESTRA.md` | Typed cards, graph findings, and the post-install preflight contract. |
 | `$ICM_HOME/spec/excluded-folders.md` | The human rendering of `excluded_globs`. Never restate the list, cite the file. |
 | `$ICM_HOME/spec/budgets.md` | Every character budget for every file kind. |
 | `$ICM_HOME/spec/layers.md` | Which layer a candidate file belongs to. |
-| `$ICM_HOME/spec/CONVENTIONS.md` | The stage contract shape and the cross reference direction. |
+| `$ICM_HOME/spec/CONVENTIONS.md` | The generic stage contract shape and canonical-source boundary. |
 | `$ICM_HOME/spec/authority-model.md` | Safe fix, mechanical report, judgment report. |
 | `$ICM_HOME/icm.defaults.json` | `never_write`, `excluded_globs`, `required_sections`, `frontmatter`, budgets, asset extensions. |
 
@@ -315,12 +317,13 @@ That is the whole trick: the structure is a description of the project, not a re
 
 ## After any apply
 
-1. Read the check summary apply printed. If you want the full report, run `sh "$ICM_HOME/scripts/icm-check.sh" .` and report it honestly. Findings against files you adopted are open work, not failures of the retrofit, and you say which is which.
-2. Route the leftovers:
+1. Read the check summary apply printed. If you want the full legacy report, run `sh "$ICM_HOME/scripts/icm-check.sh" .` and report it honestly. The default and `--all` still select only the original eleven generic checks. Findings against files you adopted are open work, not failures of the retrofit, and you say which is which.
+2. For Orchestra cards, run post-install structural validation with `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .`. Then select the entry job with the user and run strict preflight with `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" .`, adding declared `--input NAME=PATH` bindings and trusted actual `--tool-version NAME=VERSION` attestations through `skills/icm-orchestra/SKILL.md`. Relay RUN or every MISSING row and execute nothing. Missing runtime material is open work, not a failed apply and not permission to materialise it during retrofit. RUN is not job success or external approval.
+3. Route the leftovers:
    - Folders the survey called `card` or `staged` and that still lack one: `skills/icm-context/SKILL.md`.
    - Drift between the routing files and the disk: `skills/icm-sync/SKILL.md`.
    - Rule book doctrine changes: `skills/icm-forge/SKILL.md`, which proposes and never edits.
-3. Append one ledger line via `skills/icm-log/SKILL.md`, in the fixed format from `references/ledger.md` of `out-of-the-loop`:
+4. Append one ledger line via `skills/icm-log/SKILL.md`, in the fixed format from `references/ledger.md` of `out-of-the-loop`:
 
 ```
 | Date | Task | Tier | Anchor | Verify cycles | Holes: plan/hunt/review/audit | Workarounds | Call fired | Artifact |
@@ -347,7 +350,8 @@ Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against th
 | A half-applied target is distinguishable | `scripts/icm-apply.sh` error trap, exit 3 with the rollback command | apply aborts part way through |
 | Rollback fidelity | `scripts/icm-rollback.sh`, comparing the recorded hash against the file before removing or restoring it | a file changed after apply, in which case it is kept and reported |
 | The workspace is checked after apply | `scripts/icm-apply.sh`, which runs `scripts/icm-check.sh` unless `--no-check` | never; the check's status deliberately does not change apply's exit status |
-| Frontmatter, sections, budgets, adapters, drift, routes, fences, placeholders | `scripts/icm-check.sh` | see `skills/icm-sync/SKILL.md` for the full table and what each check really covers |
+| Frontmatter, sections, budgets, adapters, drift, routes, links, fences, placeholders | `scripts/icm-check.sh` | see `skills/icm-sync/SKILL.md` for the full table and what each check really covers |
+| Orchestra structure, explicit only | `scripts/icm-check.sh --orchestra` | typed cards, graph, numbering, capabilities, scope, or ambiguity findings; never selected by the legacy default |
 | Grounding invariant, optional | `scripts/check_evidence.py`, run by `scripts/icm-check.sh` when `python3` and `wiki/` both exist | a wiki fact is absent from its linked raw. Skipped otherwise, and the skip is reported, never hidden |
 
 **Not enforced by any script, whatever other documents imply.** Say so rather than implying a machine is watching.
@@ -355,7 +359,7 @@ Per `$ICM_HOME/spec/authority-model.md`. Every row below was verified against th
 - Apply does **not** refuse a stale plan. There is no mtime comparison. It warns and proceeds.
 - `icm-check.sh` has **no** check for `never_write` or excluded folders. That enforcement lives in plan and apply only, because the checker is report-only and never proposes a write.
 - `icm-check.sh` has two link checks and they are not the same one. `routes` walks only files literally named `CONTEXT.md` and grades its routing tables. `links` walks every `.md` under the target and grades every markdown link target in it.
-- `icm-check.sh` takes `--only <id>` as well as each check's own flag. There are eleven ids; an id outside that set exits 2 and lists them.
+- `icm-check.sh` takes `--only <id>` as well as each generic check's own flag. There are twelve ids; an id outside that set exits 2 and lists them. No arguments and `--all` still select only the original eleven, and `--orchestra-view` is not an id.
 - Nothing reads `wiki/index.md`. Index and disk agreeing is a model-performed safe fix, in `skills/icm-sync/SKILL.md`.
 
 **Model judgment.** No script can settle these. They are yours, and every one of them is a proposal to the user rather than an action.

@@ -1,5 +1,6 @@
 ---
 name: icm-wiki
+version: 1.0.0
 description: "This skill should be used when the user asks to 'add this to the wiki', 'ingest this source', 'what do I know about X', 'summarise everything I have on Y', 'lint the wiki', 'archive that answer', or mentions an 'LLM wiki' or a 'Karpathy wiki'. Saves sources into immutable raw/ (Layer 4a), compiles them into wiki/ articles (Layer 4b), answers questions with citations, and verifies the grounding invariant with the optional scripts/check_evidence.py."
 user-invocable: true
 argument-hint: "ingest <url|path> | query <question> | lint"
