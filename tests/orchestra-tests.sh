@@ -784,6 +784,22 @@ t_out_re '^FAIL[[:space:]]+ROUTE'
 t_out "02-b/CONTEXT.md"
 feature "GRAPH-LOAD-IS-NOT-ROUTING-HOP"
 
+D=$(fixture "nearest pipeline router")
+make_workspace "$D"
+make_router "$D/dept/CONTEXT.md"
+make_card "$D" dept/01-stage - - "" ""
+route "$D/CONTEXT.md" Department dept/CONTEXT.md - NEXT
+route "$D/CONTEXT.md" Bypass dept/01-stage/CONTEXT.md - NEXT
+t_begin
+run "$CHECK" --orchestra "$D"
+t_rc 1
+t_out_re '^FAIL[[:space:]]+ROUTE'
+t_out "dept/01-stage/CONTEXT.md"
+strict dept/01-stage/CONTEXT.md "$D"
+t_rc 1
+t_out_re '^MISSING[[:space:]]+ROUTE'
+feature "ROUTE-NEAREST-PIPELINE-ROUTER"
+
 D=$(fixture "untyped orchestra")
 make_pair "$D"
 make_card "$D" 01-a - - '| Done | `02-b/CONTEXT.md` | - |' ""
@@ -1132,6 +1148,55 @@ strict 00-intake/CONTEXT.md "$D"
 t_rc 1
 t_out_re '^MISSING[[:space:]]+SCOPE'
 feature "CAP-SKILL-SYMLINK-REFUSED"
+
+D=$(fixture "skill dangling symlink")
+make_valid "$D" root
+mkdir -p "$D/skills/icm-orchestra"
+ln -s missing-target "$D/skills/icm-orchestra/SKILL.md"
+make_card "$D" 00-intake - - "" '| Skill | icm-orchestra | 1.0.0 |'
+t_begin
+strict 00-intake/CONTEXT.md "$D"
+t_rc 1
+t_out_re '^MISSING[[:space:]]+SCOPE'
+feature "CAP-SKILL-DANGLING-SYMLINK-REFUSED"
+
+D=$(fixture "skill parent symlink")
+make_valid "$D" root
+OUTSIDE=$(fixture "empty outside skill parent")
+mkdir -p "$D/skills"
+ln -s "$OUTSIDE" "$D/skills/icm-orchestra"
+make_card "$D" 00-intake - - "" '| Skill | icm-orchestra | 1.0.0 |'
+t_begin
+strict 00-intake/CONTEXT.md "$D"
+t_rc 1
+t_out_re '^MISSING[[:space:]]+SCOPE'
+feature "CAP-SKILL-PARENT-SYMLINK-REFUSED"
+
+D=$(fixture "skill root symlink")
+make_valid "$D" root
+OUTSIDE=$(fixture "empty outside skill root")
+ln -s "$OUTSIDE" "$D/skills"
+make_card "$D" 00-intake - - "" '| Skill | icm-orchestra | 1.0.0 |'
+t_begin
+strict 00-intake/CONTEXT.md "$D"
+t_rc 1
+t_out_re '^MISSING[[:space:]]+SCOPE'
+feature "CAP-SKILL-ROOT-SYMLINK-REFUSED"
+
+D=$(fixture "skill home dangling symlink")
+ALT=$(fixture "skill home dangling")
+mkdir -p "$ALT"
+cp -R "$SCRIPTS" "$ALT/"
+cp "$ROOT/icm.defaults.json" "$ALT/icm.defaults.json"
+make_valid "$D" root
+mkdir -p "$ALT/skills/icm-orchestra"
+ln -s missing-target "$ALT/skills/icm-orchestra/SKILL.md"
+make_card "$D" 00-intake - - "" '| Skill | icm-orchestra | 1.0.0 |'
+t_begin
+run "$ALT/scripts/icm-check.sh" --orchestra --job 00-intake/CONTEXT.md "$D"
+t_rc 1
+t_out_re '^MISSING[[:space:]]+SCOPE'
+feature "CAP-SKILL-HOME-DANGLING-SYMLINK-REFUSED"
 
 D=$(fixture "unrelated skill strict")
 make_valid "$D" root
@@ -1768,6 +1833,24 @@ for ARCH in full wiki; do
     run "$CHECK" --only sections "$D"
     t_rc 0
     feature "BODY-$ARCH-OUTPUT-PREFLIGHT-TYPED-BUDGET"
+done
+
+for ARCH in quick full wiki; do
+    D=$(fixture "generated workspace $ARCH")
+    t_begin
+    run "$ROOT/scripts/icm-plan.sh" --archetype "$ARCH" "$D"
+    t_rc 0
+    run "$ROOT/scripts/icm-apply.sh" --no-check "$D"
+    t_rc 0
+    run "$CHECK" "$D"
+    t_rc 0
+    run "$CHECK" --orchestra "$D"
+    t_rc 0
+    t_out "result: clean"
+    if [ "$ARCH" = wiki ] && [ ! -d "$D/raw/incoming" ]; then
+        t_error "generated wiki raw input directory is absent"
+    fi
+    feature "GENERATED-$ARCH-ORCHESTRA"
 done
 
 printf '\n# summary\n'

@@ -1245,6 +1245,7 @@ create _log/FORGE-PROPOSALS.md quick
 create output/CONTEXT.md full
 create _config/grounding.md wiki
 create raw/CONTEXT.md wiki
+create raw/incoming/.gitkeep wiki
 create wiki/index.md wiki
 create wiki/log.md wiki
 adopt CLAUDE.md quick
@@ -1512,7 +1513,7 @@ ICM_EOF
     else
         _bc_ground='-'
     fi
-    icm_route_row raw/CONTEXT.md "Filing an incoming document" "$_bc_ground"
+    icm_route_row raw/CONTEXT.md "Filing an incoming document" -
     icm_route_row wiki/index.md "Writing or updating a wiki article" "$_bc_ground"
     icm_route_row output/CONTEXT.md "Producing something a human reads" '`_config/voice.md`'
     icm_route_row _config/conventions.md "Checking a naming or folder rule" -
@@ -1596,7 +1597,7 @@ Hold every incoming document exactly as it arrived. If a fact is not in this fol
 
 ## Process
 
-1. Save the document under `raw/`, named by date first, then a short slug.
+1. Save the document under `raw/incoming/`, named by date first, then a short slug.
 2. Put a header on it: what it is, where it came from, the date collected.
 3. Paste the body word for word. Do not summarise, tidy, translate or truncate.
 4. Append an ingest line to `wiki/log.md`.
@@ -1606,7 +1607,7 @@ Hold every incoming document exactly as it arrived. If a fact is not in this fol
 
 | Artifact | Location | Format |
 |---|---|---|
-| Immutable source | raw/ | directory |
+| Immutable source | raw/incoming/ | directory |
 | Ingest record | `wiki/log.md` | Markdown |
 
 ## Routing
@@ -2108,6 +2109,7 @@ icm_render() {
         _config/style.md)         icm_body_style ;;
         _config/grounding.md)     icm_body_grounding ;;
         raw/CONTEXT.md)           icm_body_raw_context ;;
+        raw/incoming/.gitkeep)    printf '\n' ;;
         output/CONTEXT.md)        icm_body_output_context ;;
         wiki/index.md)            icm_body_wiki_index ;;
         wiki/log.md)              icm_body_wiki_log ;;
@@ -2847,19 +2849,30 @@ icm_orchestra_graph() {
                 }
             }
         }
-        qh = 1; qt = 1; queue[1] = "CONTEXT.md"; reached["CONTEXT.md"] = 1
+        qh = 1; qt = 0
+        for (z = 1; z <= nc; z++) {
+            p = clist[z]
+            if (c_kind[p] != "stage") { continue }
+            pipe = c_pipe[p]
+            if (pipe in pseed) { continue }
+            pseed[pipe] = 1
+            start = router_for(p)
+            qpipe[++qt] = pipe; qnode[qt] = start
+            reached[pipe SUBSEP start] = 1
+        }
         while (qh <= qt) {
-            from = queue[qh++]
+            pipe = qpipe[qh]; from = qnode[qh]; qh++
             for (z = 1; z <= ne; z++) {
-                if (etyp[z] == "NEXT" && efrom[z] == from && !(eto[z] in reached)) {
-                    reached[eto[z]] = 1; queue[++qt] = eto[z]
+                rkey = pipe SUBSEP eto[z]
+                if (etyp[z] == "NEXT" && efrom[z] == from && !(rkey in reached)) {
+                    reached[rkey] = 1; qpipe[++qt] = pipe; qnode[qt] = eto[z]
                 }
             }
         }
         for (z = 1; z <= nc; z++) {
             p = clist[z]
-            if (c_kind[p] == "stage" && !(p in reached)) {
-                add("ROUTE", p, "stage is not reachable through NEXT")
+            if (c_kind[p] == "stage" && !((c_pipe[p] SUBSEP p) in reached)) {
+                add("ROUTE", p, "stage is not reachable through NEXT from its pipeline router")
             }
         }
         for (z = 1; z <= ne; z++) { printf "%s\t%s\t%s\n", etyp[z], efrom[z], eto[z] >> edgefile }
@@ -3210,17 +3223,21 @@ icm_orchestra_strict_capabilities() {
                         continue
                         ;;
                 esac
-                _o_sc_root="$TARGET"
                 _o_sc_rel="skills/$_o_sc_ref/SKILL.md"
-                if [ ! -e "$TARGET/$_o_sc_rel" ] && [ ! -L "$TARGET/$_o_sc_rel" ]; then
-                    _o_sc_root="$ICM_HOME"
-                fi
-                if [ ! -f "$_o_sc_root/$_o_sc_rel" ]; then
-                    icm_orchestra_strict_add CAPABILITY "$1" "Skill not found: $_o_sc_ref"
+                if icm_orchestra_symlink "$TARGET" "$_o_sc_rel"; then
+                    icm_orchestra_strict_add SCOPE "skills/$_o_sc_ref/SKILL.md" "Skill path contains a symlink"
                     continue
+                fi
+                _o_sc_root="$TARGET"
+                if [ ! -e "$TARGET/$_o_sc_rel" ]; then
+                    _o_sc_root="$ICM_HOME"
                 fi
                 if icm_orchestra_symlink "$_o_sc_root" "$_o_sc_rel"; then
                     icm_orchestra_strict_add SCOPE "skills/$_o_sc_ref/SKILL.md" "Skill path contains a symlink"
+                    continue
+                fi
+                if [ ! -f "$_o_sc_root/$_o_sc_rel" ]; then
+                    icm_orchestra_strict_add CAPABILITY "$1" "Skill not found: $_o_sc_ref"
                     continue
                 fi
                 _o_sc_name=$(icm_fm_get "$_o_sc_root/$_o_sc_rel" name)
