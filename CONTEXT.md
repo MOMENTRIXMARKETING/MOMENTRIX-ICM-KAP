@@ -21,15 +21,17 @@
 
 Unknown job: say so before improvising a row.
 
+For the Orchestra view, run `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .` from the repo root.
+
 ## Session Start
 
-1. Read `IDENTITY.md`. That is the map.
-2. Read this file and pick the row that matches the job.
-3. Read `BUILD-CONTRACT.md` before writing a single file. It binds every path here.
-4. Load the rule book in the Load first column and nothing else.
+1. Read `IDENTITY.md`, the map.
+2. Pick one Routing row.
+3. Before writing, read `BUILD-CONTRACT.md`; it binds every path here.
+4. Load only the row's Load first material.
 5. Do the work.
-6. Run both gates from the repo root: `ICM_HOME=$(pwd)`, `sh tests/run-tests.sh`, `sh "$ICM_HOME/scripts/icm-check.sh" .`. Harness passed and no FAIL, or it is not done.
-7. Run the Session Close below. This repo runs its own loop under `_log/`.
+6. Run both gates from the repo root: `ICM_HOME=$(pwd)`, `sh tests/run-tests.sh`, `sh "$ICM_HOME/scripts/icm-check.sh" .`. Require a passed harness and no FAIL.
+7. Run Session Close below; this repo logs under `_log/`.
 
 ## Session Close
 

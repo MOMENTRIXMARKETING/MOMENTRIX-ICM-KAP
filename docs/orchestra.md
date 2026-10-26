@@ -72,10 +72,10 @@ A cold agent can enter a compatible repository without a prior conversation:
 1. Read the target's `IDENTITY.md` and root `CONTEXT.md`.
 2. Select exactly one job by its full workspace-relative card path. Do not select by a numeric prefix alone.
 3. Run structural mode. Fix or report structural findings before selection.
-4. Materialise any required external input as ordinary workspace data, then bind it with `--input`. Do not paste inline content or credentials into a binding.
-5. Run literal `--orchestra --job CARD` strict preflight with every required binding and attestation.
-6. On `MISSING`, do not execute the job. Read the structured type, path, and detail, then supply the missing material or ask for the decision that is actually needed.
-7. On `RUN`, execute only the selected job. Read its declared Inputs, write its declared Outputs, and preserve the existing Session Close ledger practice and human approval gates.
+4. Confirm required external input is already materialised as ordinary workspace data. If it is absent, stop: only a separately authorised setup step may create it, before preflight. Preflight and `MISSING` never materialise or write input.
+5. Bind the existing material with `--input`, then run literal `--orchestra --job "$CARD"` strict preflight with every required binding and attestation. Do not paste inline content or credentials into a binding.
+6. On `MISSING`, do not execute or write. Relay the structured type, path, and detail. Any further materialisation needs a separately authorised setup step before another preflight.
+7. On `RUN`, execute only the selected job. Read its declared Inputs, write its declared Outputs, and append Session Close entries to the existing ledger after execution. Report placement proposals for separate human handling and preserve every human approval gate.
 8. Judge the resulting artifact separately. Preflight did not execute it and cannot grade it.
 
 The view is useful when selection is unclear because it exposes the same freshly parsed graph rather than asking the agent to reconstruct it mentally.
@@ -157,10 +157,10 @@ Preflight rows use `None`, `Tool`, `Skill`, or `No touch`.
 The general Tool attestation shape is:
 
 ```sh
-sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job NN-slug/CONTEXT.md --tool-version NAME=VERSION .
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" --tool-version "$TOOL_ATTESTATION" .
 ```
 
-Replace the card, name, and version with an actual declaration from your workspace. The checker compares the attested string; it does not run `NAME --version`, evaluate a version range, or execute a command named by the card. Unrelated third-party skills do not gain a version requirement merely because Orchestra exists.
+Set `CARD` to the full workspace-relative job card and `TOOL_ATTESTATION` to `NAME=VERSION` with the trusted actual tool version. The checker compares the attested string; it does not run `NAME --version`, evaluate a version range, or execute a command named by the card. Unrelated third-party skills do not gain a version requirement merely because Orchestra exists.
 
 ## Deterministic reports and exits
 

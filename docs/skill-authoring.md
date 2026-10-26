@@ -107,7 +107,7 @@ user-invocable.
 The modes, written the way the user will type them, with the default marked.
 
 ```
-argument-hint: "plan (default, writes nothing) | apply | rollback"
+argument-hint: "plan (default, writes .icm/plan.txt) | apply | rollback"
 ```
 
 If the skill takes no argument, leave the key out rather than writing an empty string.
@@ -198,7 +198,7 @@ Model work, legitimately:
 
 The line is not about difficulty. It is about who can be wrong without noticing. A model that
 asserts a byte count is guessing with a confident tone, and the guess is indistinguishable from
-a measurement in the transcript. Run `sh "$ICM_HOME/scripts/icm-check.sh" <path>` and paste
+a measurement in the transcript. Run `sh "$ICM_HOME/scripts/icm-check.sh" "<path>"` and paste
 what it said.
 
 This is the same three-tier authority model the linter and the forge use, applied to skills:

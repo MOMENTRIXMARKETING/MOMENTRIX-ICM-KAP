@@ -202,11 +202,11 @@ Caption under the tree:
 > Files added, zero files moved. Any agent that walks in reads the name tag and the map and
 > knows the whole building.
 
-**Callout 1, four rows. Numbers in orange squares.**
+**Callout 1, six rows. Numbers in orange squares.**
 
 > **THE DRY RUN COMES FIRST**
 >
-> You ask it to plan. It reads your folders and writes nothing. Then it hands you four lists.
+> You ask it to plan. It reads your folders and writes only `.icm/plan.txt`. Then it reports five dispositions plus SURVEY.
 >
 > | | | |
 > |---|---|---|
@@ -214,11 +214,13 @@ Caption under the tree:
 > | 2 | ADOPT | already there. Yours is kept, one marked block is added at the end |
 > | 3 | COLLIDE | already there and different. Your file wins |
 > | 4 | SKIP | already exactly what it would have written. Nothing to do |
+> | 5 | REFUSE | protected or outside the target. Nothing is written |
+> | 6 | SURVEY | folders that may want a job card. Apply ignores these rows |
 >
 > Junk never even makes the lists. Build folders, downloads and dependency folders are cut out
 > of the walk before anything is classified, so they never appear at all.
 >
-> You read the four lists. Nothing has touched your project yet.
+> You read the plan and survey. Nothing is applied yet.
 
 **Callout 2, orange border, glow.**
 

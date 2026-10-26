@@ -257,7 +257,7 @@ Every miss against that path dated before this line is closed. A miss dated the 
 
 The weekly run is a scheduled task. Two halves, and the first needs no model at all.
 
-- **The count runs on plain cron.** `sh "$ICM_HOME/scripts/icm-loop.sh" --index <workspace>` compiles the index and exits 1 when something is waiting. Any scheduler that can run a shell command can run it: cron, launchd, a CI job, an n8n node. No agent, no model, no API key. That is the half that must not depend on which LLM is over the top of the workspace.
+- **The count runs on plain cron.** `sh "$ICM_HOME/scripts/icm-loop.sh" --index "<workspace>"` compiles the index and exits 1 when something is waiting. Any scheduler that can run a shell command can run it: cron, launchd, a CI job, an n8n node. No agent, no model, no API key. That is the half that must not depend on which LLM is over the top of the workspace.
 - **The reading runs on whatever agent you have.** The prompt is exactly `/icm-forge run`. Nothing else. In Claude Code that is a `/schedule` entry; in another harness it is that harness's equivalent, pointed at the same workspace. The skill text is the instruction set; the harness only has to load it.
 - **Cadence:** weekly. Two sev 2 misses on one path take about a week to accumulate. Daily runs mostly report nothing and train you to skip the output. Monthly, and the fault has shipped four more times.
 - **The cron only runs the forge.** It never runs `approve`. It cannot: there is no human in a scheduled turn, and approval is defined as a human in the turn saying an id out loud. A scheduled run that finds five holes writes five proposals and stops.

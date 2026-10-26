@@ -19,10 +19,12 @@ For freshly derived workflow edges, workflow backlinks, knowledge edges, and kno
 
 1. Read `IDENTITY.md`, then choose exactly one Routing row.
 2. Run `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .` for structural validation.
-3. Run literal `--orchestra --job CARD` strict preflight for the selected card. Bind every external input with an already materialised workspace path.
-4. Do not start on `MISSING`. On `RUN`, read only the selected card's Inputs and write only its Outputs. `RUN` means ready to start, not complete or externally approved.
+3. Run literal `--orchestra --job "$CARD"` strict preflight for the selected card. Bind every external input with an already materialised workspace path.
+4. Do not start or write on `MISSING`. On `RUN`, read only the selected card's Inputs and write only its Outputs plus the existing Session Close ledger after execution. `RUN` means ready to start, not complete or externally approved.
 5. Keep human approval gates for messages, invitations, bookings, and every other external action.
-6. Run Session Close before your last reply.
+6. Run Session Close only after actual run execution.
+
+For Orchestra, preflight, graph, ambiguity, MISSING, and refusal write nothing and skip Session Close. A run permits declared Outputs and close entries in the existing `_log/LOOP-LEDGER.md` only. Placement proposals are reported for separate human handling, never written during the run.
 
 ## Session Close
 
@@ -47,4 +49,4 @@ Pull a rule book only when the selected job card names it. A rule book binds and
 | `_config/style.md` | headings, tables, links, and report shape | formatting an artifact |
 | `_config/grounding.md` | raw evidence and wiki compilation | writing into `wiki/` |
 
-Only a human edits a rule book. An agent appends a proposal to `_log/FORGE-PROPOSALS.md` and waits.
+Only a human edits a rule book. Outside Orchestra, an agent appends a proposal to `_log/FORGE-PROPOSALS.md` and waits. Orchestra reports placement proposals for separate human handling and never writes them.

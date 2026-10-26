@@ -196,7 +196,7 @@ Loop is which part of the graph wrote it: run, workaround, hunt, review, tier ch
 
 ## Mode: show
 
-Read only. Writes nothing, ever, including the file-creation step. If `_log/LOOP-LEDGER.md` does not exist, say so and stop.
+No ledger writes and no ledger creation. If `_log/LOOP-LEDGER.md` does not exist, say so and stop. The index step below may regenerate `_log/SKILL-INDEX.md`; no other file is written.
 
 Print three things:
 

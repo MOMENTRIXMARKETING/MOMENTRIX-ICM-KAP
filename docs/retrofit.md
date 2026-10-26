@@ -29,10 +29,10 @@ ICM_HOME="${ICM_HOME:-${CLAUDE_PLUGIN_ROOT:-$HOME/src/momentrix-icm-kap-toolkit}
 
 | Step | Skill | Script |
 |---|---|---|
-| Dry run | `/icm-retrofit plan` | `sh "$ICM_HOME/scripts/icm-plan.sh" <path>` |
-| Apply | `/icm-retrofit apply` | `sh "$ICM_HOME/scripts/icm-apply.sh" <path>` |
-| Undo | `/icm-retrofit rollback` | `sh "$ICM_HOME/scripts/icm-rollback.sh" <path>` |
-| Check | `/icm-sync lint` | `sh "$ICM_HOME/scripts/icm-check.sh" <path>` |
+| Dry run | `/icm-retrofit plan` | `sh "$ICM_HOME/scripts/icm-plan.sh" "<path>"` |
+| Apply | `/icm-retrofit apply` | `sh "$ICM_HOME/scripts/icm-apply.sh" "<path>"` |
+| Undo | `/icm-retrofit rollback` | `sh "$ICM_HOME/scripts/icm-rollback.sh" "<path>"` |
+| Check | `/icm-sync lint` | `sh "$ICM_HOME/scripts/icm-check.sh" "<path>"` |
 
 Four scripts on this path, and a fifth, `icm-loop.sh`, that belongs to the loop rather than to the retrofit. Rollback is its own script: there is no `--rollback` flag on apply, and there
 never was.
@@ -393,15 +393,16 @@ Legacy untyped routes remain valid for the generic checks. Orchestra is explicit
 trailing Edge declarations instead of guessing them. `LOAD` declares a prerequisite, `NEXT` normal
 forward flow, and `REWORK` intentional repair to an earlier card in routing-table order. Add
 Preflight declarations and, when external input binding is needed, a reserved `00-intake` card.
-Materialise the input inside the workspace before binding it; never turn inline content or a
-credential into a binding.
+External input must already be materialised inside the workspace before binding. If it is absent,
+stop: only a separately authorised setup step may create it before preflight. Preflight and
+`MISSING` never materialise or write input. Never turn inline content or a credential into a binding.
 
 ```sh
 sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .
 sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .
 ```
 
-Use literal `--orchestra --job CARD` for strict preflight of one full workspace-relative card.
+Use literal `--orchestra --job "$CARD"` for strict preflight of one full workspace-relative card.
 [`orchestra.md`](orchestra.md) shows the binding and attestation shapes and the public example.
 `RUN` means ready to start, not finished or approved for an external action. Orchestra is a
 report-only checker, not a supervisor process, and generic lint does not select it implicitly.

@@ -157,7 +157,7 @@ Rule book proposals go to `_log/FORGE-PROPOSALS.md`, in the format `skills/icm-f
 4. If a fix would create a file rather than edit one, it is not a sync. Route it: a missing job card goes to `skills/icm-context/SKILL.md`, a missing layer goes to `skills/icm-retrofit/SKILL.md`.
 5. Never rewrite a user file wholesale. A sync edit is targeted: one link, one row, one date. If a file needs replacing rather than editing, write the replacement to `.icm/proposed/<relative-path>` and say so. That is a collision, and the collision policy is in `skills/icm-retrofit/SKILL.md`.
 
-In `lint` mode you skip this step entirely and say so plainly: "no files were changed."
+In `lint` mode you skip this step entirely and say so plainly: "no fixes or proposals were applied." Step 7 still records the run in the existing logs.
 
 ## Step 5: Re-run the check
 
@@ -206,7 +206,7 @@ Check: sh "$ICM_HOME/scripts/icm-check.sh" . - N findings
 <if nothing was found, say exactly that and stop>
 ```
 
-`lint` closes with "no files were changed. Run `/icm-sync update` to apply the safe fixes."
+`lint` closes with "no fixes or proposals were applied. The run is recorded in `_log/LOOP-LEDGER.md` and, when present, `wiki/log.md`. Run `/icm-sync update` to apply the safe fixes."
 `update` closes with "safe fixes applied by me and listed above. Everything else is waiting on you."
 
 ## Step 7: Log

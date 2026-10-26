@@ -16,7 +16,9 @@
      LOAD, NEXT, or REWORK. Use NEXT for ordinary task selection, LOAD for a named
      prerequisite, and REWORK only toward an earlier card in this table's order.
      A non-path stop uses a dash for destination and Edge. "Load first" is the
-     smallest dependency set; it is not permission to preload the workspace. -->
+     smallest dependency set; it is not permission to preload the workspace.
+     Keep the Add new source material row only for wiki/raw usage. Delete it for
+     quick/full or whenever raw/ is not used; never create raw/ for quick/full. -->
 
 | Task | Where | Load first | Edge |
 |---|---|---|---|
@@ -36,7 +38,7 @@
 5. Read the card's Inputs, Outputs, and Preflight. Check Tool and Skill capabilities with exact versions, supply trusted actual tool versions through `--tool-version NAME=VERSION`, and honour every `No touch` path as neither read nor written.
 6. Run `/icm-orchestra preflight` for the selected full workspace-relative card. It uses `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" .` and writes nothing. MISSING means stop; RUN means ready to start only.
 7. Execute only through `/icm-orchestra run` after that job's fresh RUN. Read only declared Inputs, write only declared Outputs plus the existing Session Close ledger, and keep every external approval gate. Preflight is not a general write lease and RUN is not success or approval.
-8. Close against the job card, then append the line to `_log/LOOP-LEDGER.md`.
+8. After actual run execution, close against the job card; read-only or stopped Orchestra modes skip Session Close.
 
 ## Rule Books
 
@@ -50,7 +52,9 @@
 | `_config/style.md` | formatting mechanics: headings, tables, links, dates, numbers | writing or editing markdown |
 | `_config/{{EXTRA_RULEBOOK}}.md` | {{EXTRA_RULEBOOK_HOLDS}} | {{EXTRA_RULEBOOK_WHEN}} |
 
-Rule books are edited by a human. Agents propose changes into `_log/FORGE-PROPOSALS.md` and wait.
+Rule books are edited by a human. Outside Orchestra, agents propose changes into `_log/FORGE-PROPOSALS.md` and wait.
+
+For Orchestra, preflight, graph, ambiguity, MISSING, and refusal write nothing. A run permits declared Outputs and close entries in the existing `_log/LOOP-LEDGER.md` only. Placement proposals are reported for separate human handling, never written during the run.
 
 ## Session Close
 
@@ -77,9 +81,10 @@ The view is derived on demand and printed, never stored as an index. Do not repl
 
 ## Section To Source
 
-<!-- Keep this section only for compile projects. It is the lookup an agent runs
-     before writing: which raw folders feed this output section, and which rule
-     books govern it. One row per section of the compiled artifact. -->
+<!-- Keep this section only for wiki/raw compile projects. Delete it for quick/full
+     and whenever raw/ is not used. It is the lookup an agent runs before writing:
+     which raw folders feed this output section, and which rule books govern it.
+     One row per section of the compiled artifact. -->
 
 | Output section | Raw sources that feed it | Rule books that govern it |
 |---|---|---|

@@ -18,6 +18,10 @@ Select and safely start one job in the current ICM workspace. Never guess throug
 
 No argument means `preflight`. A mode argument never overrides ambiguity, scope, or a human approval gate.
 
+## Session Close boundary
+
+Ambiguity, preflight, graph, MISSING, and refusals write nothing: do not run Session Close or append ledger or placement records. Session Close starts only after actual `run` execution, never before it. A run writes only declared Outputs plus close entries in the existing `_log/LOOP-LEDGER.md`. Report placement proposals for separate human handling; Orchestra never writes them.
+
 ## Resolve the toolkit first
 
 ```sh

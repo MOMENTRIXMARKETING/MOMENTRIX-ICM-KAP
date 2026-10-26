@@ -11,16 +11,21 @@
 
 ## Inputs
 
-<!-- Name the scope, not just the file. Only reserved 00-intake may use @NAME in the
-     File cell; bind it later with --input NAME=PATH to existing workspace material,
-     never a credential file, secret store, or inline secret. Positive stages declare
-     workspace paths instead. 00-intake is first in its pipeline and handles intake
-     and preflight, not ordinary domain work. Use full workspace-relative paths for
-     stage cards, handoffs, and STAGE_OUTPUT_PATH. -->
+<!-- Name the scope and delete unused optional rows. Never invent a producer or path.
+     Later positive: the input row may name an actual previous output. First or only
+     positive: name an existing workspace input or delete the row. 00-intake: delete it.
+     External intake is only for a real @NAME on 00-intake; delete it on positive stages.
+     Bind existing workspace material with --input NAME=PATH, never credentials, secret
+     stores, or inline content. If absent, only separately authorised setup may create it
+     before preflight; preflight and MISSING never write it. Keep the Raw row and raw
+     Process step only for wiki/raw use. Delete both for quick/full or no raw input,
+     renumber Process, and never create raw/ for quick/full. 00-intake is first and handles
+     intake/preflight, not domain work. Use full workspace-relative paths throughout. -->
 
 | Source | File | Scope | Why |
 |---|---|---|---|
-| Previous stage | `{{PREV_OUTPUT_PATH}}` | full file | {{PREV_WHY}} |
+| Workspace or previous-stage input | `{{INPUT_PATH}}` | {{INPUT_SCOPE}} | {{INPUT_WHY}} |
+| External intake | @{{EXTERNAL_NAME}} | {{EXTERNAL_SCOPE}} | {{EXTERNAL_WHY}} |
 | Raw | `raw/{{RAW_TOPIC}}/` | {{RAW_SCOPE}} | the evidence this stage cites |
 | Rule book | `_config/{{RULEBOOK}}.md` | "{{RULEBOOK_SECTION}}" | {{RULEBOOK_WHY}} |
 
@@ -34,7 +39,7 @@ Compile, do not explore. Read the named inputs, produce the named artifact, stop
 2. Read every row of the Inputs table at the stated scope. Do not go hunting for more.
 3. {{STEP_2}}
 4. {{STEP_3}}
-5. Before writing any number, date or quote, find it verbatim in the raw file you will cite.
+5. When using raw evidence, find every number, date or quote verbatim in the raw file cited before writing it.
 6. Write only the declared Outputs, then append the existing Session Close ledger records. RUN is not success or external approval.
 
 ## Outputs
@@ -57,13 +62,19 @@ Compile, do not explore. Read the named inputs, produce the named artifact, stop
 ## Routing
 
 <!-- Path destinations require LOAD, NEXT, or REWORK. Non-path stops use two dashes.
-     REWORK must target an earlier card in this pipeline's routing-table order.
-     LOAD is a prerequisite, not a routing hop. Never add a stored graph or backlink
-     table here; the root card carries the on-demand Orchestra view command. -->
+     Keep NEXT only for an actual next card; delete it on last and single-stage cards.
+     Keep REWORK only for an actual earlier card that can repair input. Delete it for
+     first positive, single-stage, and 00-intake; use a terminal stop instead.
+     Keep the raw stop only for wiki/raw use and delete it for quick/full.
+     REWORK targets an earlier card in routing-table order. LOAD is a prerequisite,
+     not a routing hop. Never add a stored graph or backlink table here; the root
+     card carries the on-demand Orchestra view command. -->
 
 | Condition | Go to | Edge |
 |---|---|---|
 | Done | `{{NEXT_STAGE_PATH}}` | NEXT |
 | Input missing or empty | `{{PREV_STAGE_PATH}}` | REWORK |
+| Work complete or no next stage | - | - |
+| Input missing with no earlier-stage repair | - | - |
 | A fact will not ground in raw | - | - |
 | Scope looks wrong: stop and re-route from root `CONTEXT.md` | - | - |

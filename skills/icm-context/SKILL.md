@@ -203,8 +203,8 @@ sh "$ICM_HOME/scripts/icm-check.sh" . - PASS | N findings, listed above
 <if layer 2 coverage is already complete, say exactly that and stop>
 ```
 
-`report` closes with "no files were changed. Run `/icm-context create` to write these."
-`create` closes with "job cards written. Nothing existing was touched."
+`report` closes with "no job cards were created. The report is recorded in `_log/LOOP-LEDGER.md`. Run `/icm-context create` to write these."
+`create` closes with "job cards written and the task recorded in `_log/LOOP-LEDGER.md`. No existing job card was changed."
 
 ## Step 10: Log
 
@@ -219,7 +219,7 @@ Cards created goes in the artifact column. Needs-classification folders are hole
 ## Rules that do not bend
 
 1. Never overwrite an existing `CONTEXT.md`. No exceptions, no flags.
-2. Never modify a file other than the cards you create.
+2. Never modify an existing file except the disclosed Step 10 ledger append.
 3. Never invent a purpose, an input, or a process. Unknown is a valid answer and a fabricated one is not.
 4. Never write inside a folder matching `excluded_globs` or `never_write`.
 5. Never put reference material in a job card. Layer 2 routes, layer 3 holds.

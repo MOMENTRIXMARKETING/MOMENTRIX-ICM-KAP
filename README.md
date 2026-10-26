@@ -258,7 +258,7 @@ redo by hand, and the index says which count.
 
 The forge is the one skill worth putting on a schedule, because its input accumulates whether
 anyone is watching or not. Two halves. The count needs no model: any scheduler that can run a
-shell command runs `sh "$ICM_HOME/scripts/icm-loop.sh" --index <workspace>` and gets the index,
+shell command runs `sh "$ICM_HOME/scripts/icm-loop.sh" --index "<workspace>"` and gets the index,
 exit 1 when something is waiting. The reading runs on whatever agent you have, in Claude Code
 with `/schedule`, elsewhere with that harness's equivalent:
 
