@@ -1532,8 +1532,9 @@ If the job is not in the table, the table is incomplete. Say so before you impro
 3. Read the job card the row points to, and the rule book in the Load first column.
 4. Inspect the derived workflow and backlinks with: sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .
 5. Do the work. Nothing else loads unless the job card says to load it.
-6. Run the Session Close below before your last reply. It is part of the task, not an afterthought.
+6. Run Session Close only after actual execution. Read-only preflight, graph, ambiguity, MISSING, and refusal write nothing and skip it.
 
+For Orchestra, a run permits declared Outputs and close entries in the existing `_log/LOOP-LEDGER.md` only. Placement proposals are reported for separate human handling, never written during the run.
 ICM_EOF
     icm_body_session_close
     cat <<'ICM_EOF'
