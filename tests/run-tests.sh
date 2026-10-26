@@ -178,10 +178,13 @@ assert_rc "the toolkit passes its own full check" 0
 assert_out "the full self check reports clean" "result: clean"
 assert_file "the toolkit has its own IDENTITY.md" "$ROOT/IDENTITY.md"
 assert_file "the toolkit has its own CONTEXT.md" "$ROOT/CONTEXT.md"
-if [ "$(icm_lines "$ROOT/CLAUDE.md")" -eq 2 ] && grep -q -F '@IDENTITY.md' "$ROOT/CLAUDE.md"; then
-    t_pass "CLAUDE.md is a two line alias, not a copy"
+if grep -q -F '<!-- icm:begin -->' "$ROOT/CLAUDE.md" \
+    && grep -q -F '@IDENTITY.md' "$ROOT/CLAUDE.md" \
+    && grep -q -F '@CONTEXT.md' "$ROOT/CLAUDE.md" \
+    && grep -q -F '<!-- icm:end -->' "$ROOT/CLAUDE.md"; then
+    t_pass "CLAUDE.md aliases IDENTITY and CONTEXT inside managed markers"
 else
-    t_fail "CLAUDE.md is a two line alias, not a copy" "$(cat "$ROOT/CLAUDE.md")"
+    t_fail "CLAUDE.md aliases IDENTITY and CONTEXT inside managed markers" "$(cat "$ROOT/CLAUDE.md")"
 fi
 
 # The degraded hash path has to work on a box with no sha tool at all.
