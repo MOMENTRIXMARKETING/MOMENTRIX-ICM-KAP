@@ -12,7 +12,7 @@
     {
       "name": "momentrix-icm-kap-toolkit",
       "source": "./",
-      "description": "Scaffold a new project's context layer or retrofit a live one without deleting or rewriting anything you wrote, then keep both honest with POSIX sh checks and an evidence-grounded raw/ and wiki/ knowledge pair.",
+      "description": "Scaffold or retrofit an ICM context layer, compile an evidence-grounded raw/ and wiki/ pair, and validate typed Orchestra workflows with deterministic views and strict preflight. Local execution and GitHub distribution use the same project repository.",
       "version": "1.0.0",
       "author": {
         "name": "Momentrix Marketing",
@@ -29,6 +29,8 @@
         "wiki",
         "scaffold",
         "retrofit",
+        "orchestra",
+        "workflow-preflight",
         "zero-dependency"
       ]
     }

@@ -48,6 +48,10 @@ open it between stages, edit it, and the next stage compiles the edited version.
 state to manage and no orchestration layer to lie to. The pipeline stops being a black box
 because you can read every intermediate.
 
+ICM Orchestra does not turn that filesystem model into a supervisor process. It reads the same
+cards, derives their typed graph, reports structural and preflight findings, and exits. The
+selected agent executes separately, with the same human gates and declared file scope.
+
 ---
 
 ## The five layers
@@ -110,9 +114,13 @@ differ only in how many times the pattern repeats, never in what the pattern is.
 
 Two rules keep the recursion from turning into a knot.
 
-**References point outward, never back.** If a later stage reads an earlier stage's output, the
-earlier stage must not reference the later one. Without this, cross-references grow with the
-square of the folder count and the tree eventually cannot be reasoned about.
+**References have explicit types, not a blanket one-way rule.** Inputs and Load first declare
+`LOAD` dependencies, `NEXT` carries normal forward control flow, and `REWORK` carries intentional
+repair to an earlier card in routing-table order. `LOAD` must be acyclic, while `NEXT` cycles are
+checked independently, so a legal forward and repair pair is not mistaken for a dependency cycle.
+A company rule book still does not depend on a department, and an ordinary knowledge link does
+not silently become a workflow route. [`../spec/ORCHESTRA.md`](../spec/ORCHESTRA.md) owns the
+graph rules.
 
 **Every fact has one home.** Other files point at it. They do not copy it. If the same rule
 appears in two files and both read as authoritative, one of them is already wrong and nobody

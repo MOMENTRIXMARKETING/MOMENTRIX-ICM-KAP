@@ -8,6 +8,7 @@
 |---|---|---|
 | Changing a script or the shared library | `scripts/` | `spec/CLI-CONTRACT.md`, then `BUILD-CONTRACT.md` |
 | Writing or editing a skill | `skills/` | `docs/skill-authoring.md` |
+| Orchestra | `skills/icm-orchestra/SKILL.md` | `docs/orchestra.md`, `spec/ORCHESTRA.md`, `examples/orchestra-pipeline/` |
 | Changing a budget, skip glob or required section | `icm.defaults.json` | `spec/budgets.md` |
 | Editing interview material | `interview-templates/` | `spec/placeholder-syntax.md` |
 | Changing the layer model or conventions | `spec/` | `spec/layers.md` |
@@ -18,7 +19,7 @@
 | Running the forge, placing a learned thing | `_log/FORGE-PROPOSALS.md` | `spec/placement.md` |
 | Understanding the workspace | `IDENTITY.md` | - |
 
-Job not in the table: say so before improvising a row.
+Unknown job: say so before improvising a row.
 
 ## Session Start
 
@@ -43,12 +44,13 @@ Sub agents carry these four steps too. One that cannot write files reports its l
 
 ## Rule Books
 
-A rule book binds. Reference, not instruction, never a skill. They sit at the root and under `spec/` because they govern the toolkit's own source.
+Rule books bind as references, never as skills. These books govern this repo.
 
 | Rule book | Binds | Pulled when |
 |---|---|---|
 | `BUILD-CONTRACT.md` | every file in this repo | before writing or editing anything |
-| `spec/CLI-CONTRACT.md` | every command, flag, exit code, artifact path, disposition word | changing a script, a skill, or prose naming one |
+| `spec/CLI-CONTRACT.md` | commands, flags, exits, artifacts, dispositions | changing commands or prose |
+| `spec/ORCHESTRA.md` | typed graph and scope | Orchestra changes |
 | `spec/CONVENTIONS.md` | naming, folder shapes, the patterns | creating, moving or renaming a file |
 | `spec/layers.md` | the five layers and how they recurse | any change to what a layer means |
 | `spec/budgets.md` | ceilings, read from `icm.defaults.json` | writing or growing a layer file |
@@ -58,4 +60,4 @@ A rule book binds. Reference, not instruction, never a skill. They sit at the ro
 | `spec/placeholder-syntax.md` | the `{{PLACEHOLDER}}` contract | editing `interview-templates/` |
 | `spec/placement.md` | where a learned thing lives | the placement question at Session Close |
 
-Only a human edits a rule book. The forge proposes against `BUILD-CONTRACT.md` and `spec/`; the approved edit ships as a pull request quoting the proposal id.
+Human edits only. Approved forge changes ship by pull request with the proposal id.

@@ -8,11 +8,11 @@ organise a filing cabinet, and the structure itself does the routing. KAP is for
 the second half of the toolkit is a `raw/` and `wiki/` pair where the model writes up what it
 learned from your sources, and every fact it writes has to exist in a source first.
 
-Nothing here is a framework. It is markdown files, POSIX `sh` scripts, and nine skills that
+Nothing here is a framework. It is markdown files, POSIX `sh` scripts, and ten skills that
 know how to write and check both.
 
-**In a hurry?** [`QUICKSTART.md`](QUICKSTART.md) is the sixty-second path for all three ways in,
-with the real output of every command beside it.
+**In a hurry?** [`QUICKSTART.md`](QUICKSTART.md) is the sixty-second path for all three ways in
+and Orchestra, with captured install and retrofit output and real Orchestra command shapes.
 
 ---
 
@@ -94,7 +94,7 @@ folder that does real work. Every folder that is not doing work gets left alone.
 
 The repo is its own single-plugin marketplace, so the first command reads
 `.claude-plugin/marketplace.json` straight off the GitHub URL. `marketplace.json` sets
-`"source": "./"`, so the whole repo lands and the plugin root is the repo root. All nine
+`"source": "./"`, so the whole repo lands and the plugin root is the repo root. All ten
 skills arrive together and update with `/plugin update`. Nothing else to do: the skills find
 the scripts through `CLAUDE_PLUGIN_ROOT`, which the harness sets for you.
 
@@ -147,7 +147,7 @@ scripts' own root resolution.
 | Manual copy | Your clone directory | `ICM_HOME`, defaulting to `~/src/momentrix-icm-kap-toolkit` |
 
 Every skill resolves the root once, before its first command, with this block. It is identical
-in all nine, byte for byte, so you can paste it into your own shell too.
+in all ten, byte for byte, so you can paste it into your own shell too.
 
 ```sh
 # Resolve the toolkit root once, before any icm command.
@@ -170,6 +170,26 @@ There is no `bin/icm`, no PATH install and no wrapper. One resolution mechanism,
 
 ---
 
+## ICM Orchestra
+
+Orchestra validates typed context cards, derives workflow and knowledge views, and preflights one selected job. It is part of `icm-check.sh`, not a supervisor process or a sixth runtime script. Every Orchestra mode is report-only and writes nothing inside your project.
+
+Your own project repository is the only brain and workspace. Local execution and GitHub distribution use the same files: run against a local checkout, then use GitHub for versioned distribution and collaboration if wanted. No second brain, export, live mirror, or cloud service is required. Cloud execution is a separate optional later runner, not part of this local contract.
+
+From the toolkit root, these commands show the three modes against the complete public example:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra examples/orchestra-pipeline
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view examples/orchestra-pipeline
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job 00-intake/CONTEXT.md --input request=00-intake/output/example-request.md examples/orchestra-pipeline
+```
+
+Structural mode checks the typed graph and declarations. View mode generates workflow and knowledge edges and backlinks on demand, without storing an index. Strict mode returns `RUN` only when one full job-card path is ready to start, or structured `MISSING` findings otherwise. `RUN` is not successful completion or approval for an external action.
+
+The example ships the materialised request, every prior-stage output, raw and wiki evidence, central logs, and a small final report. See [`docs/orchestra.md`](docs/orchestra.md) for cold starts, all four layouts, numbering, scope, and capability attestations, and [`examples/orchestra-pipeline/`](examples/orchestra-pipeline) for the files themselves. The machine authority remains [`spec/ORCHESTRA.md`](spec/ORCHESTRA.md) and [`spec/CLI-CONTRACT.md`](spec/CLI-CONTRACT.md).
+
+---
+
 ## The skills
 
 | Skill | Reach for it when | Modes |
@@ -178,6 +198,7 @@ There is no `bin/icm`, no PATH install and no wrapper. One resolution mechanism,
 | `icm-retrofit` | The project already exists and you want to see the diff first | `plan` (default), `apply`, `rollback` |
 | `icm-context` | A folder does real work and has no job card | `report` (default), `create` |
 | `icm-stage` | You want another numbered stage in the pipeline | `<stage-name>`, `<stage-name> after:NN` |
+| `icm-orchestra` | You need to select, inspect, or safely start a typed workflow | `preflight` (default), `run`, `graph` |
 | `icm-sync` | The folder map has gone stale, or routing points at nothing | `lint` (default), `update` |
 | `icm-wiki` | You have sources to turn into knowledge the model can reuse | `ingest <url\|path>`, `query <question>`, `lint` |
 | `icm-log` | Something missed and you want it on the record in ten seconds, or a task closed | `miss`, `use`, `close`, `show` |
@@ -307,8 +328,8 @@ else on the list is written only where nothing exists.
 Layers 1, 2 and 3 recurse. A company holds departments, and each department repeats the same
 pattern inside itself. See [`spec/layers.md`](spec/layers.md).
 
-`_config/` holds **rule books**, not skills. Skills are the nine things above, they live in
-this repo, and they are the same nine in every project. Rule books are yours, they differ per
+`_config/` holds **rule books**, not skills. Skills are the ten things above, they live in
+this repo, and they are the same ten in every project. Rule books are yours, they differ per
 project, and nothing but you edits them.
 
 ---
@@ -398,10 +419,11 @@ If a number appears in two files and both look authoritative, one of them is a b
 
 ## Docs
 
-- [`QUICKSTART.md`](QUICKSTART.md) - the sixty-second path for NEW, OVER and TRANSFER, with the real output of every command
+- [`QUICKSTART.md`](QUICKSTART.md) - NEW, OVER, TRANSFER and Orchestra, with captured install and retrofit output and real command shapes
 - [`BUILD-CONTRACT.md`](BUILD-CONTRACT.md) - the non-negotiables, read before writing any file here
 - [`docs/methodology.md`](docs/methodology.md) - why the five layers, why the recursion, why the split
 - [`docs/architect.md`](docs/architect.md) - folders as agents, why the shape survives a model swap
+- [`docs/orchestra.md`](docs/orchestra.md) - typed workflow selection, generated views, and strict preflight in one user repo
 - [`docs/skill-authoring.md`](docs/skill-authoring.md) - the SKILL.md contract, read before you write one
 - [`docs/retrofit.md`](docs/retrofit.md) - the retrofit flow, step by step
 - [`docs/deck-boards.md`](docs/deck-boards.md) - the print deck copy
@@ -410,6 +432,7 @@ If a number appears in two files and both look authoritative, one of them is a b
   - [`examples/raw/`](examples/raw) and [`examples/wiki/`](examples/wiki) - a source capture and the article compiled from it, the grounding invariant end to end
   - [`examples/architect-company/`](examples/architect-company) - the Pattern 24 company tree, with the file bodies an agent reads when it walks in
   - [`examples/content-pipeline/`](examples/content-pipeline) - a numbered stage pipeline, job card by job card
+  - [`examples/orchestra-pipeline/`](examples/orchestra-pipeline) - reserved intake, typed edges, capability and scope preflight, and evidence-linked outputs
 
 ---
 

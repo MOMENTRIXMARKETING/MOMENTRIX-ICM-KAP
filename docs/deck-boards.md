@@ -61,9 +61,11 @@ The footer strip on board 2 carries the board title, so it changes with the titl
 
 ### Fix 2. Standardise on `output/`, not `output.md`
 
-A stage writes a folder of results, not a single file. That is Pattern 2 of the methodology:
-stage N writes into its own `output/` folder and stage N+1 reads from there. The deck is split
-on it, and a reader who follows the folder tree literally builds the wrong thing.
+A stage writes a folder of results, not a single file. A consumer declares the prior output as
+an Input, which gives Orchestra a `LOAD` dependency. `NEXT` carries normal forward flow and
+`REWORK` carries intentional backward repair, so the old shorthand of an always one-way chain is
+not the whole contract. The deck is split on the output folder shape, and a reader who follows
+the folder tree literally builds the wrong thing.
 
 | Board | Reads now | Change to |
 |---|---|---|
@@ -302,7 +304,8 @@ your business
 Caption under the tree:
 
 > No orchestrator. No supervisor. No process that has to stay running. The org chart is the
-> folders.
+> folders. ICM Orchestra is the checker, not a supervisor: it derives typed workflow and
+> preflight reports from the files, then exits.
 
 **Callout 1, orange border, glow.**
 
