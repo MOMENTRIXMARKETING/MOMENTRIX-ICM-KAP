@@ -10,12 +10,17 @@ set -e
 
 usage() {
     cat <<'ICM_USAGE'
-usage: icm-check.sh [--only ID]... [checks...] [--all] [-h|--help] [target-dir]
+usage: icm-check.sh [--only ID]... [--<check>]... [--all] [-h|--help] [target-dir]
+       icm-check.sh --only orchestra [target-dir]
+       icm-check.sh --orchestra [target-dir]
+       icm-check.sh --orchestra --job CARD [--input NAME=PATH]...
+                    [--tool-version NAME=VERSION]... [target-dir]
+       icm-check.sh --orchestra-view [target-dir]
 
 Verifies an ICM workspace against icm.defaults.json. Report only, never writes.
 target-dir defaults to the current directory.
 
-Checks (pass none, or --all, to run every one):
+Generic checks (the default and --all select these eleven, never Orchestra):
   --self          shell layer: sh -n, bashism sweep, defaults parse
   --frontmatter   skills/<name>/SKILL.md frontmatter and naming
   --budgets       character and line ceilings from icm.defaults.json
@@ -27,15 +32,22 @@ Checks (pass none, or --all, to run every one):
   --fences        markdown code fences are balanced
   --placeholders  no unfilled {{ }} placeholders survive
   --evidence      deep grounding sweep (needs python3 and wiki/; part of --all)
-  --all           everything above (the default)
+  --all           the eleven generic checks above
   -h, --help      this text
 
-  --only ID       select one check by its id. Repeatable. Same effect as that
-                  check's own flag. The eleven ids are:
+  --only ID       select one check by its id. Repeatable. The twelve ids are:
                   self frontmatter budgets adapters drift sections routes
-                  links fences placeholders evidence
+                  links fences placeholders evidence orchestra
 
-Exit: 0 clean, 1 findings, 2 usage or environment error.
+Orchestra is explicit only:
+  --orchestra       structural graph, same as --only orchestra
+  --orchestra-view  deterministic Markdown graph and inverse indexes
+  --job CARD        strict preflight, only with literal --orchestra --job
+  --input NAME=PATH bind an external input to existing workspace material
+  --tool-version NAME=VERSION attest an exact Tool version, never runs NAME --version
+
+RUN means ready to start, not completed work or external-action approval.
+Exit: 0 clean or RUN, 1 findings or MISSING, 2 usage or environment error.
 ICM_USAGE
 }
 
@@ -47,29 +59,31 @@ TARGET=""
 SEL=0
 D_SELF=0; D_FM=0; D_BUD=0; D_ADP=0; D_DRIFT=0
 D_SEC=0; D_ROUTE=0; D_LINK=0; D_FENCE=0; D_PLACE=0; D_EVID=0
+ORCH_FLAG=0; ORCH_ONLY=0; ORCH_VIEW=0; ORCH_GENERIC=0; ORCH_ALL=0
+JOB_SET=0; JOB=""; INPUT_ARGS=""; TOOL_ARGS=""; INPUT_NAMES=" "; TOOL_NAMES=" "
+CLI_TAB=$(printf '\t')
+CLI_NL='
+'
 
-# The complete list. CLI-CONTRACT section 3.2 owns it. There are no others.
-ICM_CHECK_IDS='self frontmatter budgets adapters drift sections routes links fences placeholders evidence'
+ICM_CHECK_IDS='self frontmatter budgets adapters drift sections routes links fences placeholders evidence orchestra'
 
-# only_id <id> - select one check by name. Never runs in a subshell, because it
-# sets the D_* flags the run block reads. An unrecognised id names the id, not
-# the flag, and lists the valid ones.
 only_id() {
     case "$1" in
-        self)         D_SELF=1 ;;
-        frontmatter)  D_FM=1 ;;
-        budgets)      D_BUD=1 ;;
-        adapters)     D_ADP=1 ;;
-        drift)        D_DRIFT=1 ;;
-        sections)     D_SEC=1 ;;
-        routes)       D_ROUTE=1 ;;
-        links)        D_LINK=1 ;;
-        fences)       D_FENCE=1 ;;
-        placeholders) D_PLACE=1 ;;
-        evidence)     D_EVID=1 ;;
+        self)         D_SELF=1; ORCH_GENERIC=1 ;;
+        frontmatter)  D_FM=1; ORCH_GENERIC=1 ;;
+        budgets)      D_BUD=1; ORCH_GENERIC=1 ;;
+        adapters)     D_ADP=1; ORCH_GENERIC=1 ;;
+        drift)        D_DRIFT=1; ORCH_GENERIC=1 ;;
+        sections)     D_SEC=1; ORCH_GENERIC=1 ;;
+        routes)       D_ROUTE=1; ORCH_GENERIC=1 ;;
+        links)        D_LINK=1; ORCH_GENERIC=1 ;;
+        fences)       D_FENCE=1; ORCH_GENERIC=1 ;;
+        placeholders) D_PLACE=1; ORCH_GENERIC=1 ;;
+        evidence)     D_EVID=1; ORCH_GENERIC=1 ;;
+        orchestra)    ORCH_ONLY=1 ;;
         *)
             printf 'FAIL unknown check id: %s\n' "$1" >&2
-            printf 'note the eleven check ids are:\n' >&2
+            printf 'note the twelve check ids are:\n' >&2
             for _oi in $ICM_CHECK_IDS; do printf 'note   %s\n' "$_oi" >&2; done
             printf 'note each one also has a flag of the same name, for example --routes\n' >&2
             exit 2
@@ -78,29 +92,75 @@ only_id() {
     SEL=1
 }
 
+cli_machine_field() {
+    case "$2" in
+        *"$CLI_TAB"*) printf 'FAIL tab in a CLI machine field\n' >&2; exit 2 ;;
+        *"$CLI_NL"*)  printf 'FAIL newline in a CLI machine field\n' >&2; exit 2 ;;
+    esac
+}
+
+cli_binding() {
+    _cb_flag="$1"
+    _cb_value="$2"
+    cli_machine_field "$_cb_flag" "$_cb_value"
+    case "$_cb_value" in
+        *=*) _cb_name=${_cb_value%%=*}; _cb_data=${_cb_value#*=} ;;
+        *)   printf 'FAIL malformed %s\n' "$_cb_flag" >&2; exit 2 ;;
+    esac
+    _cb_bad=0
+    [ -n "$_cb_name" ] && [ -n "$_cb_data" ] || _cb_bad=1
+    case "$_cb_name" in [A-Za-z]*) ;; *) _cb_bad=1 ;; esac
+    case "$_cb_name" in *[!A-Za-z0-9_-]*) _cb_bad=1 ;; esac
+    [ "$_cb_bad" -eq 0 ] || { printf 'FAIL malformed %s\n' "$_cb_flag" >&2; exit 2; }
+    if [ "$_cb_flag" = "--input" ]; then
+        case "$INPUT_NAMES" in *" $_cb_name "*) printf 'FAIL duplicate --input: %s\n' "$_cb_name" >&2; exit 2 ;; esac
+        INPUT_NAMES="$INPUT_NAMES$_cb_name "
+        INPUT_ARGS="${INPUT_ARGS}${_cb_value}
+"
+    else
+        case "$TOOL_NAMES" in *" $_cb_name "*) printf 'FAIL duplicate --tool-version: %s\n' "$_cb_name" >&2; exit 2 ;; esac
+        TOOL_NAMES="$TOOL_NAMES$_cb_name "
+        TOOL_ARGS="${TOOL_ARGS}${_cb_value}
+"
+    fi
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
-        --self)         D_SELF=1;  SEL=1 ;;
-        --frontmatter)  D_FM=1;    SEL=1 ;;
-        --budgets)      D_BUD=1;   SEL=1 ;;
-        --adapters)     D_ADP=1;   SEL=1 ;;
-        --drift)        D_DRIFT=1; SEL=1 ;;
-        --sections)     D_SEC=1;   SEL=1 ;;
-        --routes)       D_ROUTE=1; SEL=1 ;;
-        --links)        D_LINK=1;  SEL=1 ;;
-        --fences)       D_FENCE=1; SEL=1 ;;
-        --placeholders) D_PLACE=1; SEL=1 ;;
-        --evidence)     D_EVID=1;  SEL=1 ;;
+        --self)         D_SELF=1;  SEL=1; ORCH_GENERIC=1 ;;
+        --frontmatter)  D_FM=1;    SEL=1; ORCH_GENERIC=1 ;;
+        --budgets)      D_BUD=1;   SEL=1; ORCH_GENERIC=1 ;;
+        --adapters)     D_ADP=1;   SEL=1; ORCH_GENERIC=1 ;;
+        --drift)        D_DRIFT=1; SEL=1; ORCH_GENERIC=1 ;;
+        --sections)     D_SEC=1;   SEL=1; ORCH_GENERIC=1 ;;
+        --routes)       D_ROUTE=1; SEL=1; ORCH_GENERIC=1 ;;
+        --links)        D_LINK=1;  SEL=1; ORCH_GENERIC=1 ;;
+        --fences)       D_FENCE=1; SEL=1; ORCH_GENERIC=1 ;;
+        --placeholders) D_PLACE=1; SEL=1; ORCH_GENERIC=1 ;;
+        --evidence)     D_EVID=1;  SEL=1; ORCH_GENERIC=1 ;;
+        --orchestra)    ORCH_FLAG=1; SEL=1 ;;
+        --orchestra-view) ORCH_VIEW=1; SEL=1 ;;
+        --job)
+            [ $# -ge 2 ] || { printf 'FAIL --job needs a card\n' >&2; exit 2; }
+            [ "$JOB_SET" -eq 0 ] || { printf 'FAIL duplicate --job\n' >&2; exit 2; }
+            cli_machine_field --job "$2"
+            JOB_SET=1; JOB="$2"; SEL=1; shift ;;
+        --input)
+            [ $# -ge 2 ] || { printf 'FAIL malformed --input\n' >&2; exit 2; }
+            cli_binding --input "$2"; SEL=1; shift ;;
+        --tool-version)
+            [ $# -ge 2 ] || { printf 'FAIL malformed --tool-version\n' >&2; exit 2; }
+            cli_binding --tool-version "$2"; SEL=1; shift ;;
         --only)
             [ $# -ge 2 ] || {
                 printf 'FAIL --only needs a check id\n' >&2
-                printf 'note the eleven check ids are: %s\n' "$ICM_CHECK_IDS" >&2
+                printf 'note the twelve check ids are: %s\n' "$ICM_CHECK_IDS" >&2
                 exit 2
             }
             only_id "$2"
             shift ;;
         --only=*)       only_id "${1#--only=}" ;;
-        --all)          SEL=0 ;;
+        --all)          SEL=0; ORCH_ALL=1 ;;
         -h|--help)      usage; exit 0 ;;
         --*)            printf 'FAIL unknown flag: %s\n' "$1" >&2; usage >&2; exit 2 ;;
         *)
@@ -114,22 +174,58 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+ORCH_MODE=""
+if [ "$ORCH_VIEW" -eq 1 ] && { [ "$ORCH_FLAG" -eq 1 ] || [ "$ORCH_ONLY" -eq 1 ] || [ "$JOB_SET" -eq 1 ] || [ -n "$INPUT_ARGS" ] || [ -n "$TOOL_ARGS" ] || [ "$ORCH_GENERIC" -eq 1 ] || [ "$ORCH_ALL" -eq 1 ]; }; then
+    printf 'FAIL mixed Orchestra view and another check mode\n' >&2
+    exit 2
+fi
+if { [ "$ORCH_FLAG" -eq 1 ] || [ "$ORCH_ONLY" -eq 1 ]; } && { [ "$ORCH_GENERIC" -eq 1 ] || [ "$ORCH_ALL" -eq 1 ]; }; then
+    printf 'FAIL mixed Orchestra and generic check selection\n' >&2
+    exit 2
+fi
+if [ "$ORCH_FLAG" -eq 1 ] && [ "$JOB_SET" -eq 1 ] && [ "$ORCH_ONLY" -eq 0 ]; then
+    ORCH_MODE=strict
+elif [ "$JOB_SET" -eq 1 ] || [ -n "$INPUT_ARGS" ] || [ -n "$TOOL_ARGS" ]; then
+    printf 'FAIL --job, --input and --tool-version require literal --orchestra --job strict mode\n' >&2
+    exit 2
+elif [ "$ORCH_VIEW" -eq 1 ]; then
+    ORCH_MODE=view
+elif [ "$ORCH_FLAG" -eq 1 ] || [ "$ORCH_ONLY" -eq 1 ]; then
+    ORCH_MODE=structural
+fi
+
 [ -n "$TARGET" ] || TARGET="."
-# Same preflight as every other script: not a directory, unreadable, or a
-# .icm that is a file all exit 2 here. A report-only checker that could not
-# list the tree must never print "clean" for it.
 TARGET=$(icm_require_target "$TARGET") || exit 2
 
-if [ "$SEL" -eq 0 ]; then
+if [ -z "$ORCH_MODE" ] && [ "$SEL" -eq 0 ]; then
     D_SELF=1; D_FM=1; D_BUD=1; D_ADP=1; D_DRIFT=1
     D_SEC=1; D_ROUTE=1; D_LINK=1; D_FENCE=1; D_PLACE=1; D_EVID=1
 fi
 
 icm_init "$TARGET"
 
-# The checker grades a finished workspace and is given no plan, so it reads the
-# archetype off the disk. Everything that asks "is this path ours" then answers
-# for the shape this workspace actually has, not for every shape at once.
+if [ -n "$ORCH_MODE" ]; then
+    icm_tally_init
+    trap 'icm_cleanup' EXIT INT TERM
+    : > "$ICM_TMPDIR/cli.inputs"
+    : > "$ICM_TMPDIR/cli.tools"
+    printf '%s' "$INPUT_ARGS" | while IFS= read -r _cli_row; do
+        [ -n "$_cli_row" ] || continue
+        printf '%s\t%s\n' "${_cli_row%%=*}" "${_cli_row#*=}" >> "$ICM_TMPDIR/cli.inputs"
+    done
+    printf '%s' "$TOOL_ARGS" | while IFS= read -r _cli_row; do
+        [ -n "$_cli_row" ] || continue
+        printf '%s\t%s\n' "${_cli_row%%=*}" "${_cli_row#*=}" >> "$ICM_TMPDIR/cli.tools"
+    done
+    cp "$ICM_TMPDIR/cli.inputs" "$ICM_TMPDIR/orchestra.cli.inputs"
+    cp "$ICM_TMPDIR/cli.tools" "$ICM_TMPDIR/orchestra.cli.tools"
+    if icm_orchestra_report "$ORCH_MODE" "$JOB"; then
+        exit 0
+    else
+        exit $?
+    fi
+fi
+
 ICM_ARCHETYPE=$(icm_detect_archetype "$TARGET")
 export ICM_ARCHETYPE
 icm_tally_init
@@ -233,6 +329,11 @@ route_tokens() {
     awk '
         /^ *```/ { inf = 1 - inf; next }
         inf == 1 { next }
+        /^## / {
+            preflight = ($0 == "## Preflight")
+            if (preflight) { next }
+        }
+        preflight == 1 { next }
         {
             line = $0
             while ((a = index(line, "`")) > 0) {
@@ -610,6 +711,7 @@ c_routes() {
         return 0
     fi
     _ro_bad=0
+    : > "$ICM_TMPDIR/depth.notes"
     while IFS= read -r _ro_r; do
         [ -n "$_ro_r" ] || continue
         _ro_file="$TARGET/$_ro_r"
@@ -628,7 +730,21 @@ c_routes() {
             esac
             _ro_p="${_ro_t#./}"
             if [ -e "$_ro_dir/$_ro_p" ] || [ -e "$TARGET/$_ro_p" ]; then
-                :
+                _ro_rdir=$(dirname -- "$_ro_r")
+                if [ -e "$_ro_dir/$_ro_p" ]; then
+                    _ro_dest=$(icm_orchestra_normalize "$_ro_rdir" "$_ro_p" 2>/dev/null || printf '')
+                else
+                    _ro_dest=$(icm_orchestra_normalize . "$_ro_p" 2>/dev/null || printf '')
+                fi
+                _ro_stage=$(basename -- "$_ro_rdir")
+                case "$_ro_stage:$_ro_dest" in
+                    [0-9][0-9]-*:"$_ro_rdir"/*/CONTEXT.md)
+                        if ! grep -q -F -x -- "$_ro_dest" "$ICM_TMPDIR/depth.notes"; then
+                            printf '%s\n' "$_ro_dest" >> "$ICM_TMPDIR/depth.notes"
+                            icm_note "$_ro_r routes to a fourth nested context card (depth): $_ro_dest"
+                        fi
+                        ;;
+                esac
             else
                 icm_fail "$_ro_r routes to a path that does not exist: $_ro_t"
                 _ro_bad=1

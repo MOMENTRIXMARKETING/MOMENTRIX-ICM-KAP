@@ -50,6 +50,9 @@
     "_log/LOOP-LEDGER.md":        ["## Task lines", "## Call lines", "## Miss lines", "## Skill lines", "## Weekly review", "## Lines"],
     "_log/FORGE-PROPOSALS.md":    ["## Proposals", "## Authority"]
   },
+  "orchestra": {
+    "stage_required_sections": ["## Purpose", "## Inputs", "## Process", "## Outputs", "## Routing", "## Preflight"]
+  },
   "frontmatter": {
     "required_keys": ["name", "description"],
     "banned_keys": ["user_invocable", "allowed_tools"],
