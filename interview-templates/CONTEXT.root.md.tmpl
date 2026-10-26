@@ -12,29 +12,33 @@
 
 ## Routing
 
-<!-- Every common task gets a row. At minimum cover: the primary workflow, adding new
-     source material, reviewing or checking work, and understanding the workspace.
-     "Load first" is the smallest set that makes the destination legible. Use a dash
-     when nothing needs preloading. -->
+<!-- Every common task gets a semantic row. Path-bearing destinations require exactly
+     LOAD, NEXT, or REWORK. Use NEXT for ordinary task selection, LOAD for a named
+     prerequisite, and REWORK only toward an earlier card in this table's order.
+     A non-path stop uses a dash for destination and Edge. "Load first" is the
+     smallest dependency set; it is not permission to preload the workspace.
+     Keep the Add new source material row only for wiki/raw usage. Delete it for
+     quick/full or whenever raw/ is not used; never create raw/ for quick/full. -->
 
-| Task | Where | Load first |
-|---|---|---|
-| {{PRIMARY_TASK}} | `{{PRIMARY_TASK_DEST}}` | `IDENTITY.md` |
-| Add new source material | `raw/` | `_config/conventions.md` |
-| {{COMPILE_TASK}} | `{{COMPILE_TASK_DEST}}` | `_config/voice.md`, `_config/style.md` |
-| Review or check compiled work | `{{REVIEW_DEST}}` | `_config/conventions.md` |
-| {{EXTRA_TASK}} | `{{EXTRA_TASK_DEST}}` | `{{EXTRA_TASK_LOAD}}` |
-| Understand the workspace | `IDENTITY.md` | - |
+| Task | Where | Load first | Edge |
+|---|---|---|---|
+| {{PRIMARY_TASK}} | `{{PRIMARY_TASK_DEST}}` | `IDENTITY.md` | NEXT |
+| Add new source material | `raw/` | `_config/conventions.md` | NEXT |
+| {{COMPILE_TASK}} | `{{COMPILE_TASK_DEST}}` | `_config/voice.md`, `_config/style.md` | NEXT |
+| Review or check compiled work | `{{REVIEW_DEST}}` | `_config/conventions.md` | NEXT |
+| {{EXTRA_TASK}} | `{{EXTRA_TASK_DEST}}` | `{{EXTRA_TASK_LOAD}}` | NEXT |
+| Understand the workspace | `IDENTITY.md` | - | NEXT |
 
 ## Session Start
 
 1. Read `IDENTITY.md`. That is layer 0 and it is the map of this workspace.
-2. Find your task in the Routing table above. If no row fits, ask before improvising one.
-3. Open the job card at that destination and read its Inputs table.
-4. Load exactly what the Inputs table names, at the scope it names. Nothing else. Loading more does not make the output better.
-5. Pull only the rule books the job card lists, from `_config/`.
-6. Do the work. Write to the locations in the job card's Outputs table.
-7. Close against the job card, then append the line to `_log/LOOP-LEDGER.md`.
+2. Match your task to one semantic Routing row. If no unique row fits, ask and write nothing. Routing-table order is execution authority; numeric prefixes are filing aids.
+3. Follow the resolved route to the job card. NEXT selects work, LOAD names a prerequisite rather than a routing hop, and REWORK returns to an earlier card in table order.
+4. If external input is needed, use the pipeline's optional `00-intake`. Only that card declares `@NAME`; bind each name to existing workspace material with `--input NAME=PATH`, never inline content, credential files, or secret stores.
+5. Read the card's Inputs, Outputs, and Preflight. Check Tool and Skill capabilities with exact versions, supply trusted actual tool versions through `--tool-version NAME=VERSION`, and honour every `No touch` path as neither read nor written.
+6. Run `/icm-orchestra preflight` for the selected full workspace-relative card. It uses `sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" .` and writes nothing. MISSING means stop; RUN means ready to start only.
+7. Execute only through `/icm-orchestra run` after that job's fresh RUN. Read only declared Inputs, write only declared Outputs plus the existing Session Close ledger, and keep every external approval gate. Preflight is not a general write lease and RUN is not success or approval.
+8. After actual run execution, close against the job card; read-only or stopped Orchestra modes skip Session Close.
 
 ## Rule Books
 
@@ -48,7 +52,9 @@
 | `_config/style.md` | formatting mechanics: headings, tables, links, dates, numbers | writing or editing markdown |
 | `_config/{{EXTRA_RULEBOOK}}.md` | {{EXTRA_RULEBOOK_HOLDS}} | {{EXTRA_RULEBOOK_WHEN}} |
 
-Rule books are edited by a human. Agents propose changes into `_log/FORGE-PROPOSALS.md` and wait.
+Rule books are edited by a human. Outside Orchestra, agents propose changes into `_log/FORGE-PROPOSALS.md` and wait.
+
+For Orchestra, preflight, graph, ambiguity, MISSING, and refusal write nothing. A run permits declared Outputs and close entries in the existing `_log/LOOP-LEDGER.md` only. Placement proposals are reported for separate human handling, never written during the run.
 
 ## Session Close
 
@@ -61,39 +67,24 @@ Before your last reply of any task, do these four, in order. Skipping one is its
 
 Sub agents carry these four steps too. One that cannot write files reports its lines in its final message and the caller appends them. One ledger per workspace, never one per agent.
 
-{{?PIPELINE}}
+## Orchestra View
 
-## Pipeline
+For the current typed workflow, workflow backlinks, knowledge edges, and knowledge backlinks, run this command from the workspace root:
 
-<!-- Keep this section only for projects that compile something in stages.
-     Stages can be virtual (defined here, no new folders) or physical (a folder per
-     stage, each with its own layer 2 job card). Prefer virtual on an existing
-     project: do not restructure what already works. -->
-
-The model is a compiler here, not a chatbot. Each stage takes named inputs and writes a named artifact. Conversation belongs at the review gate, not inside a stage.
-
-```
-{{STAGE_1}} -> {{STAGE_2}} -> {{STAGE_3}} -> {{STAGE_4}}
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .
 ```
 
-| Stage | Job card | Reads | Writes |
-|---|---|---|---|
-| {{STAGE_1}} | `{{STAGE_1_CARD}}` | {{STAGE_1_READS}} | {{STAGE_1_WRITES}} |
-| {{STAGE_2}} | `{{STAGE_2_CARD}}` | {{STAGE_2_READS}} | {{STAGE_2_WRITES}} |
-| {{STAGE_3}} | `{{STAGE_3_CARD}}` | {{STAGE_3_READS}} | {{STAGE_3_WRITES}} |
-| {{STAGE_4}} | `{{STAGE_4_CARD}}` | {{STAGE_4_READS}} | {{STAGE_4_WRITES}} |
-
-A stage hands off through files. Stage N writes to its `output/`, stage N+1 reads from there. A human can open that file, edit it, and the next stage picks up the edit. There is no other state.
-
-{{/PIPELINE}}
+The view is derived on demand and printed, never stored as an index. Do not replace it with a handwritten pipeline or backlink table. A clean view is not RUN, and informational knowledge findings never grant readiness.
 
 {{?SECTION_TO_SOURCE}}
 
 ## Section To Source
 
-<!-- Keep this section only for compile projects. It is the lookup an agent runs
-     before writing: which raw folders feed this output section, and which rule
-     books govern it. One row per section of the compiled artifact. -->
+<!-- Keep this section only for wiki/raw compile projects. Delete it for quick/full
+     and whenever raw/ is not used. It is the lookup an agent runs before writing:
+     which raw folders feed this output section, and which rule books govern it.
+     One row per section of the compiled artifact. -->
 
 | Output section | Raw sources that feed it | Rule books that govern it |
 |---|---|---|

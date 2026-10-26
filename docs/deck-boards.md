@@ -61,9 +61,11 @@ The footer strip on board 2 carries the board title, so it changes with the titl
 
 ### Fix 2. Standardise on `output/`, not `output.md`
 
-A stage writes a folder of results, not a single file. That is Pattern 2 of the methodology:
-stage N writes into its own `output/` folder and stage N+1 reads from there. The deck is split
-on it, and a reader who follows the folder tree literally builds the wrong thing.
+A stage writes a folder of results, not a single file. A consumer declares the prior output as
+an Input, which gives Orchestra a `LOAD` dependency. `NEXT` carries normal forward flow and
+`REWORK` carries intentional backward repair, so the old shorthand of an always one-way chain is
+not the whole contract. The deck is split on the output folder shape, and a reader who follows
+the folder tree literally builds the wrong thing.
 
 | Board | Reads now | Change to |
 |---|---|---|
@@ -200,11 +202,11 @@ Caption under the tree:
 > Files added, zero files moved. Any agent that walks in reads the name tag and the map and
 > knows the whole building.
 
-**Callout 1, four rows. Numbers in orange squares.**
+**Callout 1, six rows. Numbers in orange squares.**
 
 > **THE DRY RUN COMES FIRST**
 >
-> You ask it to plan. It reads your folders and writes nothing. Then it hands you four lists.
+> You ask it to plan. It reads your folders and writes only `.icm/plan.txt`. Then it reports five dispositions plus SURVEY.
 >
 > | | | |
 > |---|---|---|
@@ -212,11 +214,13 @@ Caption under the tree:
 > | 2 | ADOPT | already there. Yours is kept, one marked block is added at the end |
 > | 3 | COLLIDE | already there and different. Your file wins |
 > | 4 | SKIP | already exactly what it would have written. Nothing to do |
+> | 5 | REFUSE | protected or outside the target. Nothing is written |
+> | 6 | SURVEY | folders that may want a job card. Apply ignores these rows |
 >
 > Junk never even makes the lists. Build folders, downloads and dependency folders are cut out
 > of the walk before anything is classified, so they never appear at all.
 >
-> You read the four lists. Nothing has touched your project yet.
+> You read the plan and survey. Nothing is applied yet.
 
 **Callout 2, orange border, glow.**
 
@@ -302,7 +306,8 @@ your business
 Caption under the tree:
 
 > No orchestrator. No supervisor. No process that has to stay running. The org chart is the
-> folders.
+> folders. ICM Orchestra is the checker, not a supervisor: it derives typed workflow and
+> preflight reports from the files, then exits.
 
 **Callout 1, orange border, glow.**
 

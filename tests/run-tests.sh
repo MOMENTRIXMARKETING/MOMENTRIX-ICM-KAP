@@ -154,7 +154,8 @@ printf 'work: %s\n\n' "$WORK"
 
 printf '%s\n' '-- syntax --'
 for F in "$SCRIPTS"/icm_lib.sh "$SCRIPTS"/icm-check.sh "$SCRIPTS"/icm-plan.sh \
-         "$SCRIPTS"/icm-apply.sh "$SCRIPTS"/icm-rollback.sh "$ROOT"/tests/run-tests.sh; do
+         "$SCRIPTS"/icm-apply.sh "$SCRIPTS"/icm-rollback.sh "$ROOT"/tests/run-tests.sh \
+         "$ROOT"/tests/orchestra-tests.sh; do
     B=$(basename "$F")
     if [ ! -f "$F" ]; then
         t_fail "$B exists" "no such file: $F"
@@ -177,10 +178,13 @@ assert_rc "the toolkit passes its own full check" 0
 assert_out "the full self check reports clean" "result: clean"
 assert_file "the toolkit has its own IDENTITY.md" "$ROOT/IDENTITY.md"
 assert_file "the toolkit has its own CONTEXT.md" "$ROOT/CONTEXT.md"
-if [ "$(icm_lines "$ROOT/CLAUDE.md")" -eq 2 ] && grep -q -F '@IDENTITY.md' "$ROOT/CLAUDE.md"; then
-    t_pass "CLAUDE.md is a two line alias, not a copy"
+if grep -q -F '<!-- icm:begin -->' "$ROOT/CLAUDE.md" \
+    && grep -q -F '@IDENTITY.md' "$ROOT/CLAUDE.md" \
+    && grep -q -F '@CONTEXT.md' "$ROOT/CLAUDE.md" \
+    && grep -q -F '<!-- icm:end -->' "$ROOT/CLAUDE.md"; then
+    t_pass "CLAUDE.md aliases IDENTITY and CONTEXT inside managed markers"
 else
-    t_fail "CLAUDE.md is a two line alias, not a copy" "$(cat "$ROOT/CLAUDE.md")"
+    t_fail "CLAUDE.md aliases IDENTITY and CONTEXT inside managed markers" "$(cat "$ROOT/CLAUDE.md")"
 fi
 
 # The degraded hash path has to work on a box with no sha tool at all.
@@ -1464,14 +1468,23 @@ fi
 
 # ------------------------------------------------------ 29 check ids CLI 3.2 --
 #
-# CLI-CONTRACT 3.2 fixes the check-id set at eleven and requires --only <id>.
-# These assertions are what stops a phantom id or a phantom flag growing back
-# into a SKILL.md, which is the defect class the hunt logged as
-# only-flag-and-phantom-check-ids.
+# CLI-CONTRACT 3.2 fixes the check-id set at twelve and requires --only <id>.
+# Default and --all still select only the original eleven. These assertions are
+# what stops a phantom id, a phantom flag, or implicit Orchestra selection from
+# growing back into a SKILL.md or a generic run.
 
 printf '\n%s\n' '-- check ids --'
 
-ICM_IDS='self frontmatter budgets adapters drift sections routes links fences placeholders evidence'
+ICM_IDS='self frontmatter budgets adapters drift sections routes links fences placeholders evidence orchestra'
+
+run "$SCRIPTS/icm-check.sh" "$ROOT"
+assert_rc "default selection still runs the legacy eleven on the toolkit" 0
+assert_not_out "default selection emits no Orchestra section" "-- orchestra --"
+assert_not_out "default selection emits no Orchestra envelope" "# icm-orchestra-structural-v1"
+run "$SCRIPTS/icm-check.sh" --all "$ROOT"
+assert_rc "explicit --all still runs the legacy eleven on the toolkit" 0
+assert_not_out "explicit --all emits no Orchestra section" "-- orchestra --"
+assert_not_out "explicit --all emits no Orchestra envelope" "# icm-orchestra-structural-v1"
 
 for ID in $ICM_IDS; do
     run "$SCRIPTS/icm-check.sh" --only "$ID" "$ROOT"
@@ -2609,6 +2622,23 @@ if [ -n "$S02_B" ] && [ -n "$ICM_OWN_KEYS" ] && [ -n "$ICM_UNION_KEYS" ] \
     assert_eq "CLI-CONTRACT 3.0 names every protected defaults key" "$S02_MISS" ""
 else
     t_fail "CLI-CONTRACT 3.0 names every protected defaults key" "no Defaults merge bullet, or a key list in icm_lib.sh is empty"
+fi
+
+# ------------------------------------------------------ Orchestra delegation --
+
+printf '\n%s\n' '-- orchestra standalone contract --'
+ORCH_OUT="$WORK/orchestra-tests.out"
+if [ "$VERBOSE" -eq 1 ]; then
+    ICM_ROOT="$ROOT" sh "$ROOT/tests/orchestra-tests.sh" -v > "$ORCH_OUT" 2>&1
+else
+    ICM_ROOT="$ROOT" sh "$ROOT/tests/orchestra-tests.sh" > "$ORCH_OUT" 2>&1
+fi
+ORCH_RC=$?
+cat "$ORCH_OUT"
+if [ "$ORCH_RC" -eq 0 ]; then
+    t_pass "the standalone Orchestra contract suite passes"
+else
+    t_fail "the standalone Orchestra contract suite passes" "exit $ORCH_RC; full child output is relayed above"
 fi
 
 # ---------------------------------------------------------------- the tally --

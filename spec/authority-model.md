@@ -20,16 +20,16 @@ Everything below is that sentence with the details filled in.
 
 ## The Three Tiers
 
-| Tier | Who found it | Auto applied | Where it goes |
+| Tier | Who found it | Applied by | Where it goes |
 |---|---|---|---|
-| Safe fix | A script, deterministically | Yes | Applied, then counted in the report |
-| Mechanical report | A script, deterministically | No | The report, for a human to decide |
-| Judgment report | A model, by opinion | No | A proposal, for a human to approve |
+| Safe fix | A script, deterministically | model, then reported | Applied, then counted in the report |
+| Mechanical report | A script, deterministically | human, after review | The report, for a human to decide |
+| Judgment report | A model, by opinion | model, then reported | A proposal, for a human to approve |
 
 ### Safe fix
 
-Deterministic. Exactly one correct answer exists and a script can find it. Applied without
-asking.
+Deterministic. Exactly one correct answer exists and a script can find it. The model applies
+it without asking, then reports the change. Orchestra has no safe-fix tier.
 
 The boundary test, and it is the important sentence in this file:
 
@@ -59,8 +59,8 @@ Note the shape of those. Every one of them turns on "exactly one match". Zero ma
 matches is not a safe fix, it is a mechanical report, because a script that picks between two
 candidates is making a judgment while wearing a script's authority.
 
-Every safe fix is reversible and every safe fix is counted in the report. Auto applied does
-not mean invisible.
+Every safe fix is reversible and every safe fix is counted in the report. Model application
+does not mean invisible.
 
 ### Mechanical report
 
@@ -94,6 +94,14 @@ Mechanical reports are the tier most likely to be quietly promoted to safe fix b
 a hurry. Do not. The distinguishing property is not confidence, it is whether a decision is
 being made.
 
+### Orchestra is report-only
+
+Every Orchestra structural, view, and strict finding is a mechanical report. The checker never
+writes a target file, stored graph, backlink index, cache, ledger, or sentinel. It never runs a
+command named by a card. Tool versions require exact external attestation, and Skill versions
+are checked only for skills declared by an Orchestra card. `RUN` means the selected job is
+ready to start, never that work completed or an external action is approved.
+
 ### Judgment report
 
 A model's opinion. Always a proposal. Never applied, ever, in any circumstance.
@@ -125,6 +133,7 @@ Judgment findings against rule books are the forge's entire output. They go to
 |---|---|---|---|---|
 | `icm-sync` lint | The workspace tree, `IDENTITY.md`, `CONTEXT.md` files, `wiki/` | Safe fixes only | Mechanical and judgment findings, in its report | Write to `_config/`, write to `raw/`, overwrite a user file |
 | `scripts/check_evidence.py` | `wiki/`, `raw/`, `wiki/log.md` | Nothing | Mechanical findings, in its report | Modify any file at all |
+| `scripts/icm-check.sh` | The workspace and declared capabilities | Nothing | Mechanical findings in deterministic envelopes | Write to the target, execute card tools, or create stored graph and backlink files |
 | `icm-forge` | `_log/LOOP-LEDGER.md`, `_log/LOOP-RUNLOG-*.md`, `_log/SKILL-INDEX.md`, `wiki/log.md`, `_config/` | Nothing | Judgment proposals into `_log/FORGE-PROPOSALS.md` | Edit any file other than its own proposals file, or move its own thresholds |
 | `icm-log` | The run log and the ledger | Appends its own log lines | Nothing | Judge, grade, summarise a verdict, or rewrite a past line |
 | `scripts/icm-loop.sh` | The ledger and the tree | Overwrites `_log/SKILL-INDEX.md`, its own compiled artifact | Mechanical findings, as verdict words in that index | Write to any other file, read the proposals, or decide what a count means |
@@ -142,9 +151,10 @@ other components reached. It does not reach verdicts. It does not soften a failu
 note, and it does not decide that a finding was probably fine. A logger with an opinion is a
 logger that eventually edits the record to match it.
 
-**Nothing writes to `_config/` except a human.** Rule books are layer 3, they are rulings, and
-a ruling with no ruler is just a preference the system developed about itself. See
-`spec/layers.md`.
+**Nothing edits an existing `_config/` rule book except a human.** Install may create an
+absent rule book once; an existing one is always a collision for a human to decide. Rule books
+are layer 3, they are rulings, and a ruling with no ruler is just a preference the system
+developed about itself. See `spec/layers.md`.
 
 ---
 

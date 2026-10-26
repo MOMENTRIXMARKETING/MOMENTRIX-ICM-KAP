@@ -54,3 +54,13 @@ built-in body only.
 3. If a shape here disagrees with the body in `scripts/icm_lib.sh`, one of them is wrong.
    The body wins for anything a script writes. Fix the template, or fix the body, but do
    not leave both standing and different.
+4. Keep the five generic job-card sections unchanged. Orchestra adds typed trailing Edge
+   columns and stage Preflight declarations, with optional `00-intake`, exact capabilities,
+   and `No touch` scope as specified in `spec/ORCHESTRA.md`.
+5. The root CONTEXT template exposes only the on-demand `--orchestra-view` command for
+   graph and backlink projections. Do not add stored indexes or duplicate handwritten
+   pipeline or backlink tables.
+6. Keep every Session Close block byte-identical. Do not reword, shorten, or reformat it
+   while editing routing, intake, capability, or view instructions around it.
+7. Stay within the existing budgets after authoring comments and unused conditionals are
+   removed. Cut or split content rather than raising a ceiling.

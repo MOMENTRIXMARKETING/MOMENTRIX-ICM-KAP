@@ -29,10 +29,10 @@ ICM_HOME="${ICM_HOME:-${CLAUDE_PLUGIN_ROOT:-$HOME/src/momentrix-icm-kap-toolkit}
 
 | Step | Skill | Script |
 |---|---|---|
-| Dry run | `/icm-retrofit plan` | `sh "$ICM_HOME/scripts/icm-plan.sh" <path>` |
-| Apply | `/icm-retrofit apply` | `sh "$ICM_HOME/scripts/icm-apply.sh" <path>` |
-| Undo | `/icm-retrofit rollback` | `sh "$ICM_HOME/scripts/icm-rollback.sh" <path>` |
-| Check | `/icm-sync lint` | `sh "$ICM_HOME/scripts/icm-check.sh" <path>` |
+| Dry run | `/icm-retrofit plan` | `sh "$ICM_HOME/scripts/icm-plan.sh" "<path>"` |
+| Apply | `/icm-retrofit apply` | `sh "$ICM_HOME/scripts/icm-apply.sh" "<path>"` |
+| Undo | `/icm-retrofit rollback` | `sh "$ICM_HOME/scripts/icm-rollback.sh" "<path>"` |
+| Check | `/icm-sync lint` | `sh "$ICM_HOME/scripts/icm-check.sh" "<path>"` |
 
 Four scripts on this path, and a fifth, `icm-loop.sh`, that belongs to the loop rather than to the retrofit. Rollback is its own script: there is no `--rollback` flag on apply, and there
 never was.
@@ -387,19 +387,42 @@ Do not do all of them. Start with the folder you touch most. Write what comes in
 what goes out. If you cannot state the outputs, you have found something worth knowing about
 that folder, and that discovery is worth more than the file.
 
-**5. Now, and only now, move things.**
+**5. Add typed Orchestra routing when you need strict preflight.**
+
+Legacy untyped routes remain valid for the generic checks. Orchestra is explicit and checks the
+trailing Edge declarations instead of guessing them. `LOAD` declares a prerequisite, `NEXT` normal
+forward flow, and `REWORK` intentional repair to an earlier card in routing-table order. Add
+Preflight declarations and, when external input binding is needed, a reserved `00-intake` card.
+External input must already be materialised inside the workspace before binding. If it is absent,
+stop: only a separately authorised setup step may create it before preflight. Preflight and
+`MISSING` never materialise or write input. Never turn inline content or a credential into a binding.
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .
+```
+
+Use literal `--orchestra --job "$CARD"` for strict preflight of one full workspace-relative card.
+[`orchestra.md`](orchestra.md) shows the binding and attestation shapes and the public example.
+`RUN` means ready to start, not finished or approved for an external action. Orchestra is a
+report-only checker, not a supervisor process, and generic lint does not select it implicitly.
+
+**6. Now, and only now, move things.**
 
 With a map that says what each folder is for, moving a folder is a small, reversible decision.
-Update its row in the routing table and go. Without the map it was a gamble.
+Update its row in the routing table and repair every affected reference after explicit confirmation.
+Without the map it was a gamble. Stage insertion and rename stay conversational; there is no
+automatic renumber script.
 
-**6. Run lint on a schedule.**
+**7. Run lint on a schedule.**
 
 ```
 /icm-sync lint
 ```
 
 The map goes stale the first week someone adds a folder. Lint catches it. A stale map is worse
-than no map, because a model will believe it.
+than no map, because a model will believe it. Run structural Orchestra separately when the typed
+workflow changes.
 
 ### What not to do on a messy tree
 

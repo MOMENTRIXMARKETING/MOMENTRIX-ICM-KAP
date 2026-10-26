@@ -23,14 +23,18 @@
 
 ## Routing
 
-<!-- Three to five rows covering the tasks people actually bring to this folder. -->
+<!-- Three to five semantic rows. Path destinations require LOAD, NEXT, or REWORK;
+     non-path stops use two dashes. NEXT selects work, LOAD names a prerequisite,
+     and REWORK goes earlier in this table's order. Put optional 00-intake first.
+     Use full workspace-relative paths for stage cards and handoffs. Tool, Skill,
+     and No touch declarations belong in each stage's Preflight. -->
 
-| Task | Go to | Load first |
-|---|---|---|
-| {{TASK_1}} | `{{TASK_1_DEST}}` | `{{TASK_1_LOAD}}` |
-| {{TASK_2}} | `{{TASK_2_DEST}}` | `{{TASK_2_LOAD}}` |
-| {{TASK_3}} | `{{TASK_3_DEST}}` | - |
-| Something not listed here | root `CONTEXT.md` | `IDENTITY.md` |
+| Task | Go to | Load first | Edge |
+|---|---|---|---|
+| {{TASK_1}} | `{{TASK_1_DEST}}` | `{{TASK_1_LOAD}}` | NEXT |
+| {{TASK_2}} | `{{TASK_2_DEST}}` | `{{TASK_2_LOAD}}` | NEXT |
+| {{TASK_3}} | `{{TASK_3_DEST}}` | - | NEXT |
+| Something not listed here: stop and ask for a unique route | - | - | - |
 
 ## Notes
 
@@ -38,5 +42,6 @@
 - Read by: {{WHO_READS_HERE}}.
 - {{FOLDER_SPECIFIC_CAUTION}}
 
-<!-- One-way references: this file points outward at what it needs. Nothing it
-     points at should point back here. -->
+<!-- Workflow references use the typed graph above. Ordinary Markdown links elsewhere
+     are knowledge links, not NEXT or LOAD edges. Do not add a stored graph, backlink
+     index, or duplicate pipeline table; use the root's on-demand view command. -->

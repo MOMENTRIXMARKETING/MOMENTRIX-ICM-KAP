@@ -8,6 +8,7 @@ in front of, paste the commands, read the output.
 | An empty folder, or a project with no context files | [NEW](#new-scaffold-a-fresh-project) |
 | A working repo full of files you cannot afford to break | [OVER](#over-drop-it-on-a-live-project) |
 | Years of folders that hold real work and nothing is routed | [TRANSFER](#transfer-pull-a-messy-tree-into-line) |
+| A typed workflow to inspect or preflight | [ORCHESTRA](#orchestra-check-and-preflight-a-typed-workflow) |
 
 Every output block below was captured from a real run of these commands against a throwaway
 fixture. Two strings are substituted so the blocks read cleanly: the fixture's parent directory
@@ -20,7 +21,8 @@ counts.
 ## Before the first command
 
 Install the toolkit first. Both methods are in [`README.md`](README.md#install): the plugin
-marketplace, or a clone plus a copy of `skills/icm-*`.
+marketplace, or a clone plus a copy of `skills/icm-*`. Both deliver ten skills, including
+`icm-orchestra`, while the runtime remains five scripts.
 
 Then resolve the toolkit root once per shell. Your working directory is your own project, never
 the toolkit, so every invocation is absolute and every path is quoted.
@@ -403,6 +405,54 @@ The full walkthrough, including what not to do on a messy tree, is
 
 ---
 
+## ORCHESTRA: check and preflight a typed workflow
+
+Use this after job cards exist. Orchestra reads typed routes, capabilities, inputs, and outputs,
+then reports whether one selected job is ready. It is not a supervisor process and it writes
+nothing inside the target.
+
+Your own project repository is the only brain and workspace. Local execution and GitHub
+distribution use the same files, with no export, second brain, live mirror, or required cloud
+service. Cloud execution is a separate optional later runner.
+
+For the shipped example, stand in the toolkit root after resolving `ICM_HOME`. For your own
+project, keep your working directory and replace the example target with your workspace path.
+
+```sh
+cd "$ICM_HOME"
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra examples/orchestra-pipeline
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view examples/orchestra-pipeline
+```
+
+Structural mode validates the cards and graph. View mode derives workflow and knowledge edges and
+backlinks on demand without storing them. Generic checks do not select Orchestra implicitly.
+
+The intake card declares external `@request`. Bind the public-safe file already materialised in
+the example with this canonical strict command:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job 00-intake/CONTEXT.md --input request=00-intake/output/example-request.md examples/orchestra-pipeline
+```
+
+The positive stages consume declared prior outputs. Their artifacts are present for strict runs:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job 01-research/CONTEXT.md examples/orchestra-pipeline
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job 02-draft/CONTEXT.md examples/orchestra-pipeline
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job 03-review/CONTEXT.md examples/orchestra-pipeline
+```
+
+`RUN` means ready to start, never completed or approved for an external action. On `MISSING`,
+supply the named input or capability, or resolve the route, scope, or ambiguity finding before
+execution. Exit 2 is a usage or environment refusal. Read
+[`docs/orchestra.md`](docs/orchestra.md) for the cold-start sequence and
+[`spec/CLI-CONTRACT.md`](spec/CLI-CONTRACT.md) for the exact envelopes.
+
+No Orchestra output block is reproduced here. Use the deterministic output of your own run as the
+receipt rather than treating an unexecuted sample as proof.
+
+---
+
 ## If you change your mind
 
 Rollback is its own script. There is no `--rollback` flag on apply and there never was.
@@ -451,10 +501,12 @@ the decision you now own.
 
 ## Where to go next
 
-- [`README.md`](README.md) - the skills, the archetypes, what lands in your project
+- [`README.md`](README.md) - the ten skills, the archetypes, what lands in your project
 - [`docs/retrofit.md`](docs/retrofit.md) - the retrofit flow in full, step by step
 - [`docs/methodology.md`](docs/methodology.md) - why the layers are shaped this way
 - [`docs/architect.md`](docs/architect.md) - folders as agents, the Pattern 24 shape
-- [`examples/`](examples) - a worked source-and-article pair, and an architect company tree
+- [`docs/orchestra.md`](docs/orchestra.md) - cold starts, typed graphs, layouts, scope, and attestations
+- [`examples/`](examples) - the evidence pair and three complete worked workspaces
+- [`spec/ORCHESTRA.md`](spec/ORCHESTRA.md) - the structural, graph, capability, and scope contract
 - [`spec/CLI-CONTRACT.md`](spec/CLI-CONTRACT.md) - every command, flag, exit code and artifact
   path. It wins over every other file, including this one.

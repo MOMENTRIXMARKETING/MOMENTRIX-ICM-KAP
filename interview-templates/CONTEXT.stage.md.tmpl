@@ -1,6 +1,7 @@
 <!-- ICM Layer 2 job card. Emitted as CONTEXT.md inside a stage folder.
-     Purpose, Inputs, Process, Outputs and Routing are required. Budget and
-     required sections: icm.defaults.json. Delete these comments before saving. -->
+     Purpose, Inputs, Process, Outputs and Routing are the generic required sections.
+     Orchestra adds Preflight and typed Edge values. Budget and required sections:
+     icm.defaults.json. Delete these comments before saving. -->
 
 # {{STAGE_NAME}}
 
@@ -10,11 +11,21 @@
 
 ## Inputs
 
-<!-- Name the scope, not just the file. "Full file" only when it is really needed. -->
+<!-- Name the scope and delete unused optional rows. Never invent a producer or path.
+     Later positive: the input row may name an actual previous output. First or only
+     positive: name an existing workspace input or delete the row. 00-intake: delete it.
+     External intake is only for a real @NAME on 00-intake; delete it on positive stages.
+     Bind existing workspace material with --input NAME=PATH, never credentials, secret
+     stores, or inline content. If absent, only separately authorised setup may create it
+     before preflight; preflight and MISSING never write it. Keep the Raw row and raw
+     Process step only for wiki/raw use. Delete both for quick/full or no raw input,
+     renumber Process, and never create raw/ for quick/full. 00-intake is first and handles
+     intake/preflight, not domain work. Use full workspace-relative paths throughout. -->
 
 | Source | File | Scope | Why |
 |---|---|---|---|
-| Previous stage | `{{PREV_OUTPUT_PATH}}` | full file | {{PREV_WHY}} |
+| Workspace or previous-stage input | `{{INPUT_PATH}}` | {{INPUT_SCOPE}} | {{INPUT_WHY}} |
+| External intake | @{{EXTERNAL_NAME}} | {{EXTERNAL_SCOPE}} | {{EXTERNAL_WHY}} |
 | Raw | `raw/{{RAW_TOPIC}}/` | {{RAW_SCOPE}} | the evidence this stage cites |
 | Rule book | `_config/{{RULEBOOK}}.md` | "{{RULEBOOK_SECTION}}" | {{RULEBOOK_WHY}} |
 
@@ -24,23 +35,46 @@ Load these. Load nothing else.
 
 Compile, do not explore. Read the named inputs, produce the named artifact, stop.
 
-1. Read every row of the Inputs table at the stated scope. Do not go hunting for more.
-2. {{STEP_2}}
-3. {{STEP_3}}
-4. Before writing any number, date or quote, find it verbatim in the raw file you will cite.
-5. Write the Outputs, then append the close line to `_log/LOOP-LEDGER.md`.
+1. Require a fresh RUN for this card through `icm-orchestra`. MISSING means stop.
+2. Read every row of the Inputs table at the stated scope. Do not go hunting for more.
+3. {{STEP_2}}
+4. {{STEP_3}}
+5. When using raw evidence, find every number, date or quote verbatim in the raw file cited before writing it.
+6. Write only the declared Outputs, then append the existing Session Close ledger records. RUN is not success or external approval.
 
 ## Outputs
 
 | Artifact | Location | Format |
 |---|---|---|
-| {{ARTIFACT_NAME}} | `output/{{SLUG}}-{{ARTIFACT_TYPE}}.md` | {{ARTIFACT_FORMAT}} |
+| {{ARTIFACT_NAME}} | `{{STAGE_OUTPUT_PATH}}` | {{ARTIFACT_FORMAT}} |
+
+## Preflight
+
+<!-- Keep None only when there are no declarations, and keep it as the only row.
+     Otherwise delete None. Tool and Skill require exact versions, never ranges.
+     No touch requires a workspace-relative path and Version dash: it bans reads and
+     writes. Do not invent declarations. Preflight is report-only, not a write lease. -->
+
+| Kind | Reference | Version |
+|---|---|---|
+| None | - | - |
 
 ## Routing
 
-| Condition | Go to |
-|---|---|
-| Done | `{{NEXT_STAGE_PATH}}` |
-| Input missing or empty | `{{PREV_STAGE_PATH}}`, that stage has not run yet |
-| A fact will not ground in raw | stop, log the hole, do not write the claim |
-| Scope looks wrong | root `CONTEXT.md`, re-route before working |
+<!-- Path destinations require LOAD, NEXT, or REWORK. Non-path stops use two dashes.
+     Keep NEXT only for an actual next card; delete it on last and single-stage cards.
+     Keep REWORK only for an actual earlier card that can repair input. Delete it for
+     first positive, single-stage, and 00-intake; use a terminal stop instead.
+     Keep the raw stop only for wiki/raw use and delete it for quick/full.
+     REWORK targets an earlier card in routing-table order. LOAD is a prerequisite,
+     not a routing hop. Never add a stored graph or backlink table here; the root
+     card carries the on-demand Orchestra view command. -->
+
+| Condition | Go to | Edge |
+|---|---|---|
+| Done | `{{NEXT_STAGE_PATH}}` | NEXT |
+| Input missing or empty | `{{PREV_STAGE_PATH}}` | REWORK |
+| Work complete or no next stage | - | - |
+| Input missing with no earlier-stage repair | - | - |
+| A fact will not ground in raw | - | - |
+| Scope looks wrong: stop and re-route from root `CONTEXT.md` | - | - |

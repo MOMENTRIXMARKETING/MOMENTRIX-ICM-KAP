@@ -24,6 +24,21 @@ shows up at it.
 
 ---
 
+## Where ICM Orchestra fits
+
+The architect pattern and Orchestra answer different questions. The architect pattern describes
+how ephemeral agents divide work through folders and reports. Orchestra checks whether the typed
+cards in one workspace describe a coherent workflow and whether a selected job is ready to start.
+
+Orchestra is therefore not the supervisor that this pattern rejects. It spawns nothing, coordinates
+no workers, holds no runtime state, and writes no target files. It derives its answer from the
+cards, prints it, and exits. Run it against the relevant root, department, or nested workspace,
+then let the existing folder and report discipline govern execution. The human guide is
+[`orchestra.md`](orchestra.md); the machine rules remain in
+[`../spec/ORCHESTRA.md`](../spec/ORCHESTRA.md).
+
+---
+
 ## Why it survives a model swap
 
 Swap the model and ask what was lost.

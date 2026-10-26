@@ -1,5 +1,6 @@
 ---
 name: icm-log
+version: 1.0.0
 description: "This skill should be used when the user says 'log that', 'log a miss', 'that was wrong', 'the rule book should have caught that', 'log the use', 'close this task', 'write the ledger line', or 'show me the ledger', and by every Session Close in a workspace the toolkit built. Records one miss in ten seconds with a severity, writes the use line for the skill or job card a task ran under, writes the task line and call lines at close, and prints the ledger. It records what happened and never diagnoses it."
 user-invocable: true
 argument-hint: "miss | use | close | show"
@@ -195,7 +196,7 @@ Loop is which part of the graph wrote it: run, workaround, hunt, review, tier ch
 
 ## Mode: show
 
-Read only. Writes nothing, ever, including the file-creation step. If `_log/LOOP-LEDGER.md` does not exist, say so and stop.
+No ledger writes and no ledger creation. If `_log/LOOP-LEDGER.md` does not exist, say so and stop. The index step below may regenerate `_log/SKILL-INDEX.md`; no other file is written.
 
 Print three things:
 

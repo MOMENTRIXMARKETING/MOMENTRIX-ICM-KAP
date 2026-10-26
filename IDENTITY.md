@@ -22,11 +22,11 @@ momentrix-icm-kap-toolkit/
 ├── .github/                 # CI: dash, BSD, busybox
 ├── .claude-plugin/          # the plugin install path
 ├── scripts/                 # POSIX sh: check, plan, apply, rollback, loop, lib
-├── skills/                  # the nine icm-* skills, one SKILL.md each
-├── spec/                    # layer 3 rule books: layers, budgets
+├── skills/                  # ten skills, with icm-orchestra
+├── spec/                    # rule books and Orchestra contracts
 ├── interview-templates/     # .tmpl a human fills in; no script reads it
-├── docs/                    # methodology, retrofit, deck copy, the paper
-├── examples/                # the raw and wiki pair, whole trees
+├── docs/                    # methodology, Orchestra, retrofit, paper
+├── examples/                # raw/wiki pair and three worked workspaces
 ├── _log/                    # this repo's own ledger, proposals, index
 └── tests/                   # the POSIX harness, plus the python one
 ```

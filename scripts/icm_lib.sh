@@ -1245,6 +1245,7 @@ create _log/FORGE-PROPOSALS.md quick
 create output/CONTEXT.md full
 create _config/grounding.md wiki
 create raw/CONTEXT.md wiki
+create raw/incoming/.gitkeep wiki
 create wiki/index.md wiki
 create wiki/log.md wiki
 adopt CLAUDE.md quick
@@ -1275,10 +1276,10 @@ icm_manifest_has() {
 }
 
 icm_route_row() {
-    # icm_route_row <relpath> <what you are doing> <load first cell>
+    # icm_route_row <relpath> <what you are doing> <load first> [edge]
     # Prints nothing at all when this archetype does not install <relpath>.
     icm_manifest_has "$1" || return 0
-    printf '| %s | `%s` | %s |\n' "$2" "$1" "$3"
+    printf '| %s | `%s` | %s | %s |\n' "$2" "$1" "$3" "${4:-NEXT}"
 }
 
 icm_rulebook_row() {
@@ -1430,10 +1431,10 @@ icm_manifest_has() {
     icm_manifest "${ICM_ARCHETYPE:-quick}" | awk -v p="$1" '$2 == p { f = 1 } END { exit f ? 0 : 1 }'
 }
 
-# icm_route_row <relpath> <what you are doing> <load first>
+# icm_route_row <relpath> <what you are doing> <load first> [edge]
 icm_route_row() {
     icm_manifest_has "$1" || return 0
-    printf '| %s | `%s` | %s |\n' "$2" "$1" "$3"
+    printf '| %s | `%s` | %s | %s |\n' "$2" "$1" "$3" "${4:-NEXT}"
 }
 
 # icm_rulebook_row <relpath> <what it binds>
@@ -1504,15 +1505,15 @@ Layer 1. You have read `IDENTITY.md`. Now pick the job.
 
 ## Routing
 
-| What you are doing | Go to | Load first |
-|---|---|---|
+| Job | Where | Load first | Edge |
+|---|---|---|---|
 ICM_EOF
     if icm_manifest_has _config/grounding.md; then
         _bc_ground='`_config/grounding.md`'
     else
         _bc_ground='-'
     fi
-    icm_route_row raw/CONTEXT.md "Filing an incoming document" "$_bc_ground"
+    icm_route_row raw/CONTEXT.md "Filing an incoming document" -
     icm_route_row wiki/index.md "Writing or updating a wiki article" "$_bc_ground"
     icm_route_row output/CONTEXT.md "Producing something a human reads" '`_config/voice.md`'
     icm_route_row _config/conventions.md "Checking a naming or folder rule" -
@@ -1530,9 +1531,11 @@ If the job is not in the table, the table is incomplete. Say so before you impro
 1. Read `IDENTITY.md`. That is the map.
 2. Read this file. Pick the row that matches the job.
 3. Read the job card the row points to, and the rule book in the Load first column.
-4. Do the work. Nothing else loads unless the job card says to load it.
-5. Run the Session Close below before your last reply. It is part of the task, not an afterthought.
+4. Inspect the derived workflow and backlinks with: sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .
+5. Do the work. Nothing else loads unless the job card says to load it.
+6. Run Session Close only after actual execution. Read-only preflight, graph, ambiguity, MISSING, and refusal write nothing and skip it.
 
+For Orchestra, a run permits declared Outputs and close entries in the existing `_log/LOOP-LEDGER.md` only. Placement proposals are reported for separate human handling, never written during the run.
 ICM_EOF
     icm_body_session_close
     cat <<'ICM_EOF'
@@ -1587,14 +1590,14 @@ Hold every incoming document exactly as it arrived. If a fact is not in this fol
 
 ## Inputs
 
-| Input | Where it comes from |
-|---|---|
-| A document, transcript, export or page capture | You, or a tool run |
-| The date it was collected | The day you filed it |
+| Source | File | Scope | Why |
+|---|---|---|---|
+| Grounding rule | `_config/grounding.md` | full file | immutable evidence rules |
+| Source document | - | full file | supplied during filing |
 
 ## Process
 
-1. Save the document under this folder, named by date first, then a short slug.
+1. Save the document under `raw/incoming/`, named by date first, then a short slug.
 2. Put a header on it: what it is, where it came from, the date collected.
 3. Paste the body word for word. Do not summarise, tidy, translate or truncate.
 4. Append an ingest line to `wiki/log.md`.
@@ -1602,25 +1605,34 @@ Hold every incoming document exactly as it arrived. If a fact is not in this fol
 
 ## Outputs
 
-- One immutable file per source.
-- One ingest line in `wiki/log.md`.
+| Artifact | Location | Format |
+|---|---|---|
+| Immutable source | raw/incoming/ | directory |
+| Ingest record | `wiki/log.md` | Markdown |
 
 ## Routing
 
-| Next | Go to |
-|---|---|
-| Turn this evidence into knowledge | `wiki/index.md` |
-| Check the grounding rule | `_config/grounding.md` |
-| Back to the routing table | `../CONTEXT.md` |
+| When | Go to | Edge |
+|---|---|---|
+| Turn this evidence into knowledge | `wiki/index.md` | NEXT |
+| Check the grounding rule | `_config/grounding.md` | NEXT |
+
+## Preflight
+
+| Kind | Reference | Version |
+|---|---|---|
+| None | - | - |
 ICM_EOF
 }
 
 icm_body_output_context() {
     if icm_manifest_has wiki/index.md; then
-        _bo_facts='`wiki/` articles, never memory'
+        _bo_facts_ref='`wiki/`'
+        _bo_wiki_route='| Find a fact | `wiki/index.md` | NEXT |'
         _bo_pull='Pull the facts from `wiki/`. If a fact is not there, it does not go in.'
     else
-        _bo_facts='whatever the brief cites'
+        _bo_facts_ref='-'
+        _bo_wiki_route=''
         _bo_pull='Gather the facts from what the brief cites. Do not write a number you cannot point at.'
     fi
     cat <<ICM_EOF
@@ -1634,11 +1646,11 @@ Hold every deliverable a human or a customer receives. Nothing here is evidence 
 
 ## Inputs
 
-| Input | Where it comes from |
-|---|---|
-| The brief | The person who asked |
-| The facts | $_bo_facts |
-| The house style | \`_config/voice.md\` and \`_config/style.md\` |
+| Source | File | Scope | Why |
+|---|---|---|---|
+| Brief | - | full file | supplied by the person asking |
+| Facts | $_bo_facts_ref | cited sections | evidence allowed in the deliverable |
+| House style | \`_config/voice.md\`, \`_config/style.md\` | full files | voice and format rules |
 
 ## Process
 
@@ -1646,22 +1658,27 @@ Hold every deliverable a human or a customer receives. Nothing here is evidence 
 2. $_bo_pull
 3. Draft it. Apply \`_config/voice.md\` and \`_config/style.md\` in full.
 4. Reread against the brief. Cut what the brief did not ask for.
-5. Save it here. Append the closing line to \`_log/LOOP-LEDGER.md\`.
+5. Save it under output/deliverables/. Append the closing line to \`_log/LOOP-LEDGER.md\`.
 
 ## Outputs
 
-- One file per deliverable.
-- One ledger line recording it.
+| Artifact | Location | Format |
+|---|---|---|
+| Deliverables | output/deliverables/ | directory |
+| Closing record | \`_log/LOOP-LEDGER.md\` | Markdown |
 
 ## Routing
 
-| Next | Go to |
-|---|---|
-ICM_EOF
-    icm_route_row wiki/index.md "Find a fact" '-'
-    cat <<'ICM_EOF'
-| Check the house style | `_config/voice.md` |
-| Back to the routing table | `../CONTEXT.md` |
+| When | Go to | Edge |
+|---|---|---|
+$_bo_wiki_route
+| Check the house style | \`_config/voice.md\` | NEXT |
+
+## Preflight
+
+| Kind | Reference | Version |
+|---|---|---|
+| None | - | - |
 ICM_EOF
 }
 
@@ -2092,6 +2109,7 @@ icm_render() {
         _config/style.md)         icm_body_style ;;
         _config/grounding.md)     icm_body_grounding ;;
         raw/CONTEXT.md)           icm_body_raw_context ;;
+        raw/incoming/.gitkeep)    printf '\n' ;;
         output/CONTEXT.md)        icm_body_output_context ;;
         wiki/index.md)            icm_body_wiki_index ;;
         wiki/log.md)              icm_body_wiki_log ;;
@@ -2276,6 +2294,1103 @@ icm_git_dirty() {
     ( cd "$1" && git status --porcelain 2>/dev/null ) \
         | awk '{ p = substr($0, 4); if (p !~ /^\.icm\//) print }' \
         | grep -q .
+}
+
+# ------------------------------------------------------------- Orchestra -----
+
+icm_orchestra_normalize() {
+    _o_n_base="$1"
+    _o_n_ref="$2"
+    case "$_o_n_base" in /*) return 2 ;; esac
+    case "$_o_n_ref" in ''|/*|*'//'*) return 2 ;; esac
+    case "$_o_n_base" in
+        ''|.) _o_n_rest="$_o_n_ref" ;;
+        *)    _o_n_rest="$_o_n_base/$_o_n_ref" ;;
+    esac
+    _o_n_stack=""
+    while : ; do
+        case "$_o_n_rest" in
+            */*) _o_n_part=${_o_n_rest%%/*}; _o_n_rest=${_o_n_rest#*/} ;;
+            *)   _o_n_part="$_o_n_rest"; _o_n_rest="" ;;
+        esac
+        case "$_o_n_part" in
+            ''|.) ;;
+            ..)
+                [ -n "$_o_n_stack" ] || return 2
+                case "$_o_n_stack" in
+                    */*) _o_n_stack=${_o_n_stack%/*} ;;
+                    *)   _o_n_stack="" ;;
+                esac
+                ;;
+            *)
+                if [ -n "$_o_n_stack" ]; then
+                    _o_n_stack="$_o_n_stack/$_o_n_part"
+                else
+                    _o_n_stack="$_o_n_part"
+                fi
+                ;;
+        esac
+        [ -n "$_o_n_rest" ] || break
+    done
+    [ -n "$_o_n_stack" ] || _o_n_stack="."
+    printf '%s\n' "$_o_n_stack"
+    return 0
+}
+
+icm_orchestra_symlink() {
+    _o_s_root="$1"
+    _o_s_rest="$2"
+    _o_s_cur="$_o_s_root"
+    case "$_o_s_rest" in ''|.) return 1 ;; esac
+    while : ; do
+        case "$_o_s_rest" in
+            */*) _o_s_part=${_o_s_rest%%/*}; _o_s_rest=${_o_s_rest#*/} ;;
+            *)   _o_s_part="$_o_s_rest"; _o_s_rest="" ;;
+        esac
+        if [ -n "$_o_s_part" ] && [ "$_o_s_part" != "." ]; then
+            _o_s_cur="$_o_s_cur/$_o_s_part"
+            [ -L "$_o_s_cur" ] && return 0
+        fi
+        [ -n "$_o_s_rest" ] || break
+    done
+    return 1
+}
+
+icm_orchestra_nested() {
+    _o_x_dir=$(dirname -- "$1")
+    while [ "$_o_x_dir" != "." ] && [ "$_o_x_dir" != "/" ] && [ -n "$_o_x_dir" ]; do
+        [ -f "$TARGET/$_o_x_dir/IDENTITY.md" ] && return 0
+        _o_x_dir=$(dirname -- "$_o_x_dir")
+    done
+    return 1
+}
+
+icm_orchestra_classify() {
+    awk -F '\t' '
+    function base(p,    n,a) { n = split(p, a, "/"); return a[n] }
+    function parent(p,    n,a,i,s) {
+        n = split(p, a, "/"); s = a[1]
+        for (i = 2; i < n; i++) { s = s "/" a[i] }
+        return (n == 1 ? "." : s)
+    }
+    function join(a, lo, hi,    i,s) {
+        s = a[lo]
+        for (i = lo + 1; i <= hi; i++) { s = s "/" a[i] }
+        return s
+    }
+    { ctx[$0] = 1; paths[++np] = $0 }
+    END {
+        for (z = 1; z <= np; z++) {
+            p = paths[z]; n = split(p, a, "/")
+            if (n < 2 || a[n] != "CONTEXT.md") { continue }
+            b = a[n - 1]
+            if (b !~ /^[0-9][0-9]-/) { continue }
+            if (n == 2) {
+                pr[p] = "CONTEXT.md"; pc[p] = "."
+            } else if (n == 3 && a[1] == "stages") {
+                pr[p] = "CONTEXT.md"; pc[p] = "stages"
+            } else if (n >= 4 && a[n - 2] == "stages") {
+                d = join(a, 1, n - 3)
+                pr[p] = d "/CONTEXT.md"; pc[p] = d "/stages"
+            } else if (n >= 3) {
+                d = join(a, 1, n - 2)
+                pr[p] = d "/CONTEXT.md"; pc[p] = d
+            } else {
+                continue
+            }
+            if (pr[p] == "CONTEXT.md" || (pr[p] in ctx)) {
+                pot[p] = 1; pp[p] = b
+            } else {
+                delete pr[p]; delete pc[p]
+            }
+        }
+        for (z = 1; z <= np; z++) {
+            p = paths[z]
+            if ((p in pot) && !((pr[p]) in pot)) {
+                kind[p] = "stage"; stage[p] = 1; router[pr[p]] = 1
+            }
+        }
+        for (z = 1; z <= np; z++) {
+            p = paths[z]; b = base(parent(p))
+            if (p == "CONTEXT.md") {
+                k = "root"; dep = 1
+            } else if (p in stage) {
+                k = "stage"; dep = 3
+            } else if (p in router) {
+                k = "router"; dep = 2
+            } else if (b ~ /^[0-9][0-9]-/) {
+                k = "deep"; dep = 4
+            } else {
+                k = "other"; dep = 2
+            }
+            pipe = (p in stage ? pc[p] : "-")
+            pref = (p in stage ? pp[p] : "-")
+            printf "%s\t%s\t%s\t%s\t%s\t%s\n", p, k, pipe, (p in stage ? pc[p] : "-"), pref, dep
+        }
+    }
+    ' "$1" | sort > "$2"
+}
+
+icm_orchestra_parse_card() {
+    _o_p_file="$1"
+    _o_p_card="$2"
+    awk -v card="$_o_p_card" \
+        -v routes="$O_DIR/routes" -v refs="$O_DIR/refs" \
+        -v pref="$O_DIR/preflight" -v issues="$O_DIR/issues" '
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+    function clean(s) { gsub(/[\t\r]/, " ", s); return trim(s) }
+    function issue(code, detail) { printf "%s\t%s\t%s\n", code, card, clean(detail) >> issues }
+    function oref(s,    a,b,r) {
+        s = clean(s)
+        if (length(s) >= 2 && substr(s, 1, 1) == "`" && substr(s, length(s), 1) == "`") {
+            s = trim(substr(s, 2, length(s) - 2))
+        }
+        if (substr(s, 1, 1) == "[") {
+            a = index(s, "](")
+            if (a > 0) {
+                r = substr(s, a + 2); b = index(r, ")")
+                if (b > 0) { s = substr(r, 1, b - 1) }
+            }
+        }
+        sub(/ +"[^"]*" *$/, "", s)
+        sub(/ +\x27[^\x27]*\x27 *$/, "", s)
+        return clean(s)
+    }
+    function splitrow(line,    i,n) {
+        n = split(line, raw, "|"); cn = 0
+        for (i = 1; i <= n; i++) {
+            if ((i == 1 || i == n) && trim(raw[i]) == "") { continue }
+            cv[++cn] = clean(raw[i])
+        }
+    }
+    function emit_one(sec, row, idx, value,    rid,dir) {
+        value = oref(value)
+        if (value == "" || value == "-") { return }
+        rid = card "|" sec "|" row "|" idx
+        dir = (value ~ /\/$/ ? 1 : 0)
+        printf "%s\t%s\t%s\t%s\t%s\t%s\n", card, sec, rid, row, value, dir >> refs
+    }
+    function emit_refs(sec, row, value,    i,c,ch,inlabel,inparen,incode,start,part,n) {
+        value = clean(value); start = 1; n = 0; inlabel = 0; inparen = 0; incode = 0
+        c = length(value)
+        for (i = 1; i <= c; i++) {
+            ch = substr(value, i, 1)
+            if (ch == "`") { incode = 1 - incode }
+            if (!incode) {
+                if (ch == "[") { inlabel++ }
+                else if (ch == "]" && inlabel > 0) { inlabel-- }
+                else if (ch == "(" && inlabel == 0) { inparen++ }
+                else if (ch == ")" && inparen > 0) { inparen-- }
+                else if (ch == "," && inlabel == 0 && inparen == 0) {
+                    part = substr(value, start, i - start)
+                    emit_one(sec, row, ++n, part); start = i + 1
+                }
+            }
+        }
+        part = substr(value, start)
+        emit_one(sec, row, ++n, part)
+    }
+    BEGIN { section = ""; intable = 0; separate = 0; order = 0; porder = 0 }
+    /^ {0,3}```/ { fence = 1 - fence; next }
+    /^ {0,3}~~~/ { tfence = 1 - tfence; next }
+    fence || tfence { next }
+    /^## / {
+        heading = $0; sub(/^## /, "", heading); heading = clean(heading)
+        section = (heading == "Inputs" || heading == "Outputs" || heading == "Routing" || heading == "Preflight" ? heading : "")
+        intable = 0; separate = 0; next
+    }
+    section == "" { next }
+    $0 !~ /^ *\|/ { if ($0 !~ /^ *$/) { intable = 0; separate = 0 }; next }
+    {
+        if (index($0, "\t") > 0) { issue((section == "Preflight" ? "CAPABILITY" : "CARD"), section " table contains a tab") }
+        splitrow($0)
+        if (!intable) {
+            intable = 1; separate = 0
+            dest = 0; load = 0; edge = 0; refcol = 0; kindcol = 0; vercol = 0
+            for (i = 1; i <= cn; i++) {
+                h = tolower(cv[i])
+                if (h == "where" || h == "go to") { dest = i }
+                else if (h == "load first") { load = i }
+                else if (h == "edge") { edge = i }
+                else if (section == "Inputs" && (h == "file" || h == "file/location")) { refcol = i }
+                else if (section == "Outputs" && h == "location") { refcol = i }
+                else if (section == "Preflight" && h == "kind") { kindcol = i }
+                else if (section == "Preflight" && h == "reference") { refcol = i }
+                else if (section == "Preflight" && h == "version") { vercol = i }
+            }
+            if (section == "Routing") {
+                headerok = (dest > 0 && edge > 0 ? 1 : 0)
+                if (!headerok) { issue("ROUTE", "Routing table requires a trailing Edge column") }
+            } else if (section == "Inputs" || section == "Outputs") {
+                if (refcol == 0) { issue("CARD", section " table has no reference column") }
+            } else if (section == "Preflight" && (kindcol == 0 || refcol == 0 || vercol == 0)) {
+                issue("CAPABILITY", "Preflight table requires Kind, Reference and Version")
+            }
+            next
+        }
+        sep = 1
+        for (i = 1; i <= cn; i++) { if (cv[i] !~ /^:?---+$/) { sep = 0 } }
+        if (sep && !separate) { separate = 1; next }
+        if (!separate) { next }
+        if (section == "Routing") {
+            order++
+            d = (dest > 0 && dest <= cn ? oref(cv[dest]) : "")
+            e = (edge > 0 && edge <= cn ? clean(cv[edge]) : "")
+            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", card, order, clean(cv[1]), d, e, order, headerok >> routes
+            if (load > 0 && load <= cn) { emit_refs("Load first", order, cv[load]) }
+        } else if (section == "Inputs" || section == "Outputs") {
+            if (refcol > 0 && refcol <= cn) { emit_refs(section, ++order, cv[refcol]) }
+        } else if (section == "Preflight") {
+            porder++
+            k = (kindcol > 0 && kindcol <= cn ? clean(cv[kindcol]) : "")
+            r = (refcol > 0 && refcol <= cn ? oref(cv[refcol]) : "")
+            v = (vercol > 0 && vercol <= cn ? clean(cv[vercol]) : "")
+            printf "%s\t%s\t%s\t%s\t%s\n", card, porder, k, r, v >> pref
+        }
+    }
+    ' "$_o_p_file"
+}
+
+icm_orchestra_resolve_one() {
+    _o_r_card="$1"
+    _o_r_raw="$2"
+    _o_r_field="$3"
+    _o_r_rid="$4"
+    if [ "$_o_r_raw" = "-" ]; then return 0; fi
+    case "$_o_r_raw" in
+        @*) printf '%s\tEXTERNAL\t\t\t\n' "$_o_r_rid" >> "$O_DIR/resolved"; return 0 ;;
+    esac
+    _o_r_base=$(dirname -- "$_o_r_card")
+    if [ "$_o_r_field" = "No touch" ]; then _o_r_base="."; fi
+    _o_r_c1=""; _o_r_c2=""; _o_r_status=""; _o_r_chosen=""
+    if _o_r_c1=$(icm_orchestra_normalize "$_o_r_base" "$_o_r_raw"); then :; else _o_r_status="SCOPE"; fi
+    if _o_r_c2=$(icm_orchestra_normalize . "$_o_r_raw"); then :; else _o_r_status="SCOPE"; fi
+    if [ "$_o_r_status" = "SCOPE" ]; then
+        printf '%s\tSCOPE\t\t\t\n' "$_o_r_rid" >> "$O_DIR/resolved"
+        return 0
+    fi
+    if [ "$_o_r_c1" = "$_o_r_c2" ]; then _o_r_c2=""; fi
+    _o_r_count=0
+    for _o_r_c in "$_o_r_c1" "$_o_r_c2"; do
+        [ -n "$_o_r_c" ] || continue
+        if icm_orchestra_symlink "$TARGET" "$_o_r_c"; then _o_r_status="SCOPE"; fi
+        case "$_o_r_field" in
+            Routing)
+                if [ -e "$TARGET/$_o_r_c" ]; then _o_r_count=$((_o_r_count + 1)); _o_r_chosen="$_o_r_c"; fi ;;
+            Outputs)
+                _o_r_parent=$(dirname -- "$TARGET/$_o_r_c")
+                if [ -e "$TARGET/$_o_r_c" ] || [ -d "$_o_r_parent" ]; then
+                    _o_r_count=$((_o_r_count + 1)); _o_r_chosen="$_o_r_c"
+                fi ;;
+            Inputs|"Load first")
+                if [ -e "$TARGET/$_o_r_c" ]; then _o_r_count=$((_o_r_count + 1)); _o_r_chosen="$_o_r_c"; fi ;;
+            "No touch") _o_r_count=1; _o_r_chosen="$_o_r_c" ;;
+        esac
+    done
+    if [ "$_o_r_status" = "SCOPE" ]; then
+        :
+    elif [ "$_o_r_field" = "No touch" ]; then
+        _o_r_status="OK"
+    elif [ "$_o_r_count" -eq 2 ]; then
+        _o_r_status="AMBIGUOUS"; _o_r_chosen=""
+    elif [ "$_o_r_count" -eq 1 ]; then
+        _o_r_status="OK"
+    elif [ "$_o_r_field" = "Routing" ]; then
+        _o_r_status="ROUTE"; _o_r_chosen=""
+    elif [ "$_o_r_field" = "Outputs" ]; then
+        _o_r_status="SCOPE"; _o_r_chosen=""
+    else
+        _o_r_status="MISSING"; _o_r_chosen=""
+    fi
+    printf '%s\t%s\t%s\t%s\t%s\n' "$_o_r_rid" "$_o_r_status" "$_o_r_c1" "$_o_r_c2" "$_o_r_chosen" >> "$O_DIR/resolved"
+}
+
+icm_orchestra_resolve_all() {
+    _o_a_tab=$(printf '\t')
+    while IFS="$_o_a_tab" read -r _o_a_card _o_a_sec _o_a_rid _o_a_row _o_a_raw _o_a_dir; do
+        [ -n "$_o_a_rid" ] || continue
+        icm_orchestra_resolve_one "$_o_a_card" "$_o_a_raw" "$_o_a_sec" "$_o_a_rid"
+    done < "$O_DIR/refs"
+    while IFS="$_o_a_tab" read -r _o_a_card _o_a_row _o_a_label _o_a_dest _o_a_edge _o_a_order _o_a_header; do
+        [ -n "$_o_a_card" ] || continue
+        [ "$_o_a_dest" = "-" ] && continue
+        _o_a_rid="$_o_a_card|Routing|$_o_a_row|0"
+        icm_orchestra_resolve_one "$_o_a_card" "$_o_a_dest" Routing "$_o_a_rid"
+    done < "$O_DIR/routes"
+    while IFS="$_o_a_tab" read -r _o_a_card _o_a_row _o_a_kind _o_a_ref _o_a_ver; do
+        [ "$_o_a_kind" = "No touch" ] || continue
+        _o_a_rid="$_o_a_card|Preflight|$_o_a_row"
+        icm_orchestra_resolve_one "$_o_a_card" "$_o_a_ref" "No touch" "$_o_a_rid"
+    done < "$O_DIR/preflight"
+}
+
+icm_orchestra_graph() {
+    awk -F '\t' -v cards="$O_DIR/cards" -v routes="$O_DIR/routes" \
+        -v refs="$O_DIR/refs" -v resolved="$O_DIR/resolved" \
+        -v find="$O_DIR/findings.raw" -v edgefile="$O_DIR/edges" \
+        -v selfile="$O_DIR/selected" '
+    function base(p,    n,a) { n = split(p, a, "/"); return (n > 1 ? a[n - 1] : a[n]) }
+    function router_for(p,    c,n) {
+        c = c_cont[p]
+        if (c == "." || c == "stages") { return "CONTEXT.md" }
+        n = length(c)
+        if (n >= 7 && substr(c, n - 6) == "/stages") {
+            return substr(c, 1, n - 7) "/CONTEXT.md"
+        }
+        return c "/CONTEXT.md"
+    }
+    function add(code, path, detail) {
+        gsub(/[\t\r\n]/, " ", detail)
+        printf "FAIL\t%s\t%s\t%s\n", code, path, detail >> find
+    }
+    function note(code, path, detail) {
+        gsub(/[\t\r\n]/, " ", detail)
+        printf "NOTE\t%s\t%s\t%s\n", code, path, detail >> find
+    }
+    function edge(typ, from, to,    k) {
+        if (from == "" || to == "") { return }
+        k = typ SUBSEP from SUBSEP to
+        if (k in eseen) { return }
+        eseen[k] = 1; etyp[++ne] = typ; efrom[ne] = from; eto[ne] = to
+    }
+    function select_candidate(rid, cand) {
+        selected[rid] = cand
+    }
+    function owners(cand,    i,matched) {
+        split("", own_cards); split("", own_rids); own_count = 0
+        for (i = 1; i <= no; i++) {
+            matched = (o_cand[i] == cand || (o_dir[i] && index(cand, o_cand[i] "/") == 1))
+            if (matched) {
+                own_count++; own_cards[own_count] = o_card[i]; own_rids[own_count] = o_rid[i]
+            }
+        }
+        return own_count
+    }
+    FILENAME == cards {
+        c_kind[$1] = $2; c_pipe[$1] = $3; c_cont[$1] = $4
+        c_pref[$1] = $5; c_depth[$1] = $6; clist[++nc] = $1; next
+    }
+    FILENAME == routes {
+        ri = ++nr; r_card[ri] = $1; r_row[ri] = $2; r_label[ri] = $3
+        r_dest[ri] = $4; r_edge[ri] = $5; r_order[ri] = $6; next
+    }
+    FILENAME == refs {
+        f_card[$3] = $1; f_sec[$3] = $2; f_row[$3] = $4
+        f_raw[$3] = $5; f_dir[$3] = $6; flist[++nf] = $3; next
+    }
+    FILENAME == resolved {
+        rs[$1] = $2; rc1[$1] = $3; rc2[$1] = $4; rchosen[$1] = $5; next
+    }
+    END {
+        for (z = 1; z <= nc; z++) {
+            p = clist[z]
+            if (c_kind[p] == "deep") { note("DEPTH", p, "fourth nested routing card") }
+        }
+        for (z = 1; z <= nf; z++) {
+            rid = flist[z]; card = f_card[rid]; sec = f_sec[rid]; raw = f_raw[rid]
+            st = rs[rid]
+            if (st == "AMBIGUOUS" || st == "SCOPE") {
+                add(st, card, sec " reference is " tolower(st))
+            } else if (sec == "Outputs" && st == "ROUTE") {
+                add("SCOPE", card, "output has no viable candidate")
+            }
+            if (raw ~ /^@/) {
+                if (raw !~ /^@[A-Za-z][A-Za-z0-9_-]*$/) {
+                    add("INPUT", card, "malformed external input name")
+                }
+                if (sec != "Inputs" || base(card) != "00-intake") {
+                    add("INPUT", card, "external inputs are allowed only in 00-intake Inputs")
+                }
+            }
+            cands[1] = rchosen[rid]; cands[2] = ""
+            if (cands[1] == "") { cands[1] = rc1[rid]; cands[2] = rc2[rid] }
+            for (j = 1; j <= 2; j++) {
+                cand = cands[j]
+                if (cand == "") { continue }
+                dk = card SUBSEP sec SUBSEP cand
+                if ((dk in dseen) && dseen[dk] != rid) {
+                    add("AMBIGUOUS", card, "duplicate " sec " declaration for " cand)
+                } else {
+                    dseen[dk] = rid
+                }
+            }
+        }
+        for (z = 1; z <= nr; z++) {
+            card = r_card[z]; raw = r_dest[z]; rid = card "|Routing|" r_row[z] "|0"
+            if (raw == "") { add("ROUTE", card, "route destination is empty"); continue }
+            if (raw == "-") {
+                if (r_edge[z] != "-") { add("ROUTE", card, "non-path route requires edge -") }
+                continue
+            }
+            if (raw ~ /^@/) { add("INPUT", card, "external input cannot be a route"); continue }
+            if (r_edge[z] !~ /^(LOAD|NEXT|REWORK)$/) {
+                add("ROUTE", card, "path-bearing route requires LOAD, NEXT or REWORK")
+                continue
+            }
+            st = rs[rid]
+            if (st == "ROUTE" || st == "AMBIGUOUS" || st == "SCOPE") {
+                add(st, card, "route destination is " tolower(st)); continue
+            }
+            if (st != "OK") { continue }
+            dst = rchosen[rid]; r_dst[z] = dst
+            label = tolower(r_label[z]); gsub(/^[ \t]+|[ \t]+$/, "", label); gsub(/[ \t]+/, " ", label)
+            lk = card SUBSEP label
+            if (lk in lseen) { add("AMBIGUOUS", card, "duplicate task label " label) } else { lseen[lk] = 1 }
+            dk = card SUBSEP dst SUBSEP r_edge[z]
+            if (dk in rdup) { add("AMBIGUOUS", card, "duplicate route to " dst) } else { rdup[dk] = 1 }
+            if ((dst in c_kind) && c_kind[dst] == "stage" && router_for(dst) == card) {
+                pipe = c_pipe[dst]; sk = pipe SUBSEP dst
+                if (!(sk in stage_order) || r_order[z] < stage_order[sk]) { stage_order[sk] = r_order[z] }
+            }
+        }
+        for (z = 1; z <= nc; z++) {
+            p = clist[z]
+            if (c_kind[p] != "stage") { continue }
+            b = base(p); pipe = c_pipe[p]; prefix = substr(b, 1, 2)
+            if (prefix == "00") {
+                icount[pipe]++; intake[pipe] = p
+                if (b != "00-intake") { add("NUMBERING", p, "00 is reserved for 00-intake") }
+            } else if (b !~ /^[0-9][0-9]-[a-z0-9]+(-[a-z0-9]+)*$/) {
+                add("NUMBERING", p, "stage name does not match NN-slug")
+            }
+            pk = pipe SUBSEP prefix
+            if (pk in pseen) { add("NUMBERING", p, "duplicate prefix " prefix " in pipeline") } else { pseen[pk] = 1 }
+        }
+        for (pipe in icount) {
+            if (icount[pipe] > 1) { add("NUMBERING", intake[pipe], "more than one 00 card in pipeline") }
+            first = ""; want = stage_order[pipe SUBSEP intake[pipe]]
+            for (z = 1; z <= nc; z++) {
+                p = clist[z]
+                if (c_kind[p] == "stage" && c_pipe[p] == pipe) {
+                    o = stage_order[pipe SUBSEP p]
+                    if (o != "" && (first == "" || o < first)) { first = o }
+                }
+            }
+            if (want == "" || want != first) {
+                add("NUMBERING", intake[pipe], "00-intake must be first in routing-table order")
+            }
+        }
+        no = 0
+        for (z = 1; z <= nf; z++) {
+            rid = flist[z]
+            if (f_sec[rid] != "Outputs" || c_kind[f_card[rid]] != "stage") { continue }
+            split("", oc); ocn = 0
+            if (rchosen[rid] != "") { oc[++ocn] = rchosen[rid] }
+            else {
+                if (rc1[rid] != "") { oc[++ocn] = rc1[rid] }
+                if (rc2[rid] != "") { oc[++ocn] = rc2[rid] }
+            }
+            for (j = 1; j <= ocn; j++) {
+                no++; o_cand[no] = oc[j]; o_card[no] = f_card[rid]
+                o_dir[no] = f_dir[rid]; o_rid[no] = rid
+            }
+        }
+        for (z = 1; z <= nf; z++) {
+            rid = flist[z]; sec = f_sec[rid]
+            if (sec != "Inputs" && sec != "Load first") { continue }
+            if (f_raw[rid] ~ /^@/) { continue }
+            card = f_card[rid]; st = rs[rid]
+            if (st != "OK" && st != "MISSING") { continue }
+            split("", tc); tn = 0
+            if (rchosen[rid] != "") { tc[++tn] = rchosen[rid] }
+            else {
+                if (rc1[rid] != "") { tc[++tn] = rc1[rid] }
+                if (rc2[rid] != "") { tc[++tn] = rc2[rid] }
+            }
+            total = 0; chosen = ""; producer = ""
+            for (j = 1; j <= tn; j++) {
+                cand = tc[j]
+                if (st == "OK" && (cand in c_kind) && sec == "Load first") {
+                    total = 1; chosen = cand; producer = cand; break
+                }
+                count = owners(cand)
+                if (count > 0) {
+                    total += count
+                    if (count == 1 && chosen == "") { chosen = cand; producer = own_cards[1] }
+                }
+            }
+            if (total > 1) {
+                add("AMBIGUOUS", card, "multiple producers own " f_raw[rid]); continue
+            }
+            if (rchosen[rid] != "") { chosen = rchosen[rid] }
+            if (chosen != "") { select_candidate(rid, chosen) }
+            if (total == 1 && producer != "") {
+                if (sec == "Inputs") {
+                    if (c_kind[card] == "stage") { edge("LOAD", producer, card) }
+                } else {
+                    rkey = card "|" f_row[rid]
+                    for (q = 1; q <= nr; q++) {
+                        if (r_card[q] == card && r_row[q] == f_row[rid]) {
+                            destjob = r_dst[q]
+                            if (destjob != "") { edge("LOAD", producer, destjob) }
+                        }
+                    }
+                }
+            }
+        }
+        for (z = 1; z <= nr; z++) {
+            dst = r_dst[z]
+            if (dst == "") { continue }
+            card = r_card[z]
+            if (r_edge[z] == "NEXT") {
+                edge("NEXT", card, dst)
+            } else if (r_edge[z] == "LOAD") {
+                edge("LOAD", dst, card)
+            } else if (r_edge[z] == "REWORK") {
+                edge("REWORK", card, dst)
+                if (!(card in c_kind) || !(dst in c_kind) || c_kind[card] != "stage" || c_kind[dst] != "stage" || c_pipe[card] != c_pipe[dst]) {
+                    add("REWORK", card, "REWORK must stay inside one stage pipeline")
+                } else {
+                    so = stage_order[c_pipe[card] SUBSEP card]
+                    destord = stage_order[c_pipe[dst] SUBSEP dst]
+                    if (so == "" || destord == "" || destord >= so) {
+                        add("REWORK", card, "REWORK destination is not earlier in routing-table order")
+                    }
+                }
+            }
+        }
+        qh = 1; qt = 0
+        for (z = 1; z <= nc; z++) {
+            p = clist[z]
+            if (c_kind[p] != "stage") { continue }
+            pipe = c_pipe[p]
+            if (pipe in pseed) { continue }
+            pseed[pipe] = 1
+            start = router_for(p)
+            qpipe[++qt] = pipe; qnode[qt] = start
+            reached[pipe SUBSEP start] = 1
+        }
+        while (qh <= qt) {
+            pipe = qpipe[qh]; from = qnode[qh]; qh++
+            for (z = 1; z <= ne; z++) {
+                rkey = pipe SUBSEP eto[z]
+                if (etyp[z] == "NEXT" && efrom[z] == from && !(rkey in reached)) {
+                    reached[rkey] = 1; qpipe[++qt] = pipe; qnode[qt] = eto[z]
+                }
+            }
+        }
+        for (z = 1; z <= nc; z++) {
+            p = clist[z]
+            if (c_kind[p] == "stage" && !((c_pipe[p] SUBSEP p) in reached)) {
+                add("ROUTE", p, "stage is not reachable through NEXT from its pipeline router")
+            }
+        }
+        for (z = 1; z <= ne; z++) { printf "%s\t%s\t%s\n", etyp[z], efrom[z], eto[z] >> edgefile }
+        for (rid in selected) { printf "%s\t%s\n", rid, selected[rid] >> selfile }
+    }
+    ' "$O_DIR/cards" "$O_DIR/routes" "$O_DIR/refs" "$O_DIR/resolved"
+}
+
+icm_orchestra_cycles() {
+    awk -F '\t' -v typ="$1" -v code="$2" -v class="$3" '
+    {
+        if ($1 != typ) { next }
+        k = $2 SUBSEP $3
+        if (k in seen) { next }
+        seen[k] = 1; nodes[$2] = 1; nodes[$3] = 1
+        out[$2, $3] = 1; indeg[$3]++
+    }
+    END {
+        for (u in nodes) { if (!(u in indeg)) { indeg[u] = 0 } }
+        removed = 0
+        do {
+            found = ""
+            for (u in nodes) {
+                if (!gone[u] && indeg[u] == 0) { found = u; break }
+            }
+            if (found != "") {
+                gone[found] = 1; removed++
+                for (k in out) {
+                    split(k, a, SUBSEP)
+                    if (a[1] == found && !gone[a[2]]) { indeg[a[2]]-- }
+                }
+            }
+        } while (found != "")
+        left = ""
+        for (u in nodes) { if (!gone[u]) { if (left == "" || u < left) { left = u }; leftn++ } }
+        if (leftn > 0) {
+            label = (typ == "KNOWLEDGE" ? "knowledge cycle" : typ " cycle")
+            printf "%s\t%s\t%s\t%s\n", class, code, left, label
+        }
+    }
+    ' "$4"
+}
+
+icm_orchestra_validate() {
+    _o_v_tab=$(printf '\t')
+    while IFS="$_o_v_tab" read -r _o_v_code _o_v_card _o_v_detail; do
+        [ -n "$_o_v_code" ] || continue
+        printf 'FAIL\t%s\t%s\t%s\n' "$_o_v_code" "$_o_v_card" "$_o_v_detail" >> "$O_DIR/findings.raw"
+    done < "$O_DIR/issues"
+    icm_json_list "$ICM_DEFAULTS" orchestra.stage_required_sections > "$O_DIR/required"
+    while IFS="$_o_v_tab" read -r _o_v_card _o_v_kind _o_v_rest; do
+        case "$_o_v_kind" in stage|other) ;; *) continue ;; esac
+        while IFS= read -r _o_v_sec; do
+            [ -n "$_o_v_sec" ] || continue
+            if ! grep -q -F -x -- "$_o_v_sec" "$TARGET/$_o_v_card" 2>/dev/null; then
+                _o_v_code=CARD
+                [ "$_o_v_sec" = "## Preflight" ] && _o_v_code=CAPABILITY
+                printf 'FAIL\t%s\t%s\tmissing required section %s\n' "$_o_v_code" "$_o_v_card" "$_o_v_sec" >> "$O_DIR/findings.raw"
+            fi
+        done < "$O_DIR/required"
+    done < "$O_DIR/cards"
+    awk -F '\t' '
+    {
+        cards[++n] = $1; rows[n] = $2; kinds[n] = $3; refs[n] = $4; vers[n] = $5
+        count[$1]++
+        key = $1 SUBSEP $3 SUBSEP $4
+        if (key in seen) {
+            printf "FAIL\tCAPABILITY\t%s\tduplicate Preflight declaration\n", $1
+        } else { seen[key] = 1 }
+    }
+    END {
+        for (i = 1; i <= n; i++) {
+            card = cards[i]; kind = kinds[i]; ref = refs[i]; ver = vers[i]
+            if (kind !~ /^(Tool|Skill|No touch|None)$/) {
+                printf "FAIL\tCAPABILITY\t%s\tunknown Preflight kind %s\n", card, kind
+            } else if (kind == "None") {
+                if (count[card] != 1 || ref != "-" || ver != "-") {
+                    printf "FAIL\tCAPABILITY\t%s\tNone must be the only Preflight row\n", card
+                }
+            } else if (kind == "No touch") {
+                if (ref == "" || ref == "-" || ver != "-") {
+                    printf "FAIL\tCAPABILITY\t%s\tmalformed No touch declaration\n", card
+                }
+            } else if (ref == "" || ref == "-" || ver == "") {
+                printf "FAIL\tCAPABILITY\t%s\tTool and Skill require reference and exact version\n", card
+            }
+        }
+    }
+    ' "$O_DIR/preflight" >> "$O_DIR/findings.raw"
+    while IFS="$_o_v_tab" read -r _o_v_card _o_v_row _o_v_kind _o_v_ref _o_v_ver; do
+        [ -n "$_o_v_card" ] || continue
+        if [ "$_o_v_kind" = "Tool" ]; then
+            case "$_o_v_ref" in
+                -*|*[!A-Za-z0-9_+.-]*)
+                    printf 'FAIL\tCAPABILITY\t%s\tunsafe Tool declaration\n' "$_o_v_card" >> "$O_DIR/findings.raw" ;;
+            esac
+        fi
+        [ "$_o_v_kind" = "No touch" ] || continue
+        _o_v_rid="$_o_v_card|Preflight|$_o_v_row"
+        _o_v_status=$(awk -F '\t' -v id="$_o_v_rid" '$1 == id { print $2; exit }' "$O_DIR/resolved")
+        _o_v_path=$(awk -F '\t' -v id="$_o_v_rid" '$1 == id { print $5; exit }' "$O_DIR/resolved")
+        if [ "$_o_v_status" = "SCOPE" ]; then
+            printf 'FAIL\tSCOPE\t%s\tunsafe No touch path\n' "$_o_v_card" >> "$O_DIR/findings.raw"
+        elif [ "$_o_v_status" = "OK" ] && [ -n "$_o_v_path" ]; then
+            printf '%s\t%s\n' "$_o_v_card" "$_o_v_path" >> "$O_DIR/notouch"
+        fi
+    done < "$O_DIR/preflight"
+    while IFS="$_o_v_tab" read -r _o_v_card _o_v_sec _o_v_rid _o_v_row _o_v_raw _o_v_dir; do
+        [ "$_o_v_sec" = "Outputs" ] || continue
+        for _o_v_n in 3 4 5; do
+            _o_v_path=$(icm_orchestra_res_field "$_o_v_rid" "$_o_v_n")
+            [ -n "$_o_v_path" ] || continue
+            if [ -n "$(icm_never_write_hit "$_o_v_path")" ]; then
+                printf 'FAIL\tSCOPE\t%s\toutput matches never_write\n' "$_o_v_path" >> "$O_DIR/findings.raw"
+            fi
+        done
+    done < "$O_DIR/refs"
+}
+
+icm_orchestra_knowledge() {
+    _o_k_tab=$(printf '\t')
+    while IFS= read -r _o_k_from; do
+        [ -n "$_o_k_from" ] || continue
+        awk -v from="$_o_k_from" '
+        function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+        /^ {0,3}```/ { fence = 1 - fence; next }
+        /^ {0,3}~~~/ { tfence = 1 - tfence; next }
+        fence || tfence { next }
+        /^## / {
+            heading = $0; sub(/^## /, "", heading); heading = trim(heading)
+            section = heading; next
+        }
+        {
+            if ($0 ~ /^ *\|/ && (section == "Inputs" || section == "Outputs" || section == "Routing" || section == "Preflight")) { next }
+            line = $0; out = ""
+            while ((a = index(line, "`")) > 0) {
+                out = out substr(line, 1, a - 1); rest = substr(line, a + 1)
+                b = index(rest, "`")
+                if (b == 0) { line = ""; break }
+                line = substr(rest, b + 1)
+            }
+            out = out line
+            while ((a = index(out, "](")) > 0) {
+                rest = substr(out, a + 2); b = index(rest, ")")
+                if (b == 0) { break }
+                dest = trim(substr(rest, 1, b - 1))
+                gsub(/%20/, " ", dest); sub(/#.*/, "", dest)
+                sub(/ +"[^"]*" *$/, "", dest)
+                if (dest != "" && dest !~ /^[A-Za-z][A-Za-z0-9+.-]*:/ && dest !~ /^\//) {
+                    printf "%s\t%s\n", from, dest
+                }
+                out = substr(rest, b + 1)
+            }
+        }
+        ' "$TARGET/$_o_k_from"
+    done < "$O_DIR/markdown" > "$O_DIR/knowledge.raw"
+    while IFS="$_o_k_tab" read -r _o_k_from _o_k_raw; do
+        [ -n "$_o_k_from" ] || continue
+        _o_k_base=$(dirname -- "$_o_k_from")
+        if _o_k_c1=$(icm_orchestra_normalize "$_o_k_base" "$_o_k_raw"); then :; else continue; fi
+        if _o_k_c2=$(icm_orchestra_normalize . "$_o_k_raw"); then :; else continue; fi
+        [ "$_o_k_c1" = "$_o_k_c2" ] && _o_k_c2=""
+        _o_k_found=""; _o_k_count=0
+        for _o_k_c in "$_o_k_c1" "$_o_k_c2"; do
+            [ -n "$_o_k_c" ] || continue
+            if [ -e "$TARGET/$_o_k_c" ] && ! icm_orchestra_symlink "$TARGET" "$_o_k_c"; then
+                _o_k_found="$_o_k_c"; _o_k_count=$((_o_k_count + 1))
+            fi
+        done
+        if [ "$_o_k_count" -eq 1 ]; then
+            printf 'KNOWLEDGE\t%s\t%s\n' "$_o_k_from" "$_o_k_found" >> "$O_DIR/kedges"
+        elif [ "$_o_k_count" -gt 1 ]; then
+            printf 'INFO\tKNOWLEDGE\t%s\tambiguous knowledge link\n' "$_o_k_from" >> "$O_DIR/findings.raw"
+        fi
+    done < "$O_DIR/knowledge.raw"
+    icm_orchestra_cycles KNOWLEDGE KNOWLEDGE INFO "$O_DIR/kedges" >> "$O_DIR/findings.raw"
+    while IFS= read -r _o_k_from; do
+        [ -n "$_o_k_from" ] || continue
+        if ! awk -F '\t' -v p="$_o_k_from" '$2 == p || $3 == p { hit = 1 } END { exit hit ? 0 : 1 }' "$O_DIR/kedges"; then
+            printf 'INFO\tORPHAN\t%s\tknowledge orphan\n' "$_o_k_from" >> "$O_DIR/findings.raw"
+        fi
+    done < "$O_DIR/markdown"
+}
+
+icm_orchestra_res_field() {
+    awk -F '\t' -v id="$1" -v n="$2" '$1 == id { print $n; exit }' "$O_DIR/resolved"
+}
+
+icm_orchestra_overlap() {
+    [ "$1" = "." ] || [ "$2" = "." ] && return 0
+    case "$2" in "$1"|"$1"/*) return 0 ;; esac
+    case "$1" in "$2"|"$2"/*) return 0 ;; esac
+    return 1
+}
+
+icm_orchestra_no_touch() {
+    _o_nt_tab=$(printf '\t')
+    while IFS="$_o_nt_tab" read -r _o_nt_card _o_nt_path; do
+        [ "$_o_nt_card" = "$1" ] || continue
+        if icm_orchestra_overlap "$_o_nt_path" "$2"; then return 0; fi
+    done < "$O_DIR/notouch"
+    return 1
+}
+
+icm_orchestra_check_input() {
+    _o_ci_path="$1"
+    _o_ci_dir="$2"
+    if icm_orchestra_symlink "$TARGET" "$_o_ci_path"; then printf 'SCOPE\n'; return 0; fi
+    if [ ! -e "$TARGET/$_o_ci_path" ]; then printf 'INPUT\n'; return 0; fi
+    if [ -f "$TARGET/$_o_ci_path" ] && [ ! -L "$TARGET/$_o_ci_path" ]; then
+        if [ "$_o_ci_dir" = "1" ] || [ ! -r "$TARGET/$_o_ci_path" ] || [ ! -s "$TARGET/$_o_ci_path" ]; then
+            printf 'INPUT\n'
+        fi
+        return 0
+    fi
+    if [ -d "$TARGET/$_o_ci_path" ] && [ ! -L "$TARGET/$_o_ci_path" ]; then
+        _o_ci_found=0
+        find "$TARGET/$_o_ci_path" -type f ! -name .gitkeep -print 2>/dev/null > "$O_DIR/input.files"
+        while IFS= read -r _o_ci_file; do
+            [ -n "$_o_ci_file" ] || continue
+            if [ -r "$_o_ci_file" ]; then _o_ci_found=1; break; fi
+        done < "$O_DIR/input.files"
+        [ "$_o_ci_found" -eq 1 ] || printf 'INPUT\n'
+        return 0
+    fi
+    printf 'INPUT\n'
+}
+
+icm_orchestra_check_output() {
+    _o_co_path="$1"
+    _o_co_dir="$2"
+    if icm_orchestra_symlink "$TARGET" "$_o_co_path"; then printf 'SCOPE\n'; return 0; fi
+    if [ -n "$(icm_never_write_hit "$_o_co_path")" ]; then printf 'SCOPE\n'; return 0; fi
+    if [ -e "$TARGET/$_o_co_path" ]; then
+        if [ "$_o_co_dir" = "1" ]; then
+            if [ ! -d "$TARGET/$_o_co_path" ] || [ ! -w "$TARGET/$_o_co_path" ]; then printf 'SCOPE\n'; fi
+        else
+            if [ ! -f "$TARGET/$_o_co_path" ] || [ ! -w "$TARGET/$_o_co_path" ]; then printf 'SCOPE\n'; fi
+        fi
+        return 0
+    fi
+    _o_co_parent=$(dirname -- "$TARGET/$_o_co_path")
+    if [ ! -d "$_o_co_parent" ] || [ ! -w "$_o_co_parent" ]; then printf 'SCOPE\n'; fi
+}
+
+icm_orchestra_strict_add() {
+    _o_sa_detail=$(printf '%s' "$3" | tr '\t\r\n' '    ')
+    printf '%s\t%s\t%s\n' "$1" "$2" "$_o_sa_detail" >> "$O_DIR/strict"
+}
+
+icm_orchestra_bound_input() {
+    _o_bi_name="$1"
+    _o_bi_path="$2"
+    _o_bi_card="$3"
+    if _o_bi_norm=$(icm_orchestra_normalize . "$_o_bi_path"); then :; else
+        icm_orchestra_strict_add SCOPE "$_o_bi_card" "bound input $_o_bi_name is outside the workspace"
+        return 0
+    fi
+    if icm_orchestra_no_touch "$_o_bi_card" "$_o_bi_norm"; then
+        icm_orchestra_strict_add SCOPE "$_o_bi_norm" "bound input overlaps No touch"
+        return 0
+    fi
+    _o_bi_dir=0
+    case "$_o_bi_path" in */) _o_bi_dir=1 ;; esac
+    _o_bi_type=$(icm_orchestra_check_input "$_o_bi_norm" "$_o_bi_dir")
+    if [ -n "$_o_bi_type" ]; then
+        icm_orchestra_strict_add "$_o_bi_type" "$_o_bi_norm" "bound input $_o_bi_name is not materialised"
+    fi
+}
+
+icm_orchestra_strict_ref() {
+    _o_sr_card="$1"
+    _o_sr_sec="$2"
+    _o_sr_rid="$3"
+    _o_sr_raw="$4"
+    _o_sr_dir="$5"
+    _o_sr_job="$6"
+    if [ "$_o_sr_sec" = "Outputs" ]; then
+        _o_sr_status=$(icm_orchestra_res_field "$_o_sr_rid" 2)
+        _o_sr_path=$(icm_orchestra_res_field "$_o_sr_rid" 5)
+        [ "$_o_sr_status" = "OK" ] && [ -n "$_o_sr_path" ] || return 0
+        if icm_orchestra_no_touch "$_o_sr_job" "$_o_sr_path"; then
+            icm_orchestra_strict_add SCOPE "$_o_sr_path" "output overlaps No touch"
+            return 0
+        fi
+        _o_sr_type=$(icm_orchestra_check_output "$_o_sr_path" "$_o_sr_dir")
+        [ -n "$_o_sr_type" ] && icm_orchestra_strict_add "$_o_sr_type" "$_o_sr_path" "output scope is not writable"
+        return 0
+    fi
+    case "$_o_sr_raw" in
+        @*)
+            _o_sr_name=${_o_sr_raw#@}
+            printf '%s\n' "$_o_sr_name" >> "$O_DIR/used.bindings"
+            _o_sr_binding=$(awk -F '\t' -v n="$_o_sr_name" '$1 == n { print $2; exit }' "$O_DIR/cli.inputs")
+            if [ -z "$_o_sr_binding" ]; then
+                icm_orchestra_strict_add INPUT "$_o_sr_job" "unbound external input $_o_sr_name"
+            else
+                icm_orchestra_bound_input "$_o_sr_name" "$_o_sr_binding" "$_o_sr_job"
+            fi
+            return 0
+            ;;
+    esac
+    _o_sr_path=$(awk -F '\t' -v id="$_o_sr_rid" '$1 == id { print $2; exit }' "$O_DIR/selected")
+    [ -n "$_o_sr_path" ] || _o_sr_path=$(icm_orchestra_res_field "$_o_sr_rid" 5)
+    if [ -z "$_o_sr_path" ]; then
+        for _o_sr_n in 3 4; do
+            _o_sr_c=$(icm_orchestra_res_field "$_o_sr_rid" "$_o_sr_n")
+            [ -n "$_o_sr_c" ] || continue
+            if icm_orchestra_no_touch "$_o_sr_job" "$_o_sr_c"; then
+                icm_orchestra_strict_add SCOPE "$_o_sr_c" "input overlaps No touch"
+                return 0
+            fi
+        done
+        _o_sr_status=$(icm_orchestra_res_field "$_o_sr_rid" 2)
+        if [ "$_o_sr_status" = "MISSING" ]; then
+            icm_orchestra_strict_add INPUT "$_o_sr_job" "input is not materialised: $_o_sr_raw"
+        fi
+        return 0
+    fi
+    if icm_orchestra_no_touch "$_o_sr_job" "$_o_sr_path"; then
+        icm_orchestra_strict_add SCOPE "$_o_sr_path" "input overlaps No touch"
+        return 0
+    fi
+    _o_sr_type=$(icm_orchestra_check_input "$_o_sr_path" "$_o_sr_dir")
+    [ -n "$_o_sr_type" ] && icm_orchestra_strict_add "$_o_sr_type" "$_o_sr_path" "input is not readable material"
+}
+
+icm_orchestra_strict_capabilities() {
+    _o_sc_tab=$(printf '\t')
+    while IFS="$_o_sc_tab" read -r _o_sc_card _o_sc_row _o_sc_kind _o_sc_ref _o_sc_ver; do
+        [ "$_o_sc_card" = "$1" ] || continue
+        case "$_o_sc_kind" in
+            Tool)
+                case "$_o_sc_ref" in -*|*[!A-Za-z0-9_+.-]*) continue ;; esac
+                _o_sc_attested=$(awk -F '\t' -v n="$_o_sc_ref" '$1 == n { print $2; exit }' "$O_DIR/cli.tools")
+                if ! command -v "$_o_sc_ref" >/dev/null 2>&1; then
+                    icm_orchestra_strict_add CAPABILITY "$1" "Tool not found: $_o_sc_ref"
+                elif [ -z "$_o_sc_attested" ]; then
+                    icm_orchestra_strict_add CAPABILITY "$1" "Tool version attestation missing: $_o_sc_ref"
+                elif [ "$_o_sc_attested" != "$_o_sc_ver" ]; then
+                    icm_orchestra_strict_add CAPABILITY "$1" "Tool version attestation differs: $_o_sc_ref"
+                fi
+                ;;
+            Skill)
+                case "$_o_sc_ref" in
+                    ''|*/*|*'..'*|*[!A-Za-z0-9_.-]*)
+                        icm_orchestra_strict_add SCOPE "$1" "unsafe Skill path"
+                        continue
+                        ;;
+                esac
+                _o_sc_rel="skills/$_o_sc_ref/SKILL.md"
+                if icm_orchestra_symlink "$TARGET" "$_o_sc_rel"; then
+                    icm_orchestra_strict_add SCOPE "skills/$_o_sc_ref/SKILL.md" "Skill path contains a symlink"
+                    continue
+                fi
+                _o_sc_root="$TARGET"
+                if [ ! -e "$TARGET/$_o_sc_rel" ]; then
+                    _o_sc_root="$ICM_HOME"
+                fi
+                if icm_orchestra_symlink "$_o_sc_root" "$_o_sc_rel"; then
+                    icm_orchestra_strict_add SCOPE "skills/$_o_sc_ref/SKILL.md" "Skill path contains a symlink"
+                    continue
+                fi
+                if [ ! -f "$_o_sc_root/$_o_sc_rel" ]; then
+                    icm_orchestra_strict_add CAPABILITY "$1" "Skill not found: $_o_sc_ref"
+                    continue
+                fi
+                _o_sc_name=$(icm_fm_get "$_o_sc_root/$_o_sc_rel" name)
+                _o_sc_version=$(icm_fm_get "$_o_sc_root/$_o_sc_rel" version)
+                if [ "$_o_sc_name" != "$_o_sc_ref" ]; then
+                    icm_orchestra_strict_add CAPABILITY "skills/$_o_sc_ref/SKILL.md" "Skill name does not match"
+                elif [ -z "$_o_sc_version" ] || [ "$_o_sc_version" != "$_o_sc_ver" ]; then
+                    icm_orchestra_strict_add CAPABILITY "skills/$_o_sc_ref/SKILL.md" "Skill version does not match exactly"
+                fi
+                ;;
+        esac
+    done < "$O_DIR/preflight"
+}
+
+icm_orchestra_strict() {
+    _o_st_job="$1"
+    : > "$O_DIR/strict"; : > "$O_DIR/used.bindings"
+    awk -F '\t' '$1 == "FAIL" {
+        typ = $2
+        if (typ == "CARD" || typ == "NUMBERING" || typ == "LOAD" || typ == "NEXT" || typ == "REWORK") { typ = "ROUTE" }
+        print typ "\t" $3 "\t" $4
+    }' "$O_DIR/findings.raw" >> "$O_DIR/strict"
+    if _o_st_norm=$(icm_orchestra_normalize . "$_o_st_job"); then
+        _o_st_display="$_o_st_norm"
+    else
+        _o_st_norm=""; _o_st_display="-"
+    fi
+    _o_st_kind=""
+    if [ -n "$_o_st_norm" ]; then
+        _o_st_kind=$(awk -F '\t' -v p="$_o_st_norm" '$1 == p { print $2; exit }' "$O_DIR/cards")
+    fi
+    if [ "$_o_st_kind" != "stage" ]; then
+        icm_orchestra_strict_add ROUTE "${_o_st_display}" "job is not a selectable stage card"
+    else
+        awk -F '\t' -v p="$_o_st_norm" '$1 == p && ($2 == "Inputs" || $2 == "Outputs")' "$O_DIR/refs" > "$O_DIR/strict.refs"
+        _o_st_tab=$(printf '\t')
+        while IFS="$_o_st_tab" read -r _o_st_card _o_st_row _o_st_label _o_st_dest _o_st_edge _o_st_order _o_st_header; do
+            [ -n "$_o_st_card" ] || continue
+            _o_st_rid="$_o_st_card|Routing|$_o_st_row|0"
+            _o_st_chosen=$(icm_orchestra_res_field "$_o_st_rid" 5)
+            [ "$_o_st_chosen" = "$_o_st_norm" ] || continue
+            awk -F '\t' -v c="$_o_st_card" -v r="$_o_st_row" \
+                '$1 == c && $2 == "Load first" && $4 == r' "$O_DIR/refs" >> "$O_DIR/strict.refs"
+        done < "$O_DIR/routes"
+        while IFS="$_o_st_tab" read -r _o_st_card _o_st_sec _o_st_rid _o_st_row _o_st_raw _o_st_dir; do
+            [ -n "$_o_st_rid" ] || continue
+            icm_orchestra_strict_ref "$_o_st_card" "$_o_st_sec" "$_o_st_rid" "$_o_st_raw" "$_o_st_dir" "$_o_st_norm"
+        done < "$O_DIR/strict.refs"
+        icm_orchestra_strict_capabilities "$_o_st_norm"
+        while IFS="$_o_st_tab" read -r _o_st_name _o_st_path; do
+            [ -n "$_o_st_name" ] || continue
+            if ! grep -q -F -x -- "$_o_st_name" "$O_DIR/used.bindings"; then
+                icm_orchestra_strict_add INPUT "$_o_st_norm" "binding $_o_st_name is not declared by this job"
+            fi
+        done < "$O_DIR/cli.inputs"
+    fi
+    printf '# icm-orchestra-preflight-v1\n'
+    printf 'job: %s\n' "${_o_st_display}"
+    sort -t "$(printf '\t')" -k1,1 -k2,2 -k3,3 -u "$O_DIR/strict" | \
+        awk -F '\t' '{ print "MISSING\t" $1 "\t" $2 "\t" $3 }'
+    if [ -s "$O_DIR/strict" ]; then
+        printf 'result: MISSING\n'
+        return 1
+    fi
+    printf 'result: RUN\n'
+    return 0
+}
+
+icm_orchestra_emit() {
+    _o_e_tab=$(printf '\t')
+    if [ "$1" = "structural" ]; then
+        printf '# icm-orchestra-structural-v1\n'
+        for _o_e_class in FAIL NOTE INFO; do
+            awk -F '\t' -v c="$_o_e_class" '$1 == c' "$O_DIR/findings.raw" | \
+                sort -t "$_o_e_tab" -k2,2 -k3,3 -k4,4 -u
+        done
+        if awk -F '\t' '$1 == "FAIL" { found = 1 } END { exit found ? 0 : 1 }' "$O_DIR/findings.raw"; then
+            printf 'result: FAIL\n'; return 1
+        fi
+        printf 'result: clean\n'; return 0
+    fi
+    printf '# ICM Orchestra\n\n'
+    printf '## Findings\n\n| Type | Path | Detail |\n|---|---|---|\n'
+    awk -F '\t' '$1 == "FAIL" { gsub(/\|/, "\\|", $3); gsub(/\|/, "\\|", $4); print "| " $2 " | `" $3 "` | " $4 " |" }' "$O_DIR/findings.raw" | sort
+    printf '\n## Pipelines\n\n| Pipeline | Routing card | Stage container |\n|---|---|---|\n'
+    awk -F '\t' '$2 == "stage" {
+        pipe = $3; router = "CONTEXT.md"
+        if (pipe != "." && pipe != "stages") {
+            if (pipe ~ /\/stages$/) { sub(/\/stages$/, "/CONTEXT.md", pipe); router = pipe }
+            else { router = pipe "/CONTEXT.md" }
+        }
+        print "| `" $3 "` | `" router "` | `" $4 "` |"
+    }' "$O_DIR/cards" | sort -u
+    printf '\n## Cards\n\n| Card | Pipeline | Prefix | Depth |\n|---|---|---|---|\n'
+    awk -F '\t' '{ print "| `" $1 "` | `" $3 "` | " substr($5, 1, 2) " | " $6 " |" }' "$O_DIR/cards" | sort
+    printf '\n## Workflow Edges\n\n| Type | From | To |\n|---|---|---|\n'
+    awk -F '\t' '{ print "| " $1 " | `" $2 "` | `" $3 "` |" }' "$O_DIR/edges" | sort -u
+    printf '\n## Workflow Backlinks\n\n| Card | Incoming type | From |\n|---|---|---|\n'
+    awk -F '\t' '{ print "| `" $3 "` | " $1 " | `" $2 "` |" }' "$O_DIR/edges" | sort -u
+    printf '\n## Knowledge Edges\n\n| From | To |\n|---|---|\n'
+    awk -F '\t' '{ print "| `" $2 "` | `" $3 "` |" }' "$O_DIR/kedges" | sort -u
+    printf '\n## Knowledge Backlinks\n\n| Target | Linked from |\n|---|---|\n'
+    awk -F '\t' '{ print "| `" $3 "` | `" $2 "` |" }' "$O_DIR/kedges" | sort -u
+    printf '\n## Notes\n\n| Type | Path | Detail |\n|---|---|---|\n'
+    awk -F '\t' '$1 == "NOTE" || $1 == "INFO" { gsub(/\|/, "\\|", $3); gsub(/\|/, "\\|", $4); print "| " $2 " | `" $3 "` | " $4 " |" }' "$O_DIR/findings.raw" | sort
+    printf '\n'
+    if awk -F '\t' '$1 == "FAIL" { found = 1 } END { exit found ? 0 : 1 }' "$O_DIR/findings.raw"; then
+        printf 'result: FAIL\n'; return 1
+    fi
+    printf 'result: clean\n'; return 0
+}
+
+icm_orchestra_report() {
+    _o_m_mode="$1"
+    _o_m_job="$2"
+    icm_tmp_init
+    O_DIR="$ICM_TMPDIR/orchestra"
+    rm -rf "$O_DIR"
+    mkdir -p "$O_DIR"
+    for _o_m_f in cards routes refs preflight issues resolved findings.raw edges selected notouch kedges markdown contexts cli.inputs cli.tools; do
+        : > "$O_DIR/$_o_m_f"
+    done
+    cp "$ICM_TMPDIR/cli.inputs" "$O_DIR/cli.inputs"
+    cp "$ICM_TMPDIR/cli.tools" "$O_DIR/cli.tools"
+    icm_walk_files "$TARGET" > "$O_DIR/all.files"
+    while IFS= read -r _o_m_rel; do
+        [ -n "$_o_m_rel" ] || continue
+        if icm_orchestra_nested "$_o_m_rel"; then continue; fi
+        case "$_o_m_rel" in
+            *.md) printf '%s\n' "$_o_m_rel" >> "$O_DIR/markdown" ;;
+        esac
+        case "$_o_m_rel" in
+            CONTEXT.md|*/CONTEXT.md) printf '%s\n' "$_o_m_rel" >> "$O_DIR/contexts" ;;
+        esac
+    done < "$O_DIR/all.files"
+    [ -f "$TARGET/IDENTITY.md" ] || printf 'FAIL\tCARD\tIDENTITY.md\tmissing workspace identity\n' >> "$O_DIR/findings.raw"
+    [ -f "$TARGET/CONTEXT.md" ] || printf 'FAIL\tCARD\tCONTEXT.md\tmissing root routing card\n' >> "$O_DIR/findings.raw"
+    icm_orchestra_classify "$O_DIR/contexts" "$O_DIR/cards"
+    _o_m_tab=$(printf '\t')
+    while IFS="$_o_m_tab" read -r _o_m_card _o_m_kind _o_m_rest; do
+        [ -n "$_o_m_card" ] || continue
+        icm_orchestra_parse_card "$TARGET/$_o_m_card" "$_o_m_card"
+    done < "$O_DIR/cards"
+    icm_orchestra_resolve_all
+    icm_orchestra_graph
+    icm_orchestra_cycles LOAD LOAD FAIL "$O_DIR/edges" >> "$O_DIR/findings.raw"
+    icm_orchestra_cycles NEXT NEXT FAIL "$O_DIR/edges" >> "$O_DIR/findings.raw"
+    icm_orchestra_validate
+    icm_orchestra_knowledge
+    case "$_o_m_mode" in
+        strict) icm_orchestra_strict "$_o_m_job" ;;
+        structural|view) icm_orchestra_emit "$_o_m_mode" ;;
+    esac
 }
 
 icm_git_dirty_list() {

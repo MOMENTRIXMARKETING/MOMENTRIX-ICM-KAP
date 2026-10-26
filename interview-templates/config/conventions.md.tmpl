@@ -16,11 +16,13 @@
 | Thing | Convention |
 |---|---|
 | Folders and files | lowercase-with-hyphens, no spaces |
-| Stage folders | zero-padded number prefix: `01-`, `02-`, `03-` |
+| Stage folders | `NN-slug`, positive `01` through `99`, gaps legal; optional `00-intake` is reserved and first |
+| Routing order | the nearest routing table is authoritative; prefixes are filing aids, duplicates are invalid inside one pipeline and legal across pipelines |
 | Output artifacts | `[topic-slug]-[artifact-type].md` |
 | Raw files | `YYYY-MM-DD-descriptive-slug.md`, slug max 60 characters |
 | Placeholders | double-brace SCREAMING_SNAKE, see `spec/placeholder-syntax.md` |
-| Routing files | `CONTEXT.md`, one per folder that needs routing |
+| Routing files | `CONTEXT.md`, typed trailing Edge column for Orchestra |
+| Job scope | Inputs read, Outputs write, `No touch` permits neither |
 | Rule books | `_config/*.md`, reference only |
 | Never edited | `raw/`, and anything under {{DO_NOT_EDIT_PATHS}} |
 
@@ -43,15 +45,17 @@ Layers 1 to 3 recurse. A folder that holds sub-areas repeats the same shape insi
 Each file type has one shape and it does not drift.
 
 - Layer 0 `IDENTITY.md`: blockquote purpose, Workspace Map, optional Raw Sources, Rules.
-- Layer 1 root `CONTEXT.md`: Routing, Session Start, Rule Books, optional Pipeline.
-- Layer 2 job card: Purpose, Inputs, Process, Outputs, Routing. Nothing else.
+- Layer 1 root `CONTEXT.md`: Routing, Session Start, Rule Books, Session Close, and the on-demand Orchestra View command.
+- Layer 2 job card: Purpose, Inputs, Process, Outputs, Routing. Orchestra adds Preflight and typed edges; Checkpoints and Audit remain optional.
 - Layer 3 rule book: this shape. Quick Reference first, detail after.
 
 Required sections and size ceilings are in `icm.defaults.json`. Do not restate a number from that file in prose here; cite the file.
 
-## Cross-References
+## Workflow and Knowledge References
 
-Every folder points outward at what it needs. Nothing points back. Before adding a reference, check whether the target already references you. If it does, restructure rather than closing the loop.
+Path-bearing workflow destinations use `LOAD`, `NEXT`, or `REWORK`; non-path stops use dashes. LOAD names a prerequisite and must be acyclic. NEXT selects work and is checked separately. REWORK goes earlier in routing-table order. Inputs and Load first derive LOAD edges from unique producers.
+
+Ordinary Markdown links outside workflow fields form the knowledge projection. Its cycles and backlinks are informational, not a reason for a blanket one-way ban. Derive the front view with `--orchestra-view`; never store a graph, backlink index, or duplicate pipeline table.
 
 ## One Home Per Fact
 

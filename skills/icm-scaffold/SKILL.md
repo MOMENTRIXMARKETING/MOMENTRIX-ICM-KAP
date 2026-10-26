@@ -1,6 +1,7 @@
 ---
 name: icm-scaffold
-description: "This skill should be used when the user asks to 'scaffold ICM', 'set up ICM', 'start a new ICM workspace', 'create IDENTITY.md and CONTEXT.md', 'build me a pipeline workspace', or names 'icm-scaffold'. It runs a ten question setup interview, picks an archetype, writes the layer files from the interview templates, then runs scripts/icm-check.sh on its own output and refuses to report success while the check fails."
+version: 1.0.0
+description: "This skill should be used when the user asks to 'scaffold ICM', 'set up ICM', 'start a new ICM workspace', 'create IDENTITY.md and CONTEXT.md', 'build me a pipeline workspace', or names 'icm-scaffold'. Runs a setup interview, picks an archetype, writes typed layer files from the interview templates, checks the result, and runs post-install Orchestra preflight without executing a job."
 user-invocable: true
 argument-hint: "quick | full | wiki"
 ---
@@ -43,10 +44,11 @@ Under the plugin install `CLAUDE_PLUGIN_ROOT` is the repo root. Under the manual
 | File | Why |
 |---|---|
 | `$ICM_HOME/spec/CLI-CONTRACT.md` | The command names, artifact paths, rule book filenames and vocabulary. Authoritative over this file. |
+| `$ICM_HOME/spec/ORCHESTRA.md` | Typed cards, four layouts, intake, capabilities, graph findings, and scope. |
 | `$ICM_HOME/spec/layers.md` | Which layer each written file belongs to. |
 | `$ICM_HOME/spec/budgets.md` | Every character budget. Never state a budget as a number in your own prose. |
 | `$ICM_HOME/spec/excluded-folders.md` | The human rendering of `excluded_globs`. Never restate the list. |
-| `$ICM_HOME/spec/CONVENTIONS.md` | The stage contract shape, one-way cross references, canonical sources. |
+| `$ICM_HOME/spec/CONVENTIONS.md` | The generic stage contract shape and canonical-source boundary. |
 | `$ICM_HOME/spec/placeholder-syntax.md` | Placeholder rules and where placeholders may not appear. |
 | `$ICM_HOME/spec/authority-model.md` | Which findings you may fix and which you may only report. |
 | `$ICM_HOME/icm.defaults.json` | `required_sections`, `frontmatter`, `never_write`, `excluded_globs`. The numbers live here. |
@@ -58,21 +60,21 @@ The argument answers this. Confirm it against the interview rather than assume i
 | Archetype | You write | Use when |
 |---|---|---|
 | `quick` | layers 0, 1, 3 only. Routing and rule books. No new folders beyond `_config/` and `_log/`. | Adding ICM to a project that already has a working folder structure. This is the default. Earn complexity before you add it. |
-| `full` | quick, plus physical stage folders under `stages/`, each with a job card and an `output/` folder. | A new pipeline built from scratch, where the stages are the folder structure. |
+| `full` | quick, plus physical stage folders in a supported Orchestra layout, each with a job card and an `output/` folder. | A new pipeline built from scratch, where the stages are the folder structure. |
 | `wiki` | full, plus the Karpathy compilation layer: `raw/` (immutable), `wiki/` (compiled), `wiki/index.md`, `wiki/log.md`, and the grounding invariant wired into the compile stage. | The work is knowledge compilation: sources in, cited articles out. |
 
 If no argument was given, default to `quick` and say so.
 
 ## Step 2: The setup interview
 
-Ask all ten in one pass. Accept brief answers. Derive what you can from the disk instead of asking twice. `$ICM_HOME/interview-templates/questionnaire.md.tmpl` is the long form if the user wants to fill it in themselves.
+Ask every applicable question in one pass. Accept brief answers. Derive what you can from the disk instead of asking twice. `$ICM_HOME/interview-templates/questionnaire.md.tmpl` is the long form if the user wants to fill it in themselves.
 
 **Required**
 
 1. **What project is this for?** Project name plus one sentence.
 2. **Where does the project live?** Absolute root path. Everything you write goes under it.
 3. **What does the folder structure look like?** Offer to scan it. If you scan, honour `excluded_globs` and show the user what you found before you use it.
-4. **What are the main workflow tasks?** The verbs. "compile docs from source notes", "research, draft, review", "investigate, implement, test".
+4. **What are the main workflow tasks?** The verbs and their semantic order. For physical stages, choose root direct, root `stages/`, department direct, or department `stages/` for each pipeline. Routing-table order, not numeric order, is authoritative.
 5. **Does this project compile knowledge?** Raw sources into structured articles. Yes points at the `wiki` archetype even if the argument said otherwise. Say so and let the user decide.
 6. **Who reads the outputs?** Engineers, the public, agents, mixed. This sets voice and evidence standard.
 
@@ -82,8 +84,11 @@ Ask all ten in one pass. Accept brief answers. Derive what you can from the disk
 8. **Are there existing conventions, glossary or style files?** If yes, the rule book re-exports them. It does not copy them.
 9. **Do you want model adapters?** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`. Default: none. `IDENTITY.md` works without any of them.
 10. **Confirm the archetype.** Quick, full or wiki, per the table above.
+11. **Does a pipeline need `00-intake`?** Add it only when intake and preflight need a reserved first card. Name its external `@NAME` inputs and declared Outputs. Default: no intake card when there is no external boundary.
+12. **Which tools and skills does each Orchestra card require?** Record exact actual version strings for the card declarations, never ranges. Default: `None` only when there are genuinely no declarations.
+13. **Which paths must a job neither read nor write?** Record them as `No touch` rows with Version `-`. Default: no card-specific rows; the merged `never_write` rules still apply to Outputs.
 
-Do not proceed on a guess for questions 1 to 4. Those four decide the routing table, and a wrong routing table is worse than no routing table.
+Do not proceed on a guess for questions 1 to 4. Those four decide the routing table, and a wrong routing table is worse than no routing table. Do not invent an intake, capability, version, or no-touch declaration to finish the interview faster.
 
 ## Step 3: Preflight the ground
 
@@ -122,11 +127,13 @@ The rule book filenames are the five in `$ICM_HOME/spec/CLI-CONTRACT.md` section
 
 | Output | Template | Layer |
 |---|---|---|
-| `stages/NN-name/CONTEXT.md` | `$ICM_HOME/interview-templates/CONTEXT.stage.md.tmpl` | 2, the job card |
-| `stages/NN-name/references/.gitkeep` | none | 3 holding pen |
-| `stages/NN-name/output/.gitkeep` | none | 4b |
+| `STAGE_DIR/CONTEXT.md` | `$ICM_HOME/interview-templates/CONTEXT.stage.md.tmpl` | 2, the job card |
+| `STAGE_DIR/references/.gitkeep` | none | 3 holding pen |
+| `STAGE_DIR/output/.gitkeep` | none | 4b |
 
-Stage folders are zero padded and lowercase with hyphens: `01-ingest`, `02-compile`.
+`STAGE_DIR` follows the layout selected in the interview: `NN-slug`, `stages/NN-slug`, `DEPARTMENT/NN-slug`, or `DEPARTMENT/stages/NN-slug`. Positive prefixes are `01` through `99`, gaps are legal, and duplicate prefixes matter only inside one pipeline. Routing-table order is authoritative.
+
+Optional `00-intake` is the reserved first card in its pipeline when external input needs an intake boundary. Only its Inputs table may declare `@NAME`; positive stages consume workspace paths. It is never an ordinary domain stage and is never renamed or renumbered by later insertion.
 
 **`wiki` adds**
 
@@ -143,12 +150,14 @@ The wiki archetype carries the grounding invariant: every load-bearing fact in a
 
 **Content rules for every file you write**
 
-- Write only what the interview and the disk support. Do not invent a folder, a task, or a status.
+- Write only what the interview and the disk support. Do not invent a folder, a task, a capability, a version, or a status.
 - Every folder in the workspace map gets a comment saying what it holds. The map is a fenced block, because `icm-check.sh --drift` reads the first fenced block in `IDENTITY.md` and compares it to the real tree.
-- Required headings per file kind are in `icm.defaults.json` under `required_sections`. For `IDENTITY.md` and every `CONTEXT.md` a missing one is a check failure; for rule books, the wiki index and log, and the ledger the list is the shape to write, graded by you, not by a script.
+- Required headings per file kind are in `icm.defaults.json` under `required_sections`. For `IDENTITY.md` and every `CONTEXT.md` a missing one is a check failure; for rule books, the wiki index and log, and the ledger the list is the shape to write, graded by you, not by a script. Orchestra adds Preflight without changing that generic list.
 - Character budgets come from `$ICM_HOME/spec/budgets.md`. A file over its ceiling is a failure. Cut the file.
 - If canonical content already exists elsewhere in the repo, the rule book re-exports it: canonical path in a blockquote at the top, a short quick reference, then a link. It does not duplicate the content.
-- Cross references point outward only. If the target already points back at you, restructure.
+- Root, department, and stage Routing tables use a trailing Edge column. Path-bearing rows use `LOAD`, `NEXT`, or `REWORK`; non-path stops use `-`. REWORK goes earlier in routing-table order. Inputs and Load first derive LOAD dependencies from unique producers.
+- Preflight declares exact Tool and Skill versions plus any No touch paths. Inputs are the only execution read scope, Outputs the only write scope apart from the existing Session Close ledger. No touch permits neither reads nor writes.
+- Ordinary Markdown links outside workflow fields are knowledge links, not workflow cycles. Do not impose a blanket one-way reference ban, write a duplicate pipeline or backlink table, or store a graph. The root card exposes the on-demand `--orchestra-view` command instead.
 - Lowercase folder names. No em dashes.
 
 ### Model adapters
@@ -185,9 +194,18 @@ From the project root you just wrote into:
 sh "$ICM_HOME/scripts/icm-check.sh" .
 ```
 
-Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify a single fix, pass that check's own flag, for example `--sections` or `--adapters`, or select it by id with `--only sections`.
+Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify a single fix, pass that check's own flag, for example `--sections` or `--adapters`, or select it by id with `--only sections`. The default and `--all` retain only the original eleven generic checks.
 
-**A scaffold that fails its own check is a bug, not a warning.** Do not report success with findings attached. Fix what you wrote, re-run, and only then report. The fix direction is fixed:
+For Orchestra cards, run structural validation separately, then run post-install strict preflight for the selected entry job:
+
+```sh
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra .
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra --job "$CARD" .
+```
+
+`CARD` is the full workspace-relative job card selected with the user. Add declared `--input NAME=PATH` bindings and trusted actual `--tool-version NAME=VERSION` attestations using `skills/icm-orchestra/SKILL.md`. Relay RUN or every MISSING row and execute nothing. Strict MISSING records runtime prerequisites; it is not a structural install failure and not permission to materialise inputs during scaffold. RUN is not completed work or external approval.
+
+**A scaffold that fails its own generic or structural check is a bug, not a warning.** Do not report structural success with findings attached. Fix what you wrote, re-run, and only then report. The fix direction is fixed:
 
 - Budget breach: cut the file. Never raise the budget.
 - Missing required section: write the section. Never delete the check.
@@ -195,13 +213,14 @@ Exit 0 clean, 1 findings, 2 usage or environment error. To re-verify a single fi
 - Adapter finding: make the adapter an alias. Never satisfy it by copying more.
 - Drift finding: the workspace map is missing something that is on disk. Add it to the map.
 - Route finding: a `CONTEXT.md` points at a path that does not exist. Fix the path or write the file.
+- Typed Orchestra finding: preserve its type in the report and fix the card, route, capability, or scope rather than weakening the check.
 
-Exactly two findings may survive into your report, and both must be named as open work rather than buried:
+Exactly two generic findings may survive into your report, and both must be named as open work rather than buried:
 
 1. A mechanical report against a pre-existing user file you did not write.
 2. The evidence check skipped because `python3` is absent, or because the workspace has no `wiki/`. `scripts/check_evidence.py` is optional. Nothing in this toolkit requires python or node.
 
-Anything else, you loop until the check is clean.
+Anything else in the generic or structural checks, you loop until clean. Strict MISSING rows are listed separately as runtime open work, never hidden and never counted as a successful job run.
 
 ## Step 7: Report
 
@@ -216,16 +235,20 @@ Root: <absolute path>
 
 ### Check result
 sh "$ICM_HOME/scripts/icm-check.sh" . - PASS
+sh "$ICM_HOME/scripts/icm-check.sh" --orchestra . - PASS when Orchestra applies
 (or: PASS with N open items, each listed and owned)
+
+### Strict preflight
+- <CARD> - RUN | every MISSING row, with no execution claimed
 
 ### Not automated
 - <what the user still has to fill in, per file>
 
 ### Next
 - Review IDENTITY.md. Does the workspace map match your mental model?
-- Review the routing table in CONTEXT.md. Does every common task have a row?
+- Review the routing table in CONTEXT.md. Does every common task have a row and a truthful Edge?
 - Review _config/. Do the rule books match how you actually work?
-- Full or wiki: run the pipeline once on a small case before using it at scale.
+- Full or wiki: use /icm-orchestra run on a small case only after its own fresh RUN and all external approvals.
 ```
 
 ## Step 8: Log
@@ -252,7 +275,7 @@ Do not invent a different shape. Verify cycles is how many times you had to re-r
 
 Per `$ICM_HOME/spec/authority-model.md`. Know which half of this list you are allowed to argue with.
 
-**Machine-enforced.** `scripts/icm-check.sh` decides. Its verdict is not an opinion and you do not talk it down. Every row below was verified against the script; each check has a flag of the same name, and `--only <id>` selects one by id. There are eleven ids and no others.
+**Machine-enforced.** `scripts/icm-check.sh` decides. Its verdict is not an opinion and you do not talk it down. Every row below was verified against the script; each generic check has a flag of the same name, and `--only <id>` selects one by id. There are twelve ids. No arguments and `--all` retain only the original eleven generic ids; Orchestra is explicit.
 
 | Check | check-id | What it actually verifies |
 |---|---|---|
@@ -267,6 +290,7 @@ Per `$ICM_HOME/spec/authority-model.md`. Know which half of this list you are al
 | Code fences | `fences` | Backtick and tilde fence counts are even in every `.md` |
 | Shell and defaults self-test | `self` | Defaults parse, every `.sh` passes `sh -n`, the bashism sweep is clean, no `.md` carries a banned frontmatter key |
 | Grounding invariant, optional | `evidence` | Runs `scripts/check_evidence.py` when `python3` and `wiki/` both exist. Skipped otherwise, and the skip is reported, never hidden |
+| Orchestra structure | `orchestra` | Explicit typed cards, graph, layouts, numbering, capabilities, scope, and ambiguity; strict preflight maps structural findings to its public MISSING types |
 
 **Not checked by anything.** Do not describe these as machine-enforced.
 
