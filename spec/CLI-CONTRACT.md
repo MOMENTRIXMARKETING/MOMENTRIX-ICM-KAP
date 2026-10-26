@@ -293,7 +293,7 @@ RUN means ready to start, never successful completion or approval for an externa
 
 All three Orchestra envelopes use workspace-relative paths. They contain no absolute target path, absolute toolkit or defaults path, temporary path, timestamp, or mirror-specific default. Repeated runs and mirrored clones produce byte-identical output without normalising local paths.
 
-Tabs and newlines in CLI machine fields are usage errors. A tab or newline inside a card field is a malformed card, not a way to inject extra TSV columns or records. Details are single-line text; machine output never emits raw field tabs or newlines as data.
+Tabs and newlines in CLI machine fields are usage errors. Name them exactly as `FAIL tab in a CLI machine field` or `FAIL newline in a CLI machine field`. A tab or newline inside a card field is a malformed card, not a way to inject extra TSV columns or records. Details are single-line text; machine output never emits raw field tabs or newlines as data.
 
 #### Legacy parser boundary
 

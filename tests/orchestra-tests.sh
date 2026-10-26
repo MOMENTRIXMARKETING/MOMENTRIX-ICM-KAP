@@ -548,10 +548,10 @@ NL='
 t_begin
 run "$CHECK" --orchestra --job 00-intake/CONTEXT.md --input "bad${TAB}name=file.md" "$D"
 t_rc 2
-t_out "tab"
+t_out "FAIL tab in a CLI machine field"
 run "$CHECK" --orchestra --job 00-intake/CONTEXT.md --tool-version "sh=1${NL}2" "$D"
 t_rc 2
-t_out "newline"
+t_out "FAIL newline in a CLI machine field"
 feature "CLI-MACHINE-FIELD-WHITESPACE"
 
 # Numbering, four layouts, nested roots, and pipeline identity.
@@ -1238,6 +1238,17 @@ t_rc 0
 t_out "result: RUN"
 feature "INPUT-BINDING-SPLITS-FIRST-EQUALS"
 
+D=$(fixture "binding directory")
+make_valid "$D" root
+make_card "$D" 00-intake '`@brief`' - "" ""
+mkdir -p "$D/intake/nested"
+printf 'brief\n' > "$D/intake/nested/brief.md"
+t_begin
+run "$CHECK" --orchestra --job 00-intake/CONTEXT.md --input brief=intake/ "$D"
+t_rc 0
+t_out "result: RUN"
+feature "INPUT-BOUND-DIRECTORY-QUALIFIES"
+
 FEATURE_SKIP=0
 feature_skip() {
     FEATURE_SKIP=$((FEATURE_SKIP + 1))
@@ -1700,6 +1711,7 @@ for ARCH in quick full wiki; do
     t_rc 0
     t_file_out "$WORK/body root $ARCH.out" '| Job | Where | Load first | Edge |'
     t_file_out "$WORK/body root $ARCH.out" 'sh "$ICM_HOME/scripts/icm-check.sh" --orchestra-view .'
+    t_file_not_out "$WORK/body root $ARCH.out" '](--orchestra-view)'
     t_file_not_out "$WORK/body root $ARCH.out" 'GRAPH.md'
     t_file_not_out "$WORK/body root $ARCH.out" 'BACKLINKS.md'
     t_file_not_out "$WORK/body root $ARCH.out" '## Pipeline'

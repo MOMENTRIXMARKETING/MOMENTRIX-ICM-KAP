@@ -2,7 +2,7 @@
 
 This is the binding structural, graph, capability, scope, and preflight contract for ICM Orchestra. `spec/CLI-CONTRACT.md` owns the command line and output envelopes. This file owns what the checker parses and what its answers mean.
 
-The end user's repository is the only brain and workspace. Orchestra reads it in place. GitHub is a versioned distribution and collaboration mechanism, not a second brain, a mirror, or a required service.
+The end user's repository is the only brain and workspace. Orchestra reads it in place. GitHub can mirror that same repository for versioned distribution and collaboration; it is not a second brain, a second live master, or a required service.
 
 ## 1. Non-negotiable behavior
 
@@ -138,7 +138,7 @@ A duplicate declaration of the same candidate is still a duplicate declaration a
 
 Task labels are normalised by trimming leading and trailing whitespace, collapsing each internal whitespace run to one ASCII space, and folding ASCII uppercase to lowercase with `LC_ALL=C`. Two rows in one Routing table with the same normalised label are `AMBIGUOUS`, even when their destinations differ. Labels in different routing tables do not collide merely because they match.
 
-Duplicate route rows, ambiguous route chains, duplicate path candidates, and multiple producers are all `AMBIGUOUS`. The checker never picks the first candidate to make a workspace look ready.
+Duplicate route rows, ambiguous route chains, duplicate path candidates, and multiple producers are all `AMBIGUOUS`. Two rows in one card with the same source, destination, and edge type are duplicate routes even when their labels differ. The checker never picks the first candidate to make a workspace look ready.
 
 ## 5. Typed workflow graph
 
