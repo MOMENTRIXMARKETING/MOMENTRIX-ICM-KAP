@@ -177,9 +177,14 @@ and exits 3.
 
 ```
 usage: icm-check.sh [--only ID]... [--<check>]... [--all] [-h|--help] [target-dir]
+       icm-check.sh --only orchestra [target-dir]
+       icm-check.sh --orchestra [target-dir]
+       icm-check.sh --orchestra --job CARD [--input NAME=PATH]...
+                    [--tool-version NAME=VERSION]... [target-dir]
+       icm-check.sh --orchestra-view [target-dir]
 ```
 
-Report only. Never writes inside the target. **KEEP.**
+Report only. Never writes inside the target. **KEEP.** This includes every Orchestra mode: no `.icm`, graph, backlink index, cache, ledger, or other target file is created. `spec/ORCHESTRA.md` owns the parsed card, graph, capability, scope, numbering, and generated-body semantics.
 
 **Check ids. This is the complete list. There are no others.**
 
@@ -191,26 +196,119 @@ Report only. Never writes inside the target. **KEEP.**
 | `adapters` | `--adapters` | `CLAUDE.md` aliases `IDENTITY.md` and is not a copy of it |
 | `drift` | `--drift` | the workspace map in `IDENTITY.md` against the real tree |
 | `sections` | `--sections` | required sections from `icm.defaults.json` |
-| `routes` | `--routes` | every routing target inside a `CONTEXT.md` exists on disk |
+| `routes` | `--routes` | every routing target inside a `CONTEXT.md` exists on disk, plus the non-failing depth note |
 | `links` | `--links` | **BUILD.** every relative link target in every `.md` under the target exists |
 | `fences` | `--fences` | markdown code fences balanced |
 | `placeholders` | `--placeholders` | no unfilled double-brace placeholder survives in live prose |
 | `evidence` | `--evidence` | the deep grounding sweep, needs `python3` and `wiki/` |
+| `orchestra` | `--orchestra` | explicit structural cards, typed workflow graph, capabilities, numbering, scope, and knowledge projections |
 
-**BUILD: `--only ID`.** Four skills already document it. Implement it rather than delete it.
-`--only` takes exactly one id, may be repeated, and selects that check. An unrecognised id
-prints `FAIL unknown check id: <id>` followed by the eleven valid ids, and exits 2. The error
-names the id, not the flag.
+**Default selection stays at eleven.** No arguments and explicit `--all` select only `self`, `frontmatter`, `budgets`, `adapters`, `drift`, `sections`, `routes`, `links`, `fences`, `placeholders`, and `evidence`. They do not select Orchestra and emit no Orchestra section. Adding the twelfth id does not make structural Orchestra part of a generic run.
 
-**BUILD: the `links` check.** `routes` only walks files literally named `CONTEXT.md` and only
-extracts routing-table tokens. That leaves `README.md`, every doc, every spec and every
-`SKILL.md` files unchecked, which is why `IDENTITY.md` rule 5 has no machine behind it and two
-dead links ship today. `links` walks every `.md` under the target, honours `excluded_globs`,
-extracts markdown link targets, skips `http*` and anchors, and FAILs on a relative target that
-resolves to nothing.
+`--only` takes exactly one id, may be repeated, and selects that check. An unrecognised id prints `FAIL unknown check id: <id>` followed by the twelve valid ids, and exits 2. The error names the id, not the flag.
 
-**DELETE from every skill and doc: the check ids `map`, `paths`, `index`, and the id `links`
-as a synonym for `routes`.**
+`--orchestra` without `--job` is exactly equivalent to `--only orchestra`: same validation, output bytes, and exit status. Structural Orchestra is explicit only. `--orchestra --job CARD` selects strict preflight for one full workspace-relative job card after structural validation. The strict spelling is literal: `--only orchestra --job` is not an alternate strict form.
+
+`--orchestra-view` is a separate deterministic Markdown mode. It is not a check id and has no `--only orchestra-view` form. It never creates a stored graph or backlink index.
+
+#### Orchestra mode refusals
+
+Flags and the positional target may appear in any order. The target still defaults to `.` and more than one target is a usage error. The following are usage errors with exit 2 and a `FAIL` line naming the rule:
+
+- duplicate `--job`, including two identical values;
+- `--job`, `--input`, or `--tool-version` outside literal `--orchestra --job` strict mode;
+- any generic check selection mixed with an Orchestra mode, including `--all`, a generic flag, or a generic `--only` id;
+- `--orchestra-view` mixed with `--orchestra`, `--job`, `--input`, `--tool-version`, or any generic selection;
+- duplicate `--input` names or duplicate `--tool-version` names, even when the values match;
+- a malformed binding: missing `=`, an empty name, path, or version, or a name outside `[A-Za-z][A-Za-z0-9_-]*`;
+- a tab or newline in a CLI machine field, including CARD, a binding name, a binding value, or an attestation;
+- more than one positional target, an unknown flag, a bad target, or an environment failure under the existing rules.
+
+For `--input NAME=PATH`, split on the first `=` so PATH may itself contain `=`. PATH is workspace-relative input material, not inline content. For `--tool-version NAME=VERSION`, split on the first `=` and compare the complete remaining string exactly. Empty and duplicate bindings are never silently ignored.
+
+#### Structural output and exits
+
+Structural mode has its own envelope, not the generic absolute `target:` and `defaults:` headers:
+
+```
+# icm-orchestra-structural-v1
+FAIL<TAB>CODE<TAB>PATH<TAB>DETAIL
+NOTE<TAB>CODE<TAB>PATH<TAB>DETAIL
+INFO<TAB>CODE<TAB>PATH<TAB>DETAIL
+result: clean
+```
+
+The header and result line are literal envelope lines. Every finding is a four-field TSV record. FAIL records come first, then NOTE records, then INFO records. Records within each class are sorted by CODE, PATH, and DETAIL under `LC_ALL=C`. No record class is emitted merely as a placeholder. `result: FAIL` replaces `result: clean` when any FAIL record exists.
+
+Structural exit is 0 with no FAIL records, 1 with at least one FAIL record, and 2 on usage or environment refusal. NOTE and INFO records, including DEPTH and knowledge information, do not change the exit status.
+
+#### Deterministic Markdown view
+
+`--orchestra-view` emits this fixed section order:
+
+1. `# ICM Orchestra`
+2. `## Findings`
+3. `## Pipelines`
+4. `## Cards`
+5. `## Workflow Edges`
+6. `## Workflow Backlinks`
+7. `## Knowledge Edges`
+8. `## Knowledge Backlinks`
+9. `## Notes`
+10. `result: clean` or `result: FAIL`
+
+The tables have these columns, in order:
+
+| Section | Columns |
+|---|---|
+| Findings | `Type | Path | Detail` |
+| Pipelines | `Pipeline | Routing card | Stage container` |
+| Cards | `Card | Pipeline | Prefix | Depth` |
+| Workflow Edges | `Type | From | To` |
+| Workflow Backlinks | `Card | Incoming type | From` |
+| Knowledge Edges | `From | To` |
+| Knowledge Backlinks | `Target | Linked from` |
+| Notes | `Type | Path | Detail` |
+
+Every row is sorted by its fields from left to right under `LC_ALL=C`. Paths are full workspace-relative paths in backticks. Empty sections keep their header and column rows and have no invented placeholder row. Knowledge information is in Notes and never makes the result FAIL. View exits 0 for clean, 1 for structural findings, and 2 for usage or environment refusal.
+
+#### Strict preflight TSV and exits
+
+Strict mode emits only this envelope after doing structural validation:
+
+```
+# icm-orchestra-preflight-v1
+job: 00-intake/CONTEXT.md
+MISSING<TAB>TYPE<TAB>PATH<TAB>DETAIL
+result: MISSING
+```
+
+The first two lines and final result line are envelope lines. Each missing item is one four-field TSV record. TYPE is exactly `INPUT`, `CAPABILITY`, `ROUTE`, `SCOPE`, or `AMBIGUOUS`. Records are sorted by TYPE, PATH, and DETAIL under `LC_ALL=C`. Structural CARD, NUMBERING, LOAD, NEXT, and REWORK findings map to ROUTE as `spec/ORCHESTRA.md` specifies.
+
+With no missing records, there are no placeholder rows and the final line is `result: RUN`. RUN exits 0. Any missing record produces `result: MISSING` and exit 1. Usage or environment refusal exits 2. Structural findings are reported through this strict TSV envelope rather than by mixing the structural envelope into strict output.
+
+RUN means ready to start, never successful completion or approval for an external action. Preflight is report-only and is not a sandbox around later agent writes.
+
+#### Determinism and machine fields
+
+All three Orchestra envelopes use workspace-relative paths. They contain no absolute target path, absolute toolkit or defaults path, temporary path, timestamp, or mirror-specific default. Repeated runs and mirrored clones produce byte-identical output without normalising local paths.
+
+Tabs and newlines in CLI machine fields are usage errors. A tab or newline inside a card field is a malformed card, not a way to inject extra TSV columns or records. Details are single-line text; machine output never emits raw field tabs or newlines as data.
+
+#### Legacy parser boundary
+
+Legacy `c_routes` extraction remains intact except that it skips the new `## Preflight` section. It is not replaced with the Orchestra parser. A separate fence-aware Orchestra parser handles Inputs, Outputs, Routing, Load first, and Preflight.
+
+These compatibility cases are contractual:
+
+- An invalid legacy Input path still fails default generic checks.
+- Untyped legacy routes still pass generic checks.
+- Backticked No touch paths in Preflight do not enter generic route scanning, even when those paths do not exist.
+- Generic `routes` adds only the non-failing depth note defined in `spec/ORCHESTRA.md`; it does not adopt Orchestra edge typing or cycle rules.
+
+**BUILD: the `links` check.** `routes` only walks files literally named `CONTEXT.md` and only extracts its legacy route tokens. That leaves `README.md`, every doc, every spec and every `SKILL.md` files unchecked. `links` walks every `.md` under the target, honours `excluded_globs`, extracts markdown link targets, skips `http*` and anchors, and FAILs on a relative target that resolves to nothing.
+
+**DELETE from every skill and doc: the check ids `map`, `paths`, `index`, and the id `links` as a synonym for `routes`.**
 
 | Phantom id | Ruling |
 |---|---|
@@ -219,9 +317,7 @@ as a synonym for `routes`.**
 | `paths` | Delete from every check table. `never_write` and excluded folders are enforced by `icm-plan.sh` and `icm-apply.sh`, never by the checker, which is report-only by contract and never proposes a write. Attribute it to plan and apply, the way `skills/icm-retrofit/SKILL.md` already does. |
 | `index` | Delete from every machine-enforced table. Nothing in `scripts/` reads `wiki/index.md`. Move it to the model-performed safe-fix list in `skills/icm-sync/SKILL.md`, citing `spec/authority-model.md`. |
 
-**DELETE: the hedge "if that build of the script does not take `--only`, run the whole thing".**
-There is no such build. Once `--only` exists the hedge is noise; until it exists the hedge is
-fiction.
+**DELETE: the hedge "if that build of the script does not take `--only`, run the whole thing".** There is no such build. Once `--only` exists the hedge is noise; until it exists the hedge is fiction.
 
 ### 3.3 `icm-plan.sh`
 
@@ -1068,7 +1164,7 @@ Before any doc, skill or script is called done, these must all be true.
 4. The only disposition words used are `CREATE`, `ADOPT`, `COLLIDE`, `SKIP`, `REFUSE`, plus
    `SURVEY` as a non-disposition row kind.
 5. The only rule book filenames used are the five in section 8.
-6. The only check ids used are the eleven in section 3.2.
+6. The only check ids used are the twelve in section 3.2. Default and `--all` still select only the original eleven.
 7. The only flags named per script are the ones in section 3.
 8. The only verdict words used for the index are the eight in section 3.6, and the only
    proposal kinds are `edit`, `new`, `archive` and `rewrite`.
