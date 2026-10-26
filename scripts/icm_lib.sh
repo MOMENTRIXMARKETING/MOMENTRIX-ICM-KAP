@@ -457,6 +457,7 @@ icm_json_load() {
     icm_json_parse "$1" "$_jl_w" || return 2
     if [ -z "$_jl_base" ]; then
         icm_json_globs_ok "$_jl_w.flat" "$1" || return 2
+        icm_json_path_budgets_ok "$_jl_w.flat" "$1" || return 2
         mv "$_jl_w.flat" "$ICM_JSON_CACHE"
         ICM_JSON_SRC="$1"
         return 0
@@ -464,6 +465,9 @@ icm_json_load() {
     # Each file is held to the glob alphabet on its own, so a refusal names
     # the file that holds the bad entry.
     if ! icm_json_globs_ok "$_jl_t.flat" "$_jl_base" || ! icm_json_globs_ok "$_jl_w.flat" "$1"; then
+        return 2
+    fi
+    if ! icm_json_path_budgets_ok "$_jl_t.flat" "$_jl_base" || ! icm_json_path_budgets_ok "$_jl_w.flat" "$1"; then
         return 2
     fi
     icm_json_merge "$_jl_t" "$_jl_w" "$1" > "$ICM_JSON_CACHE"
@@ -659,6 +663,64 @@ icm_json_globs_ok() {
             return 1
         fi
     done
+    return 0
+}
+
+# Path budget rules are ordered arrays of objects. Validate every object before
+# any workspace walk. Patterns are data for case, never shell source.
+icm_json_path_budgets_ok() {
+    _pb_bad=$(awk -F '\t' '
+        index($0, "\t") == 0 {
+            if (prev != "") { print prev ": holds a newline"; bad = 1; exit }
+            next
+        }
+        {
+            prev = ""
+            key = $1
+            if (key == "path_budgets") { print key ": must be an array of objects"; bad = 1; exit }
+            if (index(key, "path_budgets.") != 1) { next }
+            prev = key
+            rest = substr(key, length("path_budgets.") + 1)
+            n = split(rest, part, ".")
+            if (n != 2 || part[1] !~ /^[0-9]+$/) { print key ": invalid rule shape"; bad = 1; exit }
+            idx = part[1]; field = part[2]; seen[idx] = 1
+            if (field != "pattern" && field != "target_chars" && field != "ceiling_chars" && field != "ceiling_lines") {
+                print key ": unknown field"; bad = 1; exit
+            }
+            value = substr($0, length(key) + 2)
+            if (field == "pattern") {
+                if (value == "") { print key ": is empty"; bad = 1; exit }
+                if (substr(value, 1, 1) == "-" || substr(value, 1, 1) == "/" || index("/" value "/", "/../") > 0 || value !~ /^[A-Za-z0-9._*?\/-]+$/) {
+                    print key ": is not a safe relative glob"; bad = 1; exit
+                }
+                if (value in patterns) { print key ": duplicate pattern"; bad = 1; exit }
+                patterns[value] = 1
+                pattern[idx] = value
+            } else {
+                if (value !~ /^[0-9]+$/) { print key ": must be a nonnegative integer"; bad = 1; exit }
+                nums[idx, field] = value + 0
+            }
+        }
+        END {
+            if (bad) { exit }
+            for (idx in seen) {
+                if (!(idx in pattern)) { print "path_budgets." idx ".pattern: is missing"; exit }
+                if (!((idx, "ceiling_chars") in nums) || nums[idx, "ceiling_chars"] <= 0) {
+                    print "path_budgets." idx ".ceiling_chars: must be a positive integer"; exit
+                }
+                if (((idx, "target_chars") in nums) && nums[idx, "target_chars"] > nums[idx, "ceiling_chars"]) {
+                    print "path_budgets." idx ".target_chars: cannot exceed ceiling_chars"; exit
+                }
+            }
+        }
+    ' "$1")
+    if [ -n "$_pb_bad" ]; then
+        _pb_key=${_pb_bad%%:*}
+        _pb_reason=${_pb_bad#*: }
+        printf 'FAIL key %s in %s %s. nothing was walked or written. fix path_budgets, then rerun.\n' \
+            "$_pb_key" "$2" "$_pb_reason" >&2
+        return 1
+    fi
     return 0
 }
 

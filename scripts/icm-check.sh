@@ -274,27 +274,67 @@ rel_of() {
     printf '%s\n' "${1#$TARGET/}"
 }
 
-# Report a char budget. $1 file, $2 label, $3 json budget key.
-budget_file() {
+# Report byte and optional line budgets against explicit values.
+budget_file_values() {
     [ -f "$1" ] || return 0
     _b_rel=$(rel_of "$1")
     _b_c=$(icm_chars "$1")
-    _b_target=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.target_chars" 0)
-    _b_ceil=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_chars" 0)
+    _b_target=$2
+    _b_ceil=$3
+    _b_lc=$4
+    _b_label=$5
     if [ "$_b_ceil" -gt 0 ] && [ "$_b_c" -gt "$_b_ceil" ]; then
-        icm_fail "$_b_rel is $_b_c chars, over the $3 ceiling of $_b_ceil (icm.defaults.json)"
+        icm_fail "$_b_rel is $_b_c chars, over the $_b_label ceiling of $_b_ceil (icm.defaults.json)"
     elif [ "$_b_target" -gt 0 ] && [ "$_b_c" -gt "$_b_target" ]; then
-        icm_warn "$_b_rel is $_b_c chars, over the $3 target of $_b_target (icm.defaults.json)"
+        icm_warn "$_b_rel is $_b_c chars, over the $_b_label target of $_b_target (icm.defaults.json)"
     else
-        icm_ok "$_b_rel $_b_c chars, inside the $3 budget"
+        icm_ok "$_b_rel $_b_c chars, inside the $_b_label budget"
     fi
-    _b_lc=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_lines" 0)
     if [ "$_b_lc" -gt 0 ]; then
         _b_l=$(icm_lines "$1")
         if [ "$_b_l" -gt "$_b_lc" ]; then
-            icm_fail "$_b_rel is $_b_l lines, over the $3 line ceiling of $_b_lc (icm.defaults.json)"
+            icm_fail "$_b_rel is $_b_l lines, over the $_b_label line ceiling of $_b_lc (icm.defaults.json)"
         fi
     fi
+}
+
+# Report a char budget. $1 file, $2 label, $3 json budget key.
+budget_file() {
+    [ -f "$1" ] || return 0
+    _b_target=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.target_chars" 0)
+    _b_ceil=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_chars" 0)
+    _b_lc=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_lines" 0)
+    budget_file_values "$1" "$_b_target" "$_b_ceil" "$_b_lc" "$3"
+}
+
+path_budgets_init() {
+    _pb_rules="$ICM_TMPDIR/path-budgets"
+    _pb_active=0
+    : > "$_pb_rules"
+    _pb_i=0
+    while _pb_pattern=$(icm_json_get "$ICM_DEFAULTS" "path_budgets.${_pb_i}.pattern" 2>/dev/null); do
+        _pb_target=$(icm_json_num "$ICM_DEFAULTS" "path_budgets.${_pb_i}.target_chars" 0)
+        _pb_ceil=$(icm_json_num "$ICM_DEFAULTS" "path_budgets.${_pb_i}.ceiling_chars" 0)
+        _pb_lines=$(icm_json_num "$ICM_DEFAULTS" "path_budgets.${_pb_i}.ceiling_lines" 0)
+        printf '%s|%s|%s|%s\n' "$_pb_pattern" "$_pb_target" "$_pb_ceil" "$_pb_lines" >> "$_pb_rules"
+        _pb_active=1
+        _pb_i=$((_pb_i + 1))
+    done
+}
+
+path_budget_file() {
+    [ "$_pb_active" -eq 1 ] || return 1
+    [ -f "$TARGET/$1" ] || return 1
+    while IFS='|' read -r _pb_pattern _pb_target _pb_ceil _pb_lines; do
+        [ -n "$_pb_pattern" ] || continue
+        case "$1" in
+            $_pb_pattern)
+                budget_file_values "$TARGET/$1" "$_pb_target" "$_pb_ceil" "$_pb_lines" "path pattern $_pb_pattern"
+                return 0
+                ;;
+        esac
+    done < "$_pb_rules"
+    return 1
 }
 
 # Check the required sections of one file. $1 file, $2 json path.
@@ -555,12 +595,20 @@ c_frontmatter() {
 
 c_budgets() {
     printf '%s\n' '-- budgets --'
-    budget_file "$TARGET/IDENTITY.md" "identity" "IDENTITY.md"
-    budget_file "$TARGET/CONTEXT.md" "context-root" "CONTEXT.root.md"
+    path_budgets_init
+    if ! path_budget_file "IDENTITY.md"; then
+        budget_file "$TARGET/IDENTITY.md" "identity" "IDENTITY.md"
+    fi
+    if ! path_budget_file "CONTEXT.md"; then
+        budget_file "$TARGET/CONTEXT.md" "context-root" "CONTEXT.root.md"
+    fi
     _bu_md="$ICM_TMPDIR/bumd"
     icm_walk_md "$TARGET" > "$_bu_md"
     while IFS= read -r _bu_r; do
         [ -n "$_bu_r" ] || continue
+        if path_budget_file "$_bu_r"; then
+            continue
+        fi
         case "$_bu_r" in
             CONTEXT.md|IDENTITY.md) continue ;;
             */CONTEXT.md)

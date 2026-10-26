@@ -106,6 +106,26 @@ because it is not a tax on every task in the workspace.
 
 ---
 
+## Path Pattern Budgets
+
+Source: `icm.defaults.json`, key `path_budgets`. The default is an empty list, which preserves the
+per-file behavior above and adds no extra walk.
+
+Each ordered rule names a relative `pattern`, a required positive `ceiling_chars`, and optional
+`target_chars` and `ceiling_lines`. Omitted optional values impose no target or line check. Rules
+use the same byte and line counters as the per-file budgets.
+
+The pattern is a POSIX `case` glob matched against the full workspace-relative path, so it can
+cover any walked Markdown file, including folders the per-file categories do not cover. The first
+matching rule wins and supplies that file's budget. A later matching rule never overrides it. If
+no rule matches, the legacy category or exclusion applies unchanged.
+
+Every rule is validated before the workspace walk. Unknown fields, unsafe or escaping patterns,
+missing or inverted ceilings, nonnumeric values, duplicates, and newline payloads are refused with
+exit 2. Pattern text is data for `case`, never shell source.
+
+---
+
 ## The Fixed Loading Budget
 
 Source: `icm.defaults.json`, key `loading_budget`.

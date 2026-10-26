@@ -1980,6 +1980,85 @@ assert_not_out "a general URI scheme is not a file path" 'CUSTOM+v1.2'
 assert_not_out "a query on an existing normal target resolves" 'notes/Page%20Name.md?tool=a'
 assert_not_out "a fragment on an existing normal target resolves" 'notes/Page%20Name.md#top'
 
+printf '\n%s\n' '-- hunt: path budgets and config refusals --'
+HB=$(fixture "hunt path budgets")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HB"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HB"
+mkdir -p "$HB/notes/special" "$HB/wiki/articles"
+printf '123456\n' > "$HB/notes/warn.md"
+printf '1234567890\n' > "$HB/notes/special/fail.md"
+printf '12\n34\n' > "$HB/wiki/articles/lines.md"
+printf 'x\n' > "$HB/wiki/articles/other.md"
+cat > "$HB/icm.defaults.json" <<'HB_DEFAULTS'
+{
+  "path_budgets": [
+    { "pattern": "notes/*", "target_chars": 5, "ceiling_chars": 10 },
+    { "pattern": "notes/special/*", "target_chars": 0, "ceiling_chars": 100 },
+    { "pattern": "wiki/articles/*", "target_chars": 0, "ceiling_chars": 20, "ceiling_lines": 1 }
+  ]
+}
+HB_DEFAULTS
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "path budget breaches fail" 1
+assert_out "a path target is a warning" "over the path pattern notes/* target of 5"
+assert_out "an arbitrary folder gets its path ceiling" "over the path pattern notes/* ceiling of 10"
+assert_out "a path line ceiling is enforced" "over the path pattern wiki/articles/* line ceiling of 1"
+assert_out "a file inside all path budgets reports clean" "wiki/articles/other.md 2 chars, inside the path pattern wiki/articles/* budget"
+assert_out "legacy budgets still run without a matching rule" "inside the IDENTITY.md budget"
+assert_not_out "a later matching rule does not override the first" 'path pattern notes/special/*'
+printf '12345\n' > "$HB/notes/special/fail.md"
+printf '123\n' > "$HB/wiki/articles/lines.md"
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "path budgets pass after the oversized files are fixed" 0
+printf '1234567890\n' > "$HB/notes/special/fail.md"
+printf '{ "path_budgets": [] }\n' > "$HB/icm.defaults.json"
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "empty path budgets preserve the legacy result" 0
+assert_not_out "empty path budgets leave arbitrary notes unchecked" 'path pattern'
+
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "../outside", "ceiling_chars": 5 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a path pattern outside the workspace is refused" 2
+assert_out "the path escape refusal names its key" 'path_budgets.0.pattern'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*" } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a path budget without a ceiling is refused" 2
+assert_out "the missing ceiling refusal names its key" 'path_budgets.0.ceiling_chars'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "target_chars": 10, "ceiling_chars": 5 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a target above its ceiling is refused" 2
+assert_out "the inverted budget refusal names its target" 'path_budgets.0.target_chars'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 5, "typo": 1 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an unknown path budget field is refused" 2
+assert_out "the unknown field is named" 'path_budgets.0.typo'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [
+  { "pattern": "notes/*", "ceiling_chars": 5 },
+  { "pattern": "notes/*", "ceiling_chars": 10 }
+] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a duplicate path pattern is refused" 2
+assert_out "the duplicate pattern refusal is explicit" 'duplicate'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "$(touch PWNED)", "ceiling_chars": 5 } ] }
+HB_BAD
+cd "$HB"
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+cd "$ROOT"
+assert_rc "a path pattern outside the glob alphabet is refused" 2
+assert_out "the malicious pattern never reaches evaluation" 'path_budgets.0.pattern'
+assert_nofile "the malicious path pattern creates no file" "$HB/PWNED"
+
 printf '\n%s\n' '-- hunt: check and loop refuse what they cannot read --'
 # Root lists a mode 0300 folder anyway, so these two only mean something to
 # a normal user. CI runs them as one.

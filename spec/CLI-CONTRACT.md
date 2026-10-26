@@ -131,7 +131,9 @@ Five scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
   entry is checked at load against the alphabet in `spec/excluded-folders.md`. An entry outside
   it is a preflight refusal, exit 2, with a `FAIL` line naming the key, before any walk or write.
   The walk passes each entry to `find` as one quoted argument, the operand of `-name`, and
-  never tests the target's own name.
+  never tests the target's own name. Every `path_budgets` rule is also validated before any walk:
+  known fields, a safe relative pattern, a positive ceiling, no duplicates, and a target no higher
+  than its ceiling. An invalid rule exits 2 and executes no payload text.
 - **KEEP.** Defaults merge. The toolkit's `icm.defaults.json` loads first. A workspace's own
   `icm.defaults.json` overlays it key by key, so a key the workspace file lacks comes from the
   toolkit, and a workspace file written at an older version still sees every newer key. A list
@@ -192,7 +194,7 @@ Report only. Never writes inside the target. **KEEP.** This includes every Orche
 |---|---|---|
 | `self` | `--self` | `sh -n`, the bashism sweep, defaults parse, banned frontmatter keys |
 | `frontmatter` | `--frontmatter` | `skills/<name>/SKILL.md` keys and name-equals-dirname |
-| `budgets` | `--budgets` | character and line ceilings from `icm.defaults.json` |
+| `budgets` | `--budgets` | legacy character and line ceilings plus ordered `path_budgets` rules from `icm.defaults.json`; first path match wins |
 | `adapters` | `--adapters` | `CLAUDE.md` aliases `IDENTITY.md` and is not a copy of it |
 | `drift` | `--drift` | the workspace map in `IDENTITY.md` against the real tree |
 | `sections` | `--sections` | required sections from `icm.defaults.json` |

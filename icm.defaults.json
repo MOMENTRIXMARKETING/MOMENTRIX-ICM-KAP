@@ -10,6 +10,7 @@
     "rulebook.md":        { "target_chars": 2000, "ceiling_chars": 4000 },
     "wiki_article.md":    { "target_chars": 8000, "ceiling_chars": 16000 }
   },
+  "path_budgets": [],
   "loading_budget": {
     "note": "Chars, not tokens. 4 chars ~= 1 token. Layers 0+1+2+3 are the fixed cost.",
     "layer0_identity": 3200,
