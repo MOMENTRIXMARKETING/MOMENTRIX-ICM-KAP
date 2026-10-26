@@ -1921,6 +1921,65 @@ assert_not_out "a link title is not part of the path" 'IDENTITY.md "the map"'
 assert_not_out "%20 in a link is a space on disk" "01%20-%20notes"
 assert_out "a dead link still fails" "does not exist: nope.md"
 
+printf '\n%s\n' '-- hunt: wiki links and residual URL forms --'
+HW=$(fixture "hunt wiki links")
+run "$SCRIPTS/icm-plan.sh" --quiet "$HW"
+run "$SCRIPTS/icm-apply.sh" --no-check "$HW"
+mkdir -p "$HW/notes" "$HW/other" "$HW/assets"
+HW_LB='['
+printf '# Page\n' > "$HW/notes/Page Name.md"
+printf '# Topic one\n' > "$HW/notes/topic.md"
+printf '# Topic two\n' > "$HW/other/topic.md"
+printf '# Unicode\n' > "$HW/notes/ café.md"
+printf 'png\n' > "$HW/assets/logo.png"
+cat > "$HW/README.md" <<HW_README
+${HW_LB}[Page Name]]
+${HW_LB}[Page Name|alias]]
+${HW_LB}[Page Name#Heading]]
+${HW_LB}[notes/Page Name]]
+!${HW_LB}[logo.png]]
+${HW_LB}[ café]]
+${HW_LB}[#Local heading]]
+${HW_LB}[topic]]
+${HW_LB}[missing]]
+[query ok](notes/Page%20Name.md?tool=a#top)
+[fragment ok](notes/Page%20Name.md#top)
+[escaped](https\://example.invalid/not-local)
+[custom](CUSTOM+v1.2:payload)
+[bad](missing.md?tool=a)
+\`${HW_LB}[inline-missing]]\`
+\`\`\`
+${HW_LB}[fence-missing]]
+\`\`\`
+HW_README
+cat > "$HW/notes/index.md" <<HW_INDEX
+${HW_LB}[../README]]
+${HW_LB}[Page Name]]
+${HW_LB}[notes/Page Name.md]]
+${HW_LB}[../../outside]]
+HW_INDEX
+run "$SCRIPTS/icm-check.sh" --links "$HW"
+assert_rc "the wiki and residual link fixture returns its expected failures" 1
+assert_out "a missing wiki basename fails" "does not exist: ${HW_LB}[missing]]"
+assert_out "a duplicate wiki basename is ambiguous" "ambiguous wiki target: ${HW_LB}[topic]]"
+assert_out "a wiki path outside the workspace is refused" "wiki target escapes the workspace: ${HW_LB}[../../outside]]"
+assert_out "a query on a missing normal target still fails" "does not exist: missing.md?tool=a"
+assert_not_out "a valid wiki basename resolves" "${HW_LB}[Page Name]]"
+assert_not_out "a valid wiki alias resolves" "${HW_LB}[Page Name|alias]]"
+assert_not_out "a valid wiki heading resolves" "${HW_LB}[Page Name#Heading]]"
+assert_not_out "a valid wiki path resolves" "${HW_LB}[notes/Page Name]]"
+assert_not_out "a valid wiki path with a suffix resolves" "${HW_LB}[notes/Page Name.md]]"
+assert_not_out "a valid parent wiki path resolves" "${HW_LB}[../README]]"
+assert_not_out "a valid wiki embed resolves" "${HW_LB}[logo.png]]"
+assert_not_out "a valid Unicode wiki basename resolves" "${HW_LB}[ café]]"
+assert_not_out "a same-page wiki heading needs no file" "${HW_LB}[#Local heading]]"
+assert_not_out "an inline wiki example is ignored" 'inline-missing'
+assert_not_out "a fenced wiki example is ignored" 'fence-missing'
+assert_not_out "an escaped URI scheme is not a file path" 'example.invalid'
+assert_not_out "a general URI scheme is not a file path" 'CUSTOM+v1.2'
+assert_not_out "a query on an existing normal target resolves" 'notes/Page%20Name.md?tool=a'
+assert_not_out "a fragment on an existing normal target resolves" 'notes/Page%20Name.md#top'
+
 printf '\n%s\n' '-- hunt: check and loop refuse what they cannot read --'
 # Root lists a mode 0300 folder anyway, so these two only mean something to
 # a normal user. CI runs them as one.

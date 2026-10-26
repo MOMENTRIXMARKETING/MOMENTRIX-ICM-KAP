@@ -197,7 +197,7 @@ Report only. Never writes inside the target. **KEEP.** This includes every Orche
 | `drift` | `--drift` | the workspace map in `IDENTITY.md` against the real tree |
 | `sections` | `--sections` | required sections from `icm.defaults.json` |
 | `routes` | `--routes` | every routing target inside a `CONTEXT.md` exists on disk, plus the non-failing depth note |
-| `links` | `--links` | **BUILD.** every relative link target in every `.md` under the target exists |
+| `links` | `--links` | every relative Markdown and wiki target resolves; missing, ambiguous, and workspace-escape wiki targets fail |
 | `fences` | `--fences` | markdown code fences balanced |
 | `placeholders` | `--placeholders` | no unfilled double-brace placeholder survives in live prose |
 | `evidence` | `--evidence` | the deep grounding sweep, needs `python3` and `wiki/` |
@@ -306,7 +306,7 @@ These compatibility cases are contractual:
 - Backticked No touch paths in Preflight do not enter generic route scanning, even when those paths do not exist.
 - Generic `routes` adds only the non-failing depth note defined in `spec/ORCHESTRA.md`; it does not adopt Orchestra edge typing or cycle rules.
 
-**BUILD: the `links` check.** `routes` only walks files literally named `CONTEXT.md` and only extracts its legacy route tokens. That leaves `README.md`, every doc, every spec and every `SKILL.md` files unchecked. `links` walks every `.md` under the target, honours `excluded_globs`, extracts markdown link targets, skips `http*` and anchors, and FAILs on a relative target that resolves to nothing.
+**The `links` check.** `routes` only walks files literally named `CONTEXT.md` and only extracts its legacy route tokens. `links` walks every `.md` under the target, honours `excluded_globs`, and extracts Markdown and wiki targets outside code examples. URI schemes and anchors are skipped. Markdown targets lose titles, query strings, and fragments before resolution; `%20` still decodes to a space. Wiki targets support aliases, fragments, workspace paths, and embeds. A basename must resolve to exactly one walked file, path targets are normalised inside the workspace, and missing, ambiguous, or escaping targets fail. The file index is built once only when wiki targets exist, never once per target.
 
 **DELETE from every skill and doc: the check ids `map`, `paths`, `index`, and the id `links` as a synonym for `routes`.**
 

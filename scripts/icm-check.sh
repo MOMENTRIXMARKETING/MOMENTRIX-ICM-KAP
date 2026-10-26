@@ -355,14 +355,14 @@ route_tokens() {
     ' "$1"
 }
 
-# Markdown link targets only, out of one file. Fenced blocks are skipped, and
-# so is anything inside an inline code span, because a backticked
-# `[Title](wiki/topic/article.md)` is documentation quoting the syntax, not a
-# claim that the path exists.
+# Markdown and wiki targets, typed M| or W|. Fenced blocks and inline code
+# are documentation quoting syntax, not path claims.
 link_tokens() {
     awk '
+        BEGIN { lb = "[" }
         /^ *```/ { inf = 1 - inf; next }
-        inf == 1 { next }
+        /^ *~~~/ { tin = 1 - tin; next }
+        inf == 1 || tin == 1 { next }
         {
             line = $0
             out = ""
@@ -374,11 +374,22 @@ link_tokens() {
                 line = substr(rest, b + 1)
             }
             out = out line
-            while ((a = index(out, "](")) > 0) {
-                rest = substr(out, a + 2)
+            md = out
+            while ((a = index(md, "](")) > 0) {
+                rest = substr(md, a + 2)
                 b = index(rest, ")")
                 if (b == 0) { break }
-                print substr(rest, 1, b - 1)
+                printf "M|%s\n", substr(rest, 1, b - 1)
+                md = substr(rest, b + 1)
+            }
+            while ((a = index(out, lb lb)) > 0) {
+                rest = substr(out, a + 2)
+                b = index(rest, "]]" )
+                if (b == 0) { break }
+                target = substr(rest, 1, b - 1)
+                if (target != "" && substr(target, 1, 1) != "[") {
+                    printf "W|%s\n", target
+                }
                 out = substr(rest, b + 1)
             }
         }
@@ -765,6 +776,16 @@ c_routes() {
     fi
 }
 
+link_has_scheme() {
+    _ls_prefix=${1%%:*}
+    [ "$_ls_prefix" != "$1" ] || return 1
+    case $_ls_prefix in *\\) _ls_prefix=${_ls_prefix%\\} ;; esac
+    case $_ls_prefix in
+        ''|[!A-Za-z]*|*[!A-Za-z0-9+.-]*) return 1 ;;
+    esac
+    return 0
+}
+
 c_links() {
     printf '%s\n' '-- links --'
     _lk_md="$ICM_TMPDIR/lkmd"
@@ -775,6 +796,9 @@ c_links() {
     fi
     _lk_bad=0
     _lk_n=0
+    _lk_lb='['
+    _lk_wtok="$ICM_TMPDIR/lkwiki.tokens"
+    : > "$_lk_wtok"
     while IFS= read -r _lk_r; do
         [ -n "$_lk_r" ] || continue
         case "$_lk_r" in
@@ -783,32 +807,123 @@ c_links() {
         _lk_file="$TARGET/$_lk_r"
         _lk_dir=$(dirname "$_lk_file")
         link_tokens "$_lk_file" > "$ICM_TMPDIR/ltok"
-        while IFS= read -r _lk_t; do
-            case "$_lk_t" in
-                ''|http:*|https:*|mailto:*|ftp:*|'#'*) continue ;;
+        while IFS= read -r _lk_line; do
+            case $_lk_line in
+                W\|*)
+                    _lk_t=${_lk_line#W|}
+                    _lk_w=${_lk_t%%|*}
+                    _lk_w=${_lk_w%%#*}
+                    [ -n "$_lk_w" ] || continue
+                    _lk_n=$((_lk_n + 1))
+                    _lk_c1=""
+                    _lk_c2=""
+                    case $_lk_w in
+                        */*)
+                            _lk_rel=$(dirname -- "$_lk_r")
+                            _lk_c1=$(icm_orchestra_normalize "$_lk_rel" "$_lk_w" 2>/dev/null || printf '')
+                            _lk_c2=$(icm_orchestra_normalize . "$_lk_w" 2>/dev/null || printf '')
+                            if [ -z "$_lk_c1" ] && [ -z "$_lk_c2" ]; then
+                                icm_fail "$_lk_r wiki target escapes the workspace: ${_lk_lb}[${_lk_t}]]"
+                                _lk_bad=1
+                                continue
+                            fi
+                            ;;
+                    esac
+                    printf '%s\t%s\t%s\t%s\n' "$_lk_r" "$_lk_t" "$_lk_c1" "$_lk_c2" >> "$_lk_wtok"
+                    ;;
+                M\|*)
+                    _lk_t=${_lk_line#M|}
+                    [ -n "$_lk_t" ] || continue
+                    case $_lk_t in
+                        '#'*) continue ;;
+                    esac
+                    if link_has_scheme "$_lk_t"; then
+                        continue
+                    fi
+                    # a placeholder, a glob or a shell expansion is not a path claim
+                    case $_lk_t in
+                        *'{{'*|*'*'*|*'<'*|*'$'*|*'|'*) continue ;;
+                    esac
+                    # A markdown destination may carry a title after a space,
+                    # [m](IDENTITY.md "the map"), and a space in a path is written
+                    # %20. Neither is part of the path claim.
+                    _lk_p=$(printf '%s\n' "$_lk_t" | sed -e 's/ *"[^"]*" *$//' -e "s/ *'[^']*' *$//" -e 's/%20/ /g')
+                    _lk_p=${_lk_p%%\?*}
+                    _lk_p=${_lk_p%%#*}
+                    _lk_p=${_lk_p#./}
+                    [ -n "$_lk_p" ] || continue
+                    _lk_n=$((_lk_n + 1))
+                    if [ -e "$_lk_dir/$_lk_p" ] || [ -e "$TARGET/$_lk_p" ]; then
+                        :
+                    else
+                        icm_fail "$_lk_r links to a path that does not exist: $_lk_t"
+                        _lk_bad=1
+                    fi
+                    ;;
             esac
-            # a placeholder, a glob or a shell expansion is not a path claim
-            case "$_lk_t" in
-                *'{{'*|*'*'*|*'<'*|*'$'*|*'|'*) continue ;;
-            esac
-            # A markdown destination may carry a title after a space,
-            # [m](IDENTITY.md "the map"), and a space in a path is written
-            # %20. Neither is part of the path claim.
-            _lk_p=$(printf '%s\n' "$_lk_t" | sed -e 's/ *"[^"]*" *$//' -e "s/ *'[^']*' *$//" -e 's/%20/ /g')
-            _lk_p=${_lk_p%%#*}
-            _lk_p=${_lk_p#./}
-            [ -n "$_lk_p" ] || continue
-            _lk_n=$((_lk_n + 1))
-            if [ -e "$_lk_dir/$_lk_p" ] || [ -e "$TARGET/$_lk_p" ]; then
-                :
-            else
-                icm_fail "$_lk_r links to a path that does not exist: $_lk_t"
-                _lk_bad=1
-            fi
         done < "$ICM_TMPDIR/ltok"
     done < "$_lk_md"
+
+    if [ -s "$_lk_wtok" ]; then
+        _lk_files="$ICM_TMPDIR/lkfiles"
+        _lk_wout="$ICM_TMPDIR/lkwiki.out"
+        icm_walk "$TARGET" f > "$_lk_files"
+        awk -F '\t' '
+            NR == FNR {
+                path = $0
+                present[path] = 1
+                n = split(path, part, "/")
+                base = part[n]
+                count[base]++
+                if (count[base] == 1) { first[base] = path }
+                next
+            }
+            BEGIN { lb = "[" }
+            {
+                src = $1; raw = $2; c1 = $3; c2 = $4; target = raw
+                sub(/\|.*/, "", target)
+                sub(/#.*/, "", target)
+                if (target == "") { next }
+                matches = 0
+                if (index(target, "/") == 0) {
+                    for (j = 0; j < 2; j++) {
+                        if (j == 0) { key = target }
+                        else {
+                            if (target ~ /\.md$/) { continue }
+                            key = target ".md"
+                        }
+                        if (key in count) {
+                            if (count[key] > 1) { matches += count[key]; continue }
+                            p = first[key]
+                            if (seen[p] != FNR) { seen[p] = FNR; matches++ }
+                        }
+                    }
+                } else {
+                    for (j = 0; j < 2; j++) {
+                        c = (j == 0 ? c1 : c2)
+                        if (c == "") { continue }
+                        for (k = 0; k < 2; k++) {
+                            if (k == 1 && c ~ /\.md$/) { continue }
+                            p = (k == 0 ? c : c ".md")
+                            if ((p in present) && seen[p] != FNR) { seen[p] = FNR; matches++ }
+                        }
+                    }
+                }
+                if (matches == 0) {
+                    printf "%s links to a wiki target that does not exist: %s%s%s]]\n", src, lb, lb, raw
+                } else if (matches > 1) {
+                    printf "%s has an ambiguous wiki target: %s%s%s]] (%d matches)\n", src, lb, lb, raw, matches
+                }
+            }
+        ' "$_lk_files" "$_lk_wtok" > "$_lk_wout"
+        while IFS= read -r _lk_msg; do
+            [ -n "$_lk_msg" ] || continue
+            icm_fail "$_lk_msg"
+            _lk_bad=1
+        done < "$_lk_wout"
+    fi
     if [ "$_lk_bad" -eq 0 ]; then
-        icm_ok "every relative markdown link resolves on disk ($_lk_n checked)"
+        icm_ok "every relative markdown and wiki link resolves on disk ($_lk_n checked)"
     fi
 }
 
