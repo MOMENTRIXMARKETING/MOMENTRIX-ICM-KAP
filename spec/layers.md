@@ -81,15 +81,18 @@ The routing table is the whole point:
 ```markdown
 ## Routing
 
-| Task | Go to | Load first |
-|------|-------|------------|
-| Write to a prospect | `departments/sales/CONTEXT.md` | nothing else yet |
-| Plan a campaign | `departments/marketing/CONTEXT.md` | nothing else yet |
+| Job | Where | Load first | Edge |
+|---|---|---|---|
+| Write to a prospect | `departments/sales/CONTEXT.md` | - | NEXT |
+| Plan a campaign | `departments/marketing/CONTEXT.md` | - | NEXT |
 ```
 
 Note the third column. Layer 1 tells you where to go, and it tells you not to load anything
 on the way. The job card at the end of the route decides what gets loaded. Loading rule books
-speculatively at layer 1 is the single most common way a workspace blows its budget.
+speculatively at layer 1 is the single most common way a workspace blows its budget. The
+fourth column is explicit Orchestra typing: `NEXT` selects control flow, `LOAD` names a
+prerequisite, and `REWORK` names backward repair. Generic checks still accept untyped legacy
+rows; Orchestra never guesses their types.
 
 **Layer 1 recurses.** Every department gets one. See the recursion section below.
 
@@ -102,7 +105,10 @@ a skill, not a prompt, not a spec.
 
 Required headings, from `icm.defaults.json` under `required_sections."CONTEXT.stage.md"`:
 `## Purpose`, `## Inputs`, `## Process`, `## Outputs`, `## Routing`. Optional: `## Checkpoints`
-and `## Audit`.
+and `## Audit`. Explicit Orchestra cards add `## Preflight` through
+`orchestra.stage_required_sections`; this does not make Preflight a generic requirement.
+Preflight declares exact Tool and Skill versions, component-safe No touch paths, or one
+`None | - | -` row. Inputs define read scope and Outputs define write scope.
 
 **Layer 2 is the control point of the entire system.** Its Inputs table decides exactly which
 layer 3 and layer 4 files enter the context window. Nothing else decides. An agent under this
@@ -138,9 +144,11 @@ human's ruling. Different owners, different budgets, different authority.
 A rule book states the rule first and the reason second. The rule is what gets applied under
 load. The reason is what stops the rule being ignored the first time it is inconvenient.
 
-**Only a human edits a rule book.** No script writes to `_config/`. No skill writes to
-`_config/`. An agent that believes a rule book is wrong or incomplete writes a proposal to
-`_log/FORGE-PROPOSALS.md` and stops. `spec/authority-model.md` says why.
+**Only a human edits a rule book.** A script may create a rule book that does not exist,
+once, as part of an install. No script and no agent ever edits a rule book that exists. An
+existing rule book is always a `COLLIDE`: the toolkit's version goes to `.icm/proposed/` and
+a human decides. An agent that believes a rule book is wrong or incomplete writes a proposal
+to `_log/FORGE-PROPOSALS.md` and stops. `spec/authority-model.md` says why.
 
 **Rule books are not evidence checked.** The grounding invariant binds `wiki/`, which is
 compiled from sources. A rule book is a decision. A person decided it, so there is no raw
@@ -310,6 +318,17 @@ Rules of the recursion:
 6. Depth costs. Every level between the root and the job card is one more file every task in
    that department must read, forever. Keep departments one level deep unless there is a real
    reason for two.
+
+Orchestra recognises exactly four stage layouts: root `NN-slug/CONTEXT.md`, root
+`stages/NN-slug/CONTEXT.md`, department `NN-slug/CONTEXT.md`, and department
+`stages/NN-slug/CONTEXT.md`. A pipeline is the nearest routing card plus the physical stage
+container. Full workspace-relative paths are identity; numeric prefixes are filing aids and
+routing-table order is execution authority. A nested directory with its own `IDENTITY.md` is
+an independent workspace, so the outer walk excludes its whole subtree.
+
+Root `CONTEXT.md` is depth 1, a department routing card is depth 2, and a stage job card is
+depth 3. NEXT between siblings does not add depth. A fourth nested routing card is reported
+as a depth note and cannot be selected for strict preflight.
 
 ---
 

@@ -420,7 +420,7 @@ c_self() {
     # them would flag the checker itself.
     _c_pat="$ICM_TMPDIR/bashisms"
     {
-        printf '%s\n' '\[\['
+        printf '%s\n' '\[\[($|[^:])'
         printf '%s%s\n' '(^| |;)lo' 'cal '
         printf '%s\n' '<\('
         printf '%s\n' '\$\{[A-Za-z_][A-Za-z0-9_]*\^\^'
@@ -716,6 +716,15 @@ c_routes() {
         [ -n "$_ro_r" ] || continue
         _ro_file="$TARGET/$_ro_r"
         _ro_dir=$(dirname "$_ro_file")
+        _ro_root="$TARGET"
+        _ro_scope=$(dirname -- "$_ro_r")
+        while [ "$_ro_scope" != "." ] && [ "$_ro_scope" != "/" ] && [ -n "$_ro_scope" ]; do
+            if [ -f "$TARGET/$_ro_scope/IDENTITY.md" ]; then
+                _ro_root="$TARGET/$_ro_scope"
+                break
+            fi
+            _ro_scope=$(dirname -- "$_ro_scope")
+        done
         route_tokens "$_ro_file" > "$ICM_TMPDIR/rtok"
         while IFS= read -r _ro_t; do
             case "$_ro_t" in
@@ -729,7 +738,7 @@ c_routes() {
                 *) continue ;;
             esac
             _ro_p="${_ro_t#./}"
-            if [ -e "$_ro_dir/$_ro_p" ] || [ -e "$TARGET/$_ro_p" ]; then
+            if [ -e "$_ro_dir/$_ro_p" ] || [ -e "$_ro_root/$_ro_p" ]; then
                 _ro_rdir=$(dirname -- "$_ro_r")
                 if [ -e "$_ro_dir/$_ro_p" ]; then
                     _ro_dest=$(icm_orchestra_normalize "$_ro_rdir" "$_ro_p" 2>/dev/null || printf '')

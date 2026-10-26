@@ -25,6 +25,7 @@ Companion specs, each authoritative for its own subject:
 | `spec/grounding-invariant.md` | Evidence, source fidelity, and the verifier |
 | `spec/placeholder-syntax.md` | The `{{PLACEHOLDER}}` onboarding contract |
 | `spec/authority-model.md` | Who may fix, who may only report, who holds the pen |
+| `spec/ORCHESTRA.md` | Typed workflow graphs, preflight, and report-only Orchestra |
 
 ---
 
@@ -98,13 +99,26 @@ It is called a job card, never a skill and never a prompt.
 
 ## Routing
 
-| When | Go to |
-|------|-------|
-| ... | ... |
+| When | Go to | Edge |
+|------|-------|------|
+| ... | ... | NEXT |
 ```
 
 Those five headings are required. `icm.defaults.json` lists them under
 `required_sections."CONTEXT.stage.md"` and the checker fails a job card that is missing one.
+Generic checks still accept untyped legacy routes. Explicit Orchestra mode requires the
+trailing Edge value `LOAD`, `NEXT`, or `REWORK` for every path-bearing row, and `-` beside a
+non-path `-` destination.
+
+Orchestra adds one section to its stage cards without changing the generic requirement:
+
+```markdown
+## Preflight
+
+| Kind | Reference | Version |
+|---|---|---|
+| None | - | - |
+```
 
 `Checkpoints` and `Audit` are optional and are covered by patterns 11 and 12.
 
@@ -129,7 +143,9 @@ The convention:
 - Stage N+1's job card says: read `../0N-name/output/artifact-name.md` as your input
 
 That is the whole handoff. No state manager. No orchestration layer. Files in predictable
-places.
+places. Orchestra derives a `LOAD` edge when exactly one stage Outputs declaration owns the
+next stage's input. The edge points from producer to consumer, materialisation is checked
+before `RUN`, and the LOAD projection must be acyclic.
 
 A human can open the output file, edit it, save it, and the next stage picks up the edited
 version. Every output is an edit surface.
@@ -144,7 +160,8 @@ not a template. See pattern 14.
 
 ## Pattern 3: One Way Cross References
 
-Every folder points outward to what it needs. No folder points back.
+Every folder points outward to what it needs. Except for an explicit Orchestra `REWORK`
+route, no folder points back.
 
 If stage 03 references stage 02's component registry, stage 02 does not reference anything
 in stage 03. If two departments both read the company voice rule book, the company voice
@@ -156,7 +173,8 @@ order, which means no budget.
 
 The direction is always the same: down the layers and up the tree. A job card may reference
 its department's rule books and the company's rule books. A company rule book may never
-reference a department.
+reference a department. `REWORK` is the narrow repair exception: it must name an earlier
+stage in the same pipeline's routing-table order. `NEXT` cycle checks remain independent.
 
 ---
 
@@ -421,9 +439,11 @@ this workspace. It is layer 3, it lives in `_config/`, and its budget is in
 
 Three consequences.
 
-**Only the human edits a rule book.** No script, no skill, and no agent writes to `_config/`.
-An agent that finds a doctrine hole writes a proposal to `_log/FORGE-PROPOSALS.md` and stops.
-See `spec/authority-model.md`.
+**Only the human edits a rule book.** A script may create a rule book that does not exist,
+once, as part of an install. No script and no agent ever edits a rule book that exists. An
+existing rule book is always a `COLLIDE`: the toolkit's version goes to `.icm/proposed/` and
+a human decides. An agent that finds a doctrine hole writes a proposal to
+`_log/FORGE-PROPOSALS.md` and stops. See `spec/authority-model.md`.
 
 **A rule book is not evidence checked.** The grounding invariant binds `wiki/`, which is
 compiled from sources. A rule book is a decision, not a compilation. It does not need a raw
@@ -519,12 +539,13 @@ rule: for those paths there is no proposal, there is no write, the answer is no.
 Findings come in three tiers and there is exactly one set of definitions, used by lint and by
 the forge alike.
 
-- **Safe fix.** Deterministic, exactly one correct answer, auto applied.
+- **Safe fix.** Deterministic, exactly one correct answer, applied by the model and reported.
 - **Mechanical report.** A script found it, never auto fixed.
 - **Judgment report.** Model opinion, always a proposal.
 
 The logger never judges. The forge never edits. The human holds the only pen that touches
-rule books.
+rule books. Every Orchestra mode is report-only: it creates no target files, stored graph,
+backlink index, or execution approval. `RUN` means ready to start; human gates still apply.
 
 `spec/authority-model.md` is authoritative, including the boundary test for which tier a
 finding falls in and the reason the tiers exist at all.

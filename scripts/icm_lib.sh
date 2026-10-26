@@ -1275,7 +1275,7 @@ icm_manifest_has() {
 }
 
 icm_route_row() {
-    # icm_route_row <relpath> <what you are doing> <load first cell>
+    # icm_route_row <relpath> <what you are doing> <load first> [edge]
     # Prints nothing at all when this archetype does not install <relpath>.
     icm_manifest_has "$1" || return 0
     printf '| %s | `%s` | %s | %s |\n' "$2" "$1" "$3" "${4:-NEXT}"
@@ -1430,7 +1430,7 @@ icm_manifest_has() {
     icm_manifest "${ICM_ARCHETYPE:-quick}" | awk -v p="$1" '$2 == p { f = 1 } END { exit f ? 0 : 1 }'
 }
 
-# icm_route_row <relpath> <what you are doing> <load first>
+# icm_route_row <relpath> <what you are doing> <load first> [edge]
 icm_route_row() {
     icm_manifest_has "$1" || return 0
     printf '| %s | `%s` | %s | %s |\n' "$2" "$1" "$3" "${4:-NEXT}"
