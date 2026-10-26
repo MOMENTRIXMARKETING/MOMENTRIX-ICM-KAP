@@ -1595,7 +1595,7 @@ Hold every incoming document exactly as it arrived. If a fact is not in this fol
 
 ## Process
 
-1. Save the document under `raw/incoming/`, named by date first, then a short slug.
+1. Save the document under `raw/`, named by date first, then a short slug.
 2. Put a header on it: what it is, where it came from, the date collected.
 3. Paste the body word for word. Do not summarise, tidy, translate or truncate.
 4. Append an ingest line to `wiki/log.md`.
@@ -1605,7 +1605,7 @@ Hold every incoming document exactly as it arrived. If a fact is not in this fol
 
 | Artifact | Location | Format |
 |---|---|---|
-| Immutable source | raw/incoming/ | directory |
+| Immutable source | raw/ | directory |
 | Ingest record | `wiki/log.md` | Markdown |
 
 ## Routing
