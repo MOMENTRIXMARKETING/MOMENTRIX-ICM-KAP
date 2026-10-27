@@ -23,12 +23,12 @@ target-dir defaults to the current directory.
 Generic checks (the default and --all select these eleven, never Orchestra):
   --self          shell layer: sh -n, bashism sweep, defaults parse
   --frontmatter   skills/<name>/SKILL.md frontmatter and naming
-  --budgets       character and line ceilings from icm.defaults.json
+  --budgets       character and line ceilings from budgets and path_budgets
   --adapters      CLAUDE.md is an alias of IDENTITY.md, not a copy of it
   --drift         the workspace map in IDENTITY.md covers the real tree
   --sections      required sections per icm.defaults.json
   --routes        every routing-table target in a CONTEXT.md exists on disk
-  --links         every relative markdown link in every .md resolves on disk
+  --links         every relative Markdown and wiki link in every .md resolves on disk
   --fences        markdown code fences are balanced
   --placeholders  no unfilled {{ }} placeholders survive
   --evidence      deep grounding sweep (needs python3 and wiki/; part of --all)
@@ -399,21 +399,43 @@ route_tokens() {
 # are documentation quoting syntax, not path claims.
 link_tokens() {
     awk '
-        BEGIN { lb = "[" }
-        /^ *```/ { inf = 1 - inf; next }
-        /^ *~~~/ { tin = 1 - tin; next }
-        inf == 1 || tin == 1 { next }
-        {
-            line = $0
-            out = ""
-            while ((a = index(line, "`")) > 0) {
-                out = out substr(line, 1, a - 1)
-                rest = substr(line, a + 1)
-                b = index(rest, "`")
-                if (b == 0) { line = ""; break }
-                line = substr(rest, b + 1)
+        function inline_text(line,    out,i,n,rest,j,run,finish) {
+            out = ""; i = 1
+            while (i <= length(line)) {
+                if (substr(line, i, 1) != "`") { out = out substr(line, i, 1); i++; continue }
+                n = 0
+                while (substr(line, i + n, 1) == "`") { n++ }
+                rest = substr(line, i + n); finish = 0; j = 1
+                while (j <= length(rest)) {
+                    if (substr(rest, j, 1) == "`") {
+                        run = 0
+                        while (substr(rest, j + run, 1) == "`") { run++ }
+                        if (run == n) { finish = j; break }
+                        j += run
+                    } else { j++ }
+                }
+                if (finish == 0) { out = out substr(line, i, n); i += n }
+                else { i = i + finish + 2 * n - 1 }
             }
-            out = out line
+            return out
+        }
+        BEGIN { lb = "[" }
+        {
+            if (in_f) {
+                tmp = $0; sub(/^ */, "", tmp); n = 0
+                while (substr(tmp, n + 1, 1) == fch) { n++ }
+                rest = substr(tmp, n + 1)
+                if (n >= flen && rest ~ /^[ \t]*$/) { in_f = 0; fch = ""; flen = 0 }
+                next
+            }
+            tmp = $0; sub(/^ */, "", tmp)
+            if (substr(tmp, 1, 3) == "```" || substr(tmp, 1, 3) == "~~~") {
+                ch = substr(tmp, 1, 1); n = 0
+                while (substr(tmp, n + 1, 1) == ch) { n++ }
+                rest = substr(tmp, n + 1)
+                if (ch == "~" || rest !~ /`/) { in_f = 1; fch = ch; flen = n; next }
+            }
+            out = inline_text($0)
             md = out
             while ((a = index(md, "](")) > 0) {
                 rest = substr(md, a + 2)

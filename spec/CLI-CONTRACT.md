@@ -132,7 +132,8 @@ Five scripts. No others. `scripts/icm_lib.sh` is dot-sourced, never executed.
   it is a preflight refusal, exit 2, with a `FAIL` line naming the key, before any walk or write.
   The walk passes each entry to `find` as one quoted argument, the operand of `-name`, and
   never tests the target's own name. Every `path_budgets` rule is also validated before any walk:
-  known fields, a safe relative pattern, a positive ceiling, no duplicates, and a target no higher
+  known fields, correct container and scalar types, no empty rules, a safe relative pattern,
+  a positive ceiling in the exact portable integer range, no duplicates, and a target no higher
   than its ceiling. An invalid rule exits 2 and executes no payload text.
 - **KEEP.** Defaults merge. The toolkit's `icm.defaults.json` loads first. A workspace's own
   `icm.defaults.json` overlays it key by key, so a key the workspace file lacks comes from the
@@ -308,7 +309,7 @@ These compatibility cases are contractual:
 - Backticked No touch paths in Preflight do not enter generic route scanning, even when those paths do not exist.
 - Generic `routes` adds only the non-failing depth note defined in `spec/ORCHESTRA.md`; it does not adopt Orchestra edge typing or cycle rules.
 
-**The `links` check.** `routes` only walks files literally named `CONTEXT.md` and only extracts its legacy route tokens. `links` walks every `.md` under the target, honours `excluded_globs`, and extracts Markdown and wiki targets outside code examples. URI schemes and anchors are skipped. Markdown targets lose titles, query strings, and fragments before resolution; `%20` still decodes to a space. Wiki targets support aliases, fragments, workspace paths, and embeds. A basename must resolve to exactly one walked file, path targets are normalised inside the workspace, and missing, ambiguous, or escaping targets fail. The file index is built once only when wiki targets exist, never once per target.
+**The `links` check.** `routes` only walks files literally named `CONTEXT.md` and only extracts its legacy route tokens. `links` walks every `.md` under the target, honours `excluded_globs`, and extracts Markdown and wiki targets outside variable-length code spans and fences. URI schemes and anchors are skipped. Markdown targets lose titles, query strings, and fragments before resolution; `%20` still decodes to a space. Wiki targets support aliases, fragments, workspace paths, and embeds. A basename must resolve to exactly one walked file, path targets are normalised inside the workspace, and missing, ambiguous, or escaping targets fail. Wiki targets behind symlinks are not indexed and fail as unresolved; ordinary Markdown resolution is unchanged. The file index is built once only when wiki targets exist, never once per target.
 
 **DELETE from every skill and doc: the check ids `map`, `paths`, `index`, and the id `links` as a synonym for `routes`.**
 

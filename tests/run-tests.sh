@@ -1925,13 +1925,16 @@ printf '\n%s\n' '-- hunt: wiki links and residual URL forms --'
 HW=$(fixture "hunt wiki links")
 run "$SCRIPTS/icm-plan.sh" --quiet "$HW"
 run "$SCRIPTS/icm-apply.sh" --no-check "$HW"
-mkdir -p "$HW/notes" "$HW/other" "$HW/assets"
+mkdir -p "$HW/notes/other" "$HW/other" "$HW/assets"
 HW_LB='['
 printf '# Page\n' > "$HW/notes/Page Name.md"
 printf '# Topic one\n' > "$HW/notes/topic.md"
 printf '# Topic two\n' > "$HW/other/topic.md"
+printf '# Topic three\n' > "$HW/notes/other/topic.md"
 printf '# Unicode\n' > "$HW/notes/ café.md"
 printf 'png\n' > "$HW/assets/logo.png"
+ln -s "notes/Page Name.md" "$HW/alias.md"
+ln -s notes "$HW/linked"
 cat > "$HW/README.md" <<HW_README
 ${HW_LB}[Page Name]]
 ${HW_LB}[Page Name|alias]]
@@ -1948,21 +1951,37 @@ ${HW_LB}[missing]]
 [custom](CUSTOM+v1.2:payload)
 [bad](missing.md?tool=a)
 \`${HW_LB}[inline-missing]]\`
+\`\`${HW_LB}[double-inline-missing]]\`\`
+\`${HW_LB}[unmatched-wiki]]
 \`\`\`
 ${HW_LB}[fence-missing]]
 \`\`\`
+\`\`\`\`
+${HW_LB}[outer-fence-missing]]
+\`\`\`
+${HW_LB}[nested-fence-missing]]
+\`\`\`
+${HW_LB}[outer-fence-after]]
+\`\`\`\`
 HW_README
 cat > "$HW/notes/index.md" <<HW_INDEX
 ${HW_LB}[../README]]
 ${HW_LB}[Page Name]]
 ${HW_LB}[notes/Page Name.md]]
+${HW_LB}[other/topic.md]]
+${HW_LB}[alias.md]]
+${HW_LB}[linked/Page Name.md]]
 ${HW_LB}[../../outside]]
 HW_INDEX
 run "$SCRIPTS/icm-check.sh" --links "$HW"
 assert_rc "the wiki and residual link fixture returns its expected failures" 1
 assert_out "a missing wiki basename fails" "does not exist: ${HW_LB}[missing]]"
 assert_out "a duplicate wiki basename is ambiguous" "ambiguous wiki target: ${HW_LB}[topic]]"
+assert_out "a relative and root wiki path collision is ambiguous" "ambiguous wiki target: ${HW_LB}[other/topic.md]]"
 assert_out "a wiki path outside the workspace is refused" "wiki target escapes the workspace: ${HW_LB}[../../outside]]"
+assert_out "a wiki target behind a file symlink is not indexed" "does not exist: ${HW_LB}[alias.md]]"
+assert_out "a wiki target behind a directory symlink is not indexed" "does not exist: ${HW_LB}[linked/Page Name.md]]"
+assert_out "an unmatched backtick does not hide a wiki target" "does not exist: ${HW_LB}[unmatched-wiki]]"
 assert_out "a query on a missing normal target still fails" "does not exist: missing.md?tool=a"
 assert_not_out "a valid wiki basename resolves" "${HW_LB}[Page Name]]"
 assert_not_out "a valid wiki alias resolves" "${HW_LB}[Page Name|alias]]"
@@ -1974,7 +1993,11 @@ assert_not_out "a valid wiki embed resolves" "${HW_LB}[logo.png]]"
 assert_not_out "a valid Unicode wiki basename resolves" "${HW_LB}[ café]]"
 assert_not_out "a same-page wiki heading needs no file" "${HW_LB}[#Local heading]]"
 assert_not_out "an inline wiki example is ignored" 'inline-missing'
+assert_not_out "a double-backtick code span is ignored" 'double-inline-missing'
 assert_not_out "a fenced wiki example is ignored" 'fence-missing'
+assert_not_out "a nested short fence inside a long fence is ignored" 'nested-fence-missing'
+assert_not_out "a short fence does not close a long fence" 'outer-fence-after'
+assert_not_out "a long fence body is ignored" 'outer-fence-missing'
 assert_not_out "an escaped URI scheme is not a file path" 'example.invalid'
 assert_not_out "a general URI scheme is not a file path" 'CUSTOM+v1.2'
 assert_not_out "a query on an existing normal target resolves" 'notes/Page%20Name.md?tool=a'
@@ -2058,6 +2081,54 @@ cd "$ROOT"
 assert_rc "a path pattern outside the glob alphabet is refused" 2
 assert_out "the malicious pattern never reaches evaluation" 'path_budgets.0.pattern'
 assert_nofile "the malicious path pattern creates no file" "$HB/PWNED"
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ {} ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty path budget rule is refused" 2
+assert_out "the empty rule names its missing pattern" 'path_budgets.0.pattern'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": {} }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a path budget object is refused when an array is required" 2
+assert_out "the wrong container type is named" 'path_budgets'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ {}, { "pattern": "notes/*", "ceiling_chars": 5 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty first rule cannot hide a later valid rule" 2
+assert_out "the empty first rule is rejected before evaluation" 'path_budgets.0.pattern'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": 123, "ceiling_chars": 5 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a numeric pattern is refused" 2
+assert_out "the numeric pattern type is named" 'path_budgets.0.pattern'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": null, "ceiling_chars": 5 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a null pattern is refused" 2
+assert_out "the null pattern type is named" 'path_budgets.0.pattern'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": "5" } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "a string ceiling is refused" 2
+assert_out "the string ceiling type is named" 'path_budgets.0.ceiling_chars'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "target_chars": 9007199254740993, "ceiling_chars": 9007199254740992 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an integer beyond the portable budget range is refused without rounding" 2
+assert_out "the oversized target is named exactly" 'path_budgets.0.target_chars'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 2147483648 } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an oversized ceiling is refused before shell arithmetic" 2
+assert_out "the oversized ceiling is named" 'path_budgets.0.ceiling_chars'
 
 printf '\n%s\n' '-- hunt: check and loop refuse what they cannot read --'
 # Root lists a mode 0300 folder anyway, so these two only mean something to
