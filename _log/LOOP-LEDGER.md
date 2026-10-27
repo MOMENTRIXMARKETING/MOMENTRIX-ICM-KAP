@@ -86,3 +86,13 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-10-26 | Bug | icm-generator | 2 | scripts/icm_lib.sh:1516,1600 duplicate load and ambiguous raw output | 0 | 0 | 3/3 | 1 (generated-workspace gate) | GENERATED-wiki-ORCHESTRA | tests/orchestra-tests.sh |
 | 2026-10-26 | Bug | icm-skill-scope | 2 | scripts/icm_lib.sh:3226 fallback preceded component safety | 0 | 0 | 4/4 | 1 (symlink fixtures) | CAP-SKILL-PARENT-SYMLINK-REFUSED | tests/orchestra-tests.sh |
 | 2026-10-26 | Bug | icm-pipeline-router | 2 | scripts/icm_lib.sh:2852 global NEXT traversal | 0 | 0 | 4/4 | 1 (nearest-router fixture) | ROUTE-NEAREST-PIPELINE-ROUTER | tests/orchestra-tests.sh |
+| 2026-10-27 | Miss | 2 | tests/run-tests.sh | fixture used literal wiki delimiters and the banned word local, tripping the self scan | generate delimiters at runtime and keep test descriptions free of shell keywords |
+| 2026-10-27 | Miss | 2 | scripts/icm-check.sh | typed token case patterns used an unescaped pipe, routing every token through the wiki path | escape type separators and exercise the direct repro before the full suite |
+| 2026-10-27 | Miss | 2 | scripts/icm-check.sh | single-backtick scanning leaked nested code targets into wiki checks | handle variable-length code spans and fences with direct token probes |
+| 2026-10-27 | Miss | 2 | scripts/icm_lib.sh | validation covered emitted fields and AWK numbers, missing empty containers and integer precision | validate every typed key and compare exact decimal strings |
+| 2026-10-27 | Miss | 2 | tests/run-tests.sh | red evidence referenced mutable harnesses and fixtures, so historical counts could not be replayed | pin harness snapshots and separate original and fixed fixtures with hashes |
+| 2026-10-27 | Use | icm-log | skills/icm-log/SKILL.md | ICM existing-collections upgrade | rework | 0 |
+| 2026-10-27 | ICM existing-collections upgrade | 3 | customer result | 2 | 0/2/6/0 | 2 (fresh builder recovery, immutable replay) | T3 (Matty selected fresh builder) | https://github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP/pull/23 |
+| 2026-10-27 | T3 | two independent review failures | fresh builder repair and independent PASS |  |
+| 2026-10-27 | Bug | icm-links | 2 | scripts/icm-check.sh Markdown-only extraction and incomplete target normalization | 0 | 2 | 0/0 | 0 | hunt wiki links and residual URL forms | https://github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP/pull/23 |
+| 2026-10-27 | Bug | icm-path-budgets | 2 | scripts/icm_lib.sh emitted-field validation and AWK numeric conversion | 0 | 2 | 0/0 | 0 | hunt path budgets and config refusals | https://github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP/pull/23 |
