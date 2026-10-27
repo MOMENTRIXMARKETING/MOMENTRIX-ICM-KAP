@@ -715,13 +715,31 @@ icm_json_path_budgets_ok() {
             prev = ""
             key = $1; typ = $2; types[key] = typ
             if (index(key, "path_budgets") == 1) { prev = key }
-            if (key == "path_budgets") { container = typ }
+            if (key == "path_budgets") {
+                container = typ
+                if (typ != "a") { fail(key, "must be an array of objects") }
+                next
+            }
             if (index(key, "path_budgets.") == 1) {
                 rest = substr(key, length("path_budgets.") + 1)
                 n = split(rest, part, ".")
-                if (n == 1 && part[1] ~ /^[0-9]+$/ && (typ == "o" || typ == "a")) {
-                    indices[part[1]] = 1
-                    kinds[part[1]] = typ
+                if (part[1] !~ /^[0-9]+$/) { fail(key, "invalid rule shape") }
+                idx = part[1]
+                if (n == 1) {
+                    indices[idx] = 1
+                    kinds[idx] = typ
+                    if (typ != "o") { fail(key, "must be an object") }
+                    next
+                }
+                if (n != 2) { fail(key, "invalid rule shape") }
+                field = part[2]
+                if (field != "pattern" && field != "target_chars" && field != "ceiling_chars" && field != "ceiling_lines") {
+                    fail(key, "unknown field")
+                }
+                if (field == "pattern") {
+                    if (typ != "s") { fail(key, "must be a string") }
+                } else if (typ != "number") {
+                    fail(key, "must be a JSON number")
                 }
             }
             next

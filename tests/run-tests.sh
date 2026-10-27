@@ -2118,6 +2118,42 @@ run "$SCRIPTS/icm-check.sh" --budgets "$HB"
 assert_rc "a string ceiling is refused" 2
 assert_out "the string ceiling type is named" 'path_budgets.0.ceiling_chars'
 cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 5, "target_chars": {} } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty object target is refused" 2
+assert_out "the empty object target is named exactly" 'path_budgets.0.target_chars'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 5, "target_chars": [] } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty array target is refused" 2
+assert_out "the empty array target is named exactly" 'path_budgets.0.target_chars'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 5, "ceiling_lines": {} } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty object line ceiling is refused" 2
+assert_out "the empty object line ceiling is named exactly" 'path_budgets.0.ceiling_lines'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 5, "ceiling_lines": [] } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty array line ceiling is refused" 2
+assert_out "the empty array line ceiling is named exactly" 'path_budgets.0.ceiling_lines'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 5, "typo": {} } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty object unknown field is refused" 2
+assert_out "the empty object unknown field is named exactly" 'path_budgets.0.typo'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
+{ "path_budgets": [ { "pattern": "notes/*", "ceiling_chars": 5, "typo": [] } ] }
+HB_BAD
+run "$SCRIPTS/icm-check.sh" --budgets "$HB"
+assert_rc "an empty array unknown field is refused" 2
+assert_out "the empty array unknown field is named exactly" 'path_budgets.0.typo'
+cat > "$HB/icm.defaults.json" <<'HB_BAD'
 { "path_budgets": [ { "pattern": "notes/*", "target_chars": 9007199254740993, "ceiling_chars": 9007199254740992 } ] }
 HB_BAD
 run "$SCRIPTS/icm-check.sh" --budgets "$HB"
