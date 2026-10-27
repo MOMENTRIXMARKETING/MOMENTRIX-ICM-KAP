@@ -388,6 +388,21 @@ so, and still passes on everything else. Nothing in the toolkit depends on it be
 
 ---
 
+## Checks for existing note collections
+
+The `links` check handles Markdown and wiki targets. Wiki aliases, heading fragments, paths and
+embeds resolve against one workspace index. Missing and ambiguous targets fail. Targets behind
+symlinks are not indexed and fail as unresolved; ordinary Markdown resolution is unchanged. URI
+schemes and anchors are skipped, query strings are stripped, and code examples stay exempt. The
+index is built once only when wiki targets exist, never once per link.
+
+The `path_budgets` key adds optional ordered budget rules for workspace-relative path globs. The
+first matching rule wins; without a match, the existing category budgets apply. The default is an
+empty list, so older workspaces keep the same behavior. Rule syntax and validation live in
+[`spec/budgets.md`](spec/budgets.md).
+
+---
+
 ## Where the numbers live
 
 Every budget, every skip glob and every required-section list lives in

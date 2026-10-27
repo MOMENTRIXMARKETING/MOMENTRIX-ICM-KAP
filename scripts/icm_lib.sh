@@ -285,7 +285,7 @@ icm_count() {
 # comma, text after the last brace) stops at its first fault: status 1, and
 # the fault, with its line, on stderr. The lines before it are no use.
 icm_json_flatten() {
-    awk -v lf="${2:-}" '
+    awk -v lf="${2:-}" -v tf="${3:-}" '
     { s = s $0 "\n" }
     END {
         # The dotted path is rebuilt inline at each emit. An awk subroutine would
@@ -302,10 +302,26 @@ icm_json_flatten() {
             if (w == "end") { break }
             if (c == "{") {
                 if (w != "top" && w != "v" && w != "vc") { break }
+                if (tf != "") {
+                    P = ""
+                    for (d = 1; d <= depth; d++) {
+                        if (typ[d] == "o") { P = (P == "" ? ky[d] : P "." ky[d]) }
+                        else               { P = (P == "" ? idx[d] "" : P "." idx[d]) }
+                    }
+                    print P "\to" > tf
+                }
                 depth++; typ[depth] = "o"; ky[depth] = ""; w = "kc"; i++; continue
             }
             if (c == "[") {
                 if (w != "v" && w != "vc") { break }
+                if (tf != "") {
+                    P = ""
+                    for (d = 1; d <= depth; d++) {
+                        if (typ[d] == "o") { P = (P == "" ? ky[d] : P "." ky[d]) }
+                        else               { P = (P == "" ? idx[d] "" : P "." idx[d]) }
+                    }
+                    print P "\ta" > tf
+                }
                 if (lf != "" && depth >= 1) {
                     P = ""
                     for (d = 1; d <= depth; d++) {
@@ -362,6 +378,7 @@ icm_json_flatten() {
                         else               { P = (P == "" ? idx[d] "" : P "." idx[d]) }
                     }
                     printf "%s\t%s\n", P, str
+                    if (tf != "") { print P "\ts" > tf }
                     if (typ[depth] == "a") { idx[depth]++ }
                     w = "cc"
                 }
@@ -383,6 +400,10 @@ icm_json_flatten() {
                 else               { P = (P == "" ? idx[d] "" : P "." idx[d]) }
             }
             printf "%s\t%s\n", P, val
+            if (tf != "") {
+                kind = (val == "null" ? "null" : (val == "true" || val == "false" ? "bool" : "number"))
+                print P "\t" kind > tf
+            }
             if (typ[depth] == "a") { idx[depth]++ }
             w = "cc"
         }
@@ -457,6 +478,7 @@ icm_json_load() {
     icm_json_parse "$1" "$_jl_w" || return 2
     if [ -z "$_jl_base" ]; then
         icm_json_globs_ok "$_jl_w.flat" "$1" || return 2
+        icm_json_path_budgets_ok "$_jl_w.flat" "$1" "$_jl_w.types" || return 2
         mv "$_jl_w.flat" "$ICM_JSON_CACHE"
         ICM_JSON_SRC="$1"
         return 0
@@ -464,6 +486,9 @@ icm_json_load() {
     # Each file is held to the glob alphabet on its own, so a refusal names
     # the file that holds the bad entry.
     if ! icm_json_globs_ok "$_jl_t.flat" "$_jl_base" || ! icm_json_globs_ok "$_jl_w.flat" "$1"; then
+        return 2
+    fi
+    if ! icm_json_path_budgets_ok "$_jl_t.flat" "$_jl_base" "$_jl_t.types" || ! icm_json_path_budgets_ok "$_jl_w.flat" "$1" "$_jl_w.types"; then
         return 2
     fi
     icm_json_merge "$_jl_t" "$_jl_w" "$1" > "$ICM_JSON_CACHE"
@@ -478,7 +503,8 @@ icm_json_load() {
 # the fault and a FAIL line naming the file goes to stderr, status 2.
 icm_json_parse() {
     : > "$2.lists"
-    if icm_json_flatten "$1" "$2.lists" > "$2.flat" 2> "$2.err"; then
+    : > "$2.types"
+    if icm_json_flatten "$1" "$2.lists" "$2.types" > "$2.flat" 2> "$2.err"; then
         return 0
     fi
     printf 'FAIL %s is not valid JSON (%s). nothing was walked or written. fix the file, then rerun.\n' \
@@ -659,6 +685,120 @@ icm_json_globs_ok() {
             return 1
         fi
     done
+    return 0
+}
+
+# Path budget rules are ordered arrays of objects. Validate every object before
+# any workspace walk. Patterns are data for case, never shell source.
+icm_json_path_budgets_ok() {
+    _pb_bad=$(awk -F '\t' '
+        function fail(key, reason) { print key ": " reason; bad = 1; exit }
+        function norm(value) { sub(/^0+/, "", value); return value == "" ? "0" : value }
+        function validnum(value,    t) {
+            if (value !~ /^[0-9]+$/) { return 0 }
+            t = norm(value)
+            if (length(t) > 10) { return 0 }
+            if (length(t) < 10) { return 1 }
+            return ("x" t) <= "x2147483647"
+        }
+        function numle(a, b,    aa, bb) {
+            aa = norm(a); bb = norm(b)
+            if (length(aa) != length(bb)) { return length(aa) < length(bb) }
+            return ("x" aa) <= ("x" bb)
+        }
+        function positive(value,    t) { t = norm(value); return t != "0" && validnum(value) }
+        NR == FNR {
+            if (index($0, "\t") == 0) {
+                if (prev != "") { print prev ": holds a newline"; bad = 1; exit }
+                next
+            }
+            prev = ""
+            key = $1; typ = $2; types[key] = typ
+            if (index(key, "path_budgets") == 1) { prev = key }
+            if (key == "path_budgets") {
+                container = typ
+                if (typ != "a") { fail(key, "must be an array of objects") }
+                next
+            }
+            if (index(key, "path_budgets.") == 1) {
+                rest = substr(key, length("path_budgets.") + 1)
+                n = split(rest, part, ".")
+                if (part[1] !~ /^[0-9]+$/) { fail(key, "invalid rule shape") }
+                idx = part[1]
+                if (n == 1) {
+                    indices[idx] = 1
+                    kinds[idx] = typ
+                    if (typ != "o") { fail(key, "must be an object") }
+                    next
+                }
+                if (n != 2) { fail(key, "invalid rule shape") }
+                field = part[2]
+                if (field != "pattern" && field != "target_chars" && field != "ceiling_chars" && field != "ceiling_lines") {
+                    fail(key, "unknown field")
+                }
+                if (field == "pattern") {
+                    if (typ != "s") { fail(key, "must be a string") }
+                } else if (typ != "number") {
+                    fail(key, "must be a JSON number")
+                }
+            }
+            next
+        }
+        index($0, "\t") == 0 {
+            if (prev != "") { print prev ": holds a newline"; bad = 1; exit }
+            next
+        }
+        {
+            prev = ""
+            key = $1
+            if (key == "path_budgets") { fail(key, "must be an array of objects") }
+            if (index(key, "path_budgets.") != 1) { next }
+            prev = key
+            rest = substr(key, length("path_budgets.") + 1)
+            n = split(rest, part, ".")
+            if (n != 2 || part[1] !~ /^[0-9]+$/) { fail(key, "invalid rule shape") }
+            idx = part[1]; field = part[2]; indices[idx] = 1
+            if (field != "pattern" && field != "target_chars" && field != "ceiling_chars" && field != "ceiling_lines") {
+                fail(key, "unknown field")
+            }
+            value = substr($0, length(key) + 2)
+            if (field == "pattern") {
+                if (types[key] != "s") { fail(key, "must be a string") }
+                if (value == "") { fail(key, "is empty") }
+                if (substr(value, 1, 1) == "-" || substr(value, 1, 1) == "/" || index("/" value "/", "/../") > 0 || value !~ /^[A-Za-z0-9._*?\/-]+$/) {
+                    fail(key, "is not a safe relative glob")
+                }
+                if (value in patterns) { fail(key, "duplicate pattern") }
+                patterns[value] = 1
+                pattern[idx] = value
+            } else {
+                if (types[key] != "number") { fail(key, "must be a JSON number") }
+                if (!validnum(value)) { fail(key, "must be an integer in the portable range") }
+                nums[idx, field] = value
+            }
+        }
+        END {
+            if (bad) { exit }
+            if (container != "" && container != "a") { print "path_budgets: must be an array of objects"; exit }
+            for (idx in indices) {
+                if (kinds[idx] != "o") { print "path_budgets." idx ": must be an object"; exit }
+                if (!(idx in pattern)) { print "path_budgets." idx ".pattern: is missing"; exit }
+                if (!((idx, "ceiling_chars") in nums) || !positive(nums[idx, "ceiling_chars"])) {
+                    print "path_budgets." idx ".ceiling_chars: must be a positive integer in the portable range"; exit
+                }
+                if (((idx, "target_chars") in nums) && !numle(nums[idx, "target_chars"], nums[idx, "ceiling_chars"])) {
+                    print "path_budgets." idx ".target_chars: cannot exceed ceiling_chars"; exit
+                }
+            }
+        }
+    ' "$3" "$1")
+    if [ -n "$_pb_bad" ]; then
+        _pb_key=${_pb_bad%%:*}
+        _pb_reason=${_pb_bad#*: }
+        printf 'FAIL key %s in %s %s. nothing was walked or written. fix path_budgets, then rerun.\n' \
+            "$_pb_key" "$2" "$_pb_reason" >&2
+        return 1
+    fi
     return 0
 }
 

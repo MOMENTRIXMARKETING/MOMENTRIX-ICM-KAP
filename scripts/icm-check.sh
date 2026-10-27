@@ -23,12 +23,12 @@ target-dir defaults to the current directory.
 Generic checks (the default and --all select these eleven, never Orchestra):
   --self          shell layer: sh -n, bashism sweep, defaults parse
   --frontmatter   skills/<name>/SKILL.md frontmatter and naming
-  --budgets       character and line ceilings from icm.defaults.json
+  --budgets       character and line ceilings from budgets and path_budgets
   --adapters      CLAUDE.md is an alias of IDENTITY.md, not a copy of it
   --drift         the workspace map in IDENTITY.md covers the real tree
   --sections      required sections per icm.defaults.json
   --routes        every routing-table target in a CONTEXT.md exists on disk
-  --links         every relative markdown link in every .md resolves on disk
+  --links         every relative Markdown and wiki link in every .md resolves on disk
   --fences        markdown code fences are balanced
   --placeholders  no unfilled {{ }} placeholders survive
   --evidence      deep grounding sweep (needs python3 and wiki/; part of --all)
@@ -274,27 +274,67 @@ rel_of() {
     printf '%s\n' "${1#$TARGET/}"
 }
 
-# Report a char budget. $1 file, $2 label, $3 json budget key.
-budget_file() {
+# Report byte and optional line budgets against explicit values.
+budget_file_values() {
     [ -f "$1" ] || return 0
     _b_rel=$(rel_of "$1")
     _b_c=$(icm_chars "$1")
-    _b_target=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.target_chars" 0)
-    _b_ceil=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_chars" 0)
+    _b_target=$2
+    _b_ceil=$3
+    _b_lc=$4
+    _b_label=$5
     if [ "$_b_ceil" -gt 0 ] && [ "$_b_c" -gt "$_b_ceil" ]; then
-        icm_fail "$_b_rel is $_b_c chars, over the $3 ceiling of $_b_ceil (icm.defaults.json)"
+        icm_fail "$_b_rel is $_b_c chars, over the $_b_label ceiling of $_b_ceil (icm.defaults.json)"
     elif [ "$_b_target" -gt 0 ] && [ "$_b_c" -gt "$_b_target" ]; then
-        icm_warn "$_b_rel is $_b_c chars, over the $3 target of $_b_target (icm.defaults.json)"
+        icm_warn "$_b_rel is $_b_c chars, over the $_b_label target of $_b_target (icm.defaults.json)"
     else
-        icm_ok "$_b_rel $_b_c chars, inside the $3 budget"
+        icm_ok "$_b_rel $_b_c chars, inside the $_b_label budget"
     fi
-    _b_lc=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_lines" 0)
     if [ "$_b_lc" -gt 0 ]; then
         _b_l=$(icm_lines "$1")
         if [ "$_b_l" -gt "$_b_lc" ]; then
-            icm_fail "$_b_rel is $_b_l lines, over the $3 line ceiling of $_b_lc (icm.defaults.json)"
+            icm_fail "$_b_rel is $_b_l lines, over the $_b_label line ceiling of $_b_lc (icm.defaults.json)"
         fi
     fi
+}
+
+# Report a char budget. $1 file, $2 label, $3 json budget key.
+budget_file() {
+    [ -f "$1" ] || return 0
+    _b_target=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.target_chars" 0)
+    _b_ceil=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_chars" 0)
+    _b_lc=$(icm_json_num "$ICM_DEFAULTS" "budgets.$3.ceiling_lines" 0)
+    budget_file_values "$1" "$_b_target" "$_b_ceil" "$_b_lc" "$3"
+}
+
+path_budgets_init() {
+    _pb_rules="$ICM_TMPDIR/path-budgets"
+    _pb_active=0
+    : > "$_pb_rules"
+    _pb_i=0
+    while _pb_pattern=$(icm_json_get "$ICM_DEFAULTS" "path_budgets.${_pb_i}.pattern" 2>/dev/null); do
+        _pb_target=$(icm_json_num "$ICM_DEFAULTS" "path_budgets.${_pb_i}.target_chars" 0)
+        _pb_ceil=$(icm_json_num "$ICM_DEFAULTS" "path_budgets.${_pb_i}.ceiling_chars" 0)
+        _pb_lines=$(icm_json_num "$ICM_DEFAULTS" "path_budgets.${_pb_i}.ceiling_lines" 0)
+        printf '%s|%s|%s|%s\n' "$_pb_pattern" "$_pb_target" "$_pb_ceil" "$_pb_lines" >> "$_pb_rules"
+        _pb_active=1
+        _pb_i=$((_pb_i + 1))
+    done
+}
+
+path_budget_file() {
+    [ "$_pb_active" -eq 1 ] || return 1
+    [ -f "$TARGET/$1" ] || return 1
+    while IFS='|' read -r _pb_pattern _pb_target _pb_ceil _pb_lines; do
+        [ -n "$_pb_pattern" ] || continue
+        case "$1" in
+            $_pb_pattern)
+                budget_file_values "$TARGET/$1" "$_pb_target" "$_pb_ceil" "$_pb_lines" "path pattern $_pb_pattern"
+                return 0
+                ;;
+        esac
+    done < "$_pb_rules"
+    return 1
 }
 
 # Check the required sections of one file. $1 file, $2 json path.
@@ -355,30 +395,63 @@ route_tokens() {
     ' "$1"
 }
 
-# Markdown link targets only, out of one file. Fenced blocks are skipped, and
-# so is anything inside an inline code span, because a backticked
-# `[Title](wiki/topic/article.md)` is documentation quoting the syntax, not a
-# claim that the path exists.
+# Markdown and wiki targets, typed M| or W|. Fenced blocks and inline code
+# are documentation quoting syntax, not path claims.
 link_tokens() {
     awk '
-        /^ *```/ { inf = 1 - inf; next }
-        inf == 1 { next }
-        {
-            line = $0
-            out = ""
-            while ((a = index(line, "`")) > 0) {
-                out = out substr(line, 1, a - 1)
-                rest = substr(line, a + 1)
-                b = index(rest, "`")
-                if (b == 0) { line = ""; break }
-                line = substr(rest, b + 1)
+        function inline_text(line,    out,i,n,rest,j,run,finish) {
+            out = ""; i = 1
+            while (i <= length(line)) {
+                if (substr(line, i, 1) != "`") { out = out substr(line, i, 1); i++; continue }
+                n = 0
+                while (substr(line, i + n, 1) == "`") { n++ }
+                rest = substr(line, i + n); finish = 0; j = 1
+                while (j <= length(rest)) {
+                    if (substr(rest, j, 1) == "`") {
+                        run = 0
+                        while (substr(rest, j + run, 1) == "`") { run++ }
+                        if (run == n) { finish = j; break }
+                        j += run
+                    } else { j++ }
+                }
+                if (finish == 0) { out = out substr(line, i, n); i += n }
+                else { i = i + finish + 2 * n - 1 }
             }
-            out = out line
-            while ((a = index(out, "](")) > 0) {
-                rest = substr(out, a + 2)
+            return out
+        }
+        BEGIN { lb = "[" }
+        {
+            if (in_f) {
+                tmp = $0; sub(/^ */, "", tmp); n = 0
+                while (substr(tmp, n + 1, 1) == fch) { n++ }
+                rest = substr(tmp, n + 1)
+                if (n >= flen && rest ~ /^[ \t]*$/) { in_f = 0; fch = ""; flen = 0 }
+                next
+            }
+            tmp = $0; sub(/^ */, "", tmp)
+            if (substr(tmp, 1, 3) == "```" || substr(tmp, 1, 3) == "~~~") {
+                ch = substr(tmp, 1, 1); n = 0
+                while (substr(tmp, n + 1, 1) == ch) { n++ }
+                rest = substr(tmp, n + 1)
+                if (ch == "~" || rest !~ /`/) { in_f = 1; fch = ch; flen = n; next }
+            }
+            out = inline_text($0)
+            md = out
+            while ((a = index(md, "](")) > 0) {
+                rest = substr(md, a + 2)
                 b = index(rest, ")")
                 if (b == 0) { break }
-                print substr(rest, 1, b - 1)
+                printf "M|%s\n", substr(rest, 1, b - 1)
+                md = substr(rest, b + 1)
+            }
+            while ((a = index(out, lb lb)) > 0) {
+                rest = substr(out, a + 2)
+                b = index(rest, "]]" )
+                if (b == 0) { break }
+                target = substr(rest, 1, b - 1)
+                if (target != "" && substr(target, 1, 1) != "[") {
+                    printf "W|%s\n", target
+                }
                 out = substr(rest, b + 1)
             }
         }
@@ -544,12 +617,20 @@ c_frontmatter() {
 
 c_budgets() {
     printf '%s\n' '-- budgets --'
-    budget_file "$TARGET/IDENTITY.md" "identity" "IDENTITY.md"
-    budget_file "$TARGET/CONTEXT.md" "context-root" "CONTEXT.root.md"
+    path_budgets_init
+    if ! path_budget_file "IDENTITY.md"; then
+        budget_file "$TARGET/IDENTITY.md" "identity" "IDENTITY.md"
+    fi
+    if ! path_budget_file "CONTEXT.md"; then
+        budget_file "$TARGET/CONTEXT.md" "context-root" "CONTEXT.root.md"
+    fi
     _bu_md="$ICM_TMPDIR/bumd"
     icm_walk_md "$TARGET" > "$_bu_md"
     while IFS= read -r _bu_r; do
         [ -n "$_bu_r" ] || continue
+        if path_budget_file "$_bu_r"; then
+            continue
+        fi
         case "$_bu_r" in
             CONTEXT.md|IDENTITY.md) continue ;;
             */CONTEXT.md)
@@ -765,6 +846,16 @@ c_routes() {
     fi
 }
 
+link_has_scheme() {
+    _ls_prefix=${1%%:*}
+    [ "$_ls_prefix" != "$1" ] || return 1
+    case $_ls_prefix in *\\) _ls_prefix=${_ls_prefix%\\} ;; esac
+    case $_ls_prefix in
+        ''|[!A-Za-z]*|*[!A-Za-z0-9+.-]*) return 1 ;;
+    esac
+    return 0
+}
+
 c_links() {
     printf '%s\n' '-- links --'
     _lk_md="$ICM_TMPDIR/lkmd"
@@ -775,6 +866,9 @@ c_links() {
     fi
     _lk_bad=0
     _lk_n=0
+    _lk_lb='['
+    _lk_wtok="$ICM_TMPDIR/lkwiki.tokens"
+    : > "$_lk_wtok"
     while IFS= read -r _lk_r; do
         [ -n "$_lk_r" ] || continue
         case "$_lk_r" in
@@ -783,32 +877,123 @@ c_links() {
         _lk_file="$TARGET/$_lk_r"
         _lk_dir=$(dirname "$_lk_file")
         link_tokens "$_lk_file" > "$ICM_TMPDIR/ltok"
-        while IFS= read -r _lk_t; do
-            case "$_lk_t" in
-                ''|http:*|https:*|mailto:*|ftp:*|'#'*) continue ;;
+        while IFS= read -r _lk_line; do
+            case $_lk_line in
+                W\|*)
+                    _lk_t=${_lk_line#W|}
+                    _lk_w=${_lk_t%%|*}
+                    _lk_w=${_lk_w%%#*}
+                    [ -n "$_lk_w" ] || continue
+                    _lk_n=$((_lk_n + 1))
+                    _lk_c1=""
+                    _lk_c2=""
+                    case $_lk_w in
+                        */*)
+                            _lk_rel=$(dirname -- "$_lk_r")
+                            _lk_c1=$(icm_orchestra_normalize "$_lk_rel" "$_lk_w" 2>/dev/null || printf '')
+                            _lk_c2=$(icm_orchestra_normalize . "$_lk_w" 2>/dev/null || printf '')
+                            if [ -z "$_lk_c1" ] && [ -z "$_lk_c2" ]; then
+                                icm_fail "$_lk_r wiki target escapes the workspace: ${_lk_lb}[${_lk_t}]]"
+                                _lk_bad=1
+                                continue
+                            fi
+                            ;;
+                    esac
+                    printf '%s\t%s\t%s\t%s\n' "$_lk_r" "$_lk_t" "$_lk_c1" "$_lk_c2" >> "$_lk_wtok"
+                    ;;
+                M\|*)
+                    _lk_t=${_lk_line#M|}
+                    [ -n "$_lk_t" ] || continue
+                    case $_lk_t in
+                        '#'*) continue ;;
+                    esac
+                    if link_has_scheme "$_lk_t"; then
+                        continue
+                    fi
+                    # a placeholder, a glob or a shell expansion is not a path claim
+                    case $_lk_t in
+                        *'{{'*|*'*'*|*'<'*|*'$'*|*'|'*) continue ;;
+                    esac
+                    # A markdown destination may carry a title after a space,
+                    # [m](IDENTITY.md "the map"), and a space in a path is written
+                    # %20. Neither is part of the path claim.
+                    _lk_p=$(printf '%s\n' "$_lk_t" | sed -e 's/ *"[^"]*" *$//' -e "s/ *'[^']*' *$//" -e 's/%20/ /g')
+                    _lk_p=${_lk_p%%\?*}
+                    _lk_p=${_lk_p%%#*}
+                    _lk_p=${_lk_p#./}
+                    [ -n "$_lk_p" ] || continue
+                    _lk_n=$((_lk_n + 1))
+                    if [ -e "$_lk_dir/$_lk_p" ] || [ -e "$TARGET/$_lk_p" ]; then
+                        :
+                    else
+                        icm_fail "$_lk_r links to a path that does not exist: $_lk_t"
+                        _lk_bad=1
+                    fi
+                    ;;
             esac
-            # a placeholder, a glob or a shell expansion is not a path claim
-            case "$_lk_t" in
-                *'{{'*|*'*'*|*'<'*|*'$'*|*'|'*) continue ;;
-            esac
-            # A markdown destination may carry a title after a space,
-            # [m](IDENTITY.md "the map"), and a space in a path is written
-            # %20. Neither is part of the path claim.
-            _lk_p=$(printf '%s\n' "$_lk_t" | sed -e 's/ *"[^"]*" *$//' -e "s/ *'[^']*' *$//" -e 's/%20/ /g')
-            _lk_p=${_lk_p%%#*}
-            _lk_p=${_lk_p#./}
-            [ -n "$_lk_p" ] || continue
-            _lk_n=$((_lk_n + 1))
-            if [ -e "$_lk_dir/$_lk_p" ] || [ -e "$TARGET/$_lk_p" ]; then
-                :
-            else
-                icm_fail "$_lk_r links to a path that does not exist: $_lk_t"
-                _lk_bad=1
-            fi
         done < "$ICM_TMPDIR/ltok"
     done < "$_lk_md"
+
+    if [ -s "$_lk_wtok" ]; then
+        _lk_files="$ICM_TMPDIR/lkfiles"
+        _lk_wout="$ICM_TMPDIR/lkwiki.out"
+        icm_walk "$TARGET" f > "$_lk_files"
+        awk -F '\t' '
+            NR == FNR {
+                path = $0
+                present[path] = 1
+                n = split(path, part, "/")
+                base = part[n]
+                count[base]++
+                if (count[base] == 1) { first[base] = path }
+                next
+            }
+            BEGIN { lb = "[" }
+            {
+                src = $1; raw = $2; c1 = $3; c2 = $4; target = raw
+                sub(/\|.*/, "", target)
+                sub(/#.*/, "", target)
+                if (target == "") { next }
+                matches = 0
+                if (index(target, "/") == 0) {
+                    for (j = 0; j < 2; j++) {
+                        if (j == 0) { key = target }
+                        else {
+                            if (target ~ /\.md$/) { continue }
+                            key = target ".md"
+                        }
+                        if (key in count) {
+                            if (count[key] > 1) { matches += count[key]; continue }
+                            p = first[key]
+                            if (seen[p] != FNR) { seen[p] = FNR; matches++ }
+                        }
+                    }
+                } else {
+                    for (j = 0; j < 2; j++) {
+                        c = (j == 0 ? c1 : c2)
+                        if (c == "") { continue }
+                        for (k = 0; k < 2; k++) {
+                            if (k == 1 && c ~ /\.md$/) { continue }
+                            p = (k == 0 ? c : c ".md")
+                            if ((p in present) && seen[p] != FNR) { seen[p] = FNR; matches++ }
+                        }
+                    }
+                }
+                if (matches == 0) {
+                    printf "%s links to a wiki target that does not exist: %s%s%s]]\n", src, lb, lb, raw
+                } else if (matches > 1) {
+                    printf "%s has an ambiguous wiki target: %s%s%s]] (%d matches)\n", src, lb, lb, raw, matches
+                }
+            }
+        ' "$_lk_files" "$_lk_wtok" > "$_lk_wout"
+        while IFS= read -r _lk_msg; do
+            [ -n "$_lk_msg" ] || continue
+            icm_fail "$_lk_msg"
+            _lk_bad=1
+        done < "$_lk_wout"
+    fi
     if [ "$_lk_bad" -eq 0 ]; then
-        icm_ok "every relative markdown link resolves on disk ($_lk_n checked)"
+        icm_ok "every relative markdown and wiki link resolves on disk ($_lk_n checked)"
     fi
 }
 
