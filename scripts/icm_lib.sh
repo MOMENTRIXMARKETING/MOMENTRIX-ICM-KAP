@@ -1121,8 +1121,47 @@ icm_first_fence_block() {
 # "<line number>: <line>". A placeholder inside a code fence or inside
 # backticks is a document quoting the syntax, not unfilled content, so it does
 # not count. This is the single definition; icm-check and icm-apply share it.
+#
+# Known merge / Liquid / Meta tokens (firstName, value_play_url, adset.id
+# and the rest of the allowlist below) are live send tags, not unfilled
+# onboarding placeholders, so they do not count. Files under _log/ and
+# paths named pack_template.md or *template* are exempt, the same way a
+# *.tmpl file is exempt in icm-check.
 icm_live_placeholders() {
+    [ -n "$1" ] || return 0
+    case "$1" in
+        */_log/*|_log/*) return 0 ;;
+        *pack_template.md) return 0 ;;
+        *template*|*Template*|*TEMPLATE*) return 0 ;;
+    esac
     awk '
+        function trim(s) {
+            gsub(/^[ \t]+|[ \t]+$/, "", s)
+            return s
+        }
+        function allowed(t) {
+            t = trim(t)
+            if (t == "firstName" || t == "first_name" || t == "value_play_url" \
+                || t == "mention" || t == "FORM_URL" || t == "companyName" \
+                || t == "partnerLink" || t == "adset.id" || t == "ad.id") {
+                return 1
+            }
+            if (index(t, "firstName |") == 1) return 1
+            if (index(t, "unsubscribe") == 1) return 1
+            return 0
+        }
+        function all_allowed(s,    p, q, tok, rest) {
+            rest = s
+            while ((p = index(rest, "{{")) > 0) {
+                rest = substr(rest, p + 2)
+                q = index(rest, "}}")
+                if (q == 0) return 0
+                tok = substr(rest, 1, q - 1)
+                if (!allowed(tok)) return 0
+                rest = substr(rest, q + 2)
+            }
+            return 1
+        }
         /^ *```/ { inf = 1 - inf; next }
         /^ *~~~/ { inf = 1 - inf; next }
         inf == 1 { next }
@@ -1137,9 +1176,19 @@ icm_live_placeholders() {
                 line = substr(rest, b + 1)
             }
             out = out line
-            if (index(out, "{{") > 0) { print FNR ": " $0 }
+            if (index(out, "{{") > 0 && all_allowed(out) == 0) {
+                print FNR ": " $0
+            }
         }
     ' "$1"
+}
+
+# Break {{ and }} in a copied FAIL line so writing it into _log/HANDOFF.md
+# does not re-trigger the placeholder check (self-recursion). The tokens
+# are still readable. Use this in any HANDOFF / ledger writer that reprints
+# icm-check FAIL lines.
+icm_handoff_sanitize() {
+    printf '%s\n' "$1" | sed 's/{{/{ {/g; s/}}/} }/g'
 }
 
 # Count of backtick fence lines, then tilde fence lines, one per output line.

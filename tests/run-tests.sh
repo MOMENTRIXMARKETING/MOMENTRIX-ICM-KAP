@@ -289,6 +289,43 @@ run "$SCRIPTS/icm-check.sh" --placeholders "$D"
 assert_rc "an unfilled placeholder fails the check" 1
 assert_out "the placeholder is named in the report" "unfilled placeholder"
 
+# Known Instantly / Liquid / Meta send tags are not unfilled onboarding
+# placeholders. They must not fail the check.
+D=$(fixture t-place-allow)
+printf '%s\n' "# email" "Hi {{firstName}}," "Read this: {{value_play_url}}" "or {{firstName | there}} and {{first_name}}." "Ad {{adset.id}} / {{ad.id}}." "Form {{FORM_URL}} at {{companyName}} via {{partnerLink}}." "Unsub {{unsubscribe_url}} {{mention}}." > "$D/email.md"
+run "$SCRIPTS/icm-check.sh" --placeholders "$D"
+assert_rc "known merge and Meta tokens pass the placeholder check" 0
+
+# A mix of an allowlisted token and a real onboarding placeholder still fails.
+D=$(fixture t-place-mix)
+printf '%s\n' "Hi {{firstName}}, this is {{BRAND_NAME}}." > "$D/mix.md"
+run "$SCRIPTS/icm-check.sh" --placeholders "$D"
+assert_rc "a real placeholder still fails when mixed with a merge tag" 1
+assert_out "the mixed-line report still names the unfilled placeholder" "unfilled placeholder"
+
+# _log/ reprints must not feed the check (HANDOFF self-recursion).
+D=$(fixture t-place-log)
+mkdir -p "$D/_log"
+printf '%s\n' "placeholders: file.md carries an unfilled placeholder at line 66: {{companyName}}" > "$D/_log/HANDOFF.md"
+run "$SCRIPTS/icm-check.sh" --placeholders "$D"
+assert_rc "placeholders inside _log/ are skipped" 0
+
+# Template paths are exempt, the same way *.tmpl is.
+D=$(fixture t-place-tmplpath)
+mkdir -p "$D/images/founders-500/src"
+printf '%s\n' "pack {{PNGS}} {{X_BRAND_URL}}" > "$D/images/founders-500/src/pack_template.md"
+printf '%s\n' "also {{X_MATTY_LEN}}" > "$D/images/SOME-TEMPLATE.md"
+run "$SCRIPTS/icm-check.sh" --placeholders "$D"
+assert_rc "pack_template.md and *template* paths are skipped" 0
+
+# The HANDOFF sanitizer breaks braces so a copied FAIL line will not match {{.
+_san=$(icm_handoff_sanitize "file.md carries {{companyName}} and {{FORM_URL}}")
+case "$_san" in
+    *'{{'*) t_fail "icm_handoff_sanitize breaks double braces" "$_san" ;;
+    *'{ {companyName} }'*) t_pass "icm_handoff_sanitize breaks double braces" ;;
+    *) t_fail "icm_handoff_sanitize breaks double braces" "$_san" ;;
+esac
+
 # -------------------------------------------------------- 7 plan is read only --
 
 printf '\n%s\n' '-- plan --'
