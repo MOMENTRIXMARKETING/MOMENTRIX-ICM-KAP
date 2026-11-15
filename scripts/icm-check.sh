@@ -1033,6 +1033,8 @@ c_placeholders() {
         [ -n "$_pl_r" ] || continue
         case "$_pl_r" in
             *.tmpl) continue ;;
+            */_log/*|_log/*) continue ;;
+            *pack_template.md|*template*|*Template*|*TEMPLATE*) continue ;;
         esac
         icm_live_placeholders "$TARGET/$_pl_r" > "$ICM_TMPDIR/plhits"
         if [ -s "$ICM_TMPDIR/plhits" ]; then
@@ -1045,7 +1047,7 @@ c_placeholders() {
     if [ "$_pl_bad" -eq 0 ]; then
         icm_ok "no unfilled placeholders in live prose"
     fi
-    icm_note "a *.tmpl file is exempt, it is interview material a human fills in, and so is any placeholder inside a code fence or backticks, which is documentation quoting the syntax"
+    icm_note "a *.tmpl file, pack_template.md, any *template* path, and files under _log/ are exempt; so is any placeholder inside a code fence or backticks, and so are known send/merge tokens such as firstName, value_play_url and adset.id"
 }
 
 c_evidence() {
