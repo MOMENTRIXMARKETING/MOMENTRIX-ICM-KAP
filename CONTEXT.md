@@ -7,6 +7,7 @@
 | What you are doing | Go to | Load first |
 |---|---|---|
 | Changing a script or the shared library | `scripts/` | `spec/CLI-CONTRACT.md`, then `BUILD-CONTRACT.md` |
+| Changing a Mac launchd job wrapper | `launchd/` | `launchd/README.md`, then `IDENTITY.md` |
 | Writing or editing a skill | `skills/` | `docs/skill-authoring.md` |
 | Orchestra | `skills/icm-orchestra/SKILL.md` | `docs/orchestra.md`, `spec/ORCHESTRA.md`, `examples/orchestra-pipeline/` |
 | Changing a budget, skip glob or required section | `icm.defaults.json` | `spec/budgets.md` |
