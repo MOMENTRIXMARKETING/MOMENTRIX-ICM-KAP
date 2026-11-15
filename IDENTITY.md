@@ -28,7 +28,8 @@ momentrix-icm-kap-toolkit/
 ├── docs/                    # methodology, Orchestra, retrofit, paper
 ├── examples/                # raw/wiki pair and three worked workspaces
 ├── _log/                    # this repo's own ledger, proposals, index
-└── tests/                   # the POSIX harness, plus the python one
+├── tests/                   # the POSIX harness, plus the python one
+└── launchd/                 # Mac launchd job wrappers; bash, not POSIX sh
 ```
 
 ## Layers
@@ -48,7 +49,7 @@ The toolkit ships every layer and runs 0, 1, 3 and the loop on itself. It makes 
 
 ## Rules
 
-1. Every script is POSIX `sh`. No bashisms, no python, no node. `sh -n`, the bashism sweep and the tests gate every change.
+1. Every script under `scripts/` is POSIX `sh`. No bashisms, no python, no node. `sh -n`, the bashism sweep and the tests gate every change. The wrappers under `launchd/` are the exception: they are bash, because the Mac plists invoke `/bin/bash`, and they are installed onto the Mac rather than run by the toolkit.
 2. Numbers live in one file, `icm.defaults.json`. Prose cites it, and never restates a budget, a ceiling or a skip glob as a literal.
 3. Rule books are rule books. "Skill" means a SKILL.md under `skills/` and nothing else. A folder's own CONTEXT.md is a job card.
 4. A user's file is never rewritten. `CLAUDE.md` and `.gitignore` get a marked block appended, backed up first. Anything else that exists is parked in `.icm/proposed/`.
