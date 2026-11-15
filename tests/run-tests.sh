@@ -2923,6 +2923,16 @@ else
     t_fail "the standalone Orchestra contract suite passes" "exit $ORCH_RC; full child output is relayed above"
 fi
 
+# ----------------------------------------------------------- launchd extras --
+
+# Optional suites dropped in as tests/*-extra.sh. Missing files are skipped
+# so later PRs can add a suite without editing this hook.
+for _EX in "$ROOT/tests/"*-extra.sh; do
+    [ -f "$_EX" ] || continue
+    # shellcheck disable=SC1090
+    . "$_EX"
+done
+
 # ---------------------------------------------------------------- the tally --
 
 printf '\n%s\n' '-- summary --'
