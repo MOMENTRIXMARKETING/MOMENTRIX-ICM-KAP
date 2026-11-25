@@ -69,3 +69,14 @@ A proposal with no evidence column is not a proposal, it is an opinion. Give it 
 - Smallest edit: the union sentence names never_write with the other three keys; scripts/icm_lib.sh ICM_UNION_KEYS gains never_write; README names it too.
 - Test that proves it: tests/run-tests.sh section S02, "a workspace adds to never_write and keeps the toolkit's .git", and the conformance test that CLI-CONTRACT 3.0 names every protected key.
 - Would have prevented: a workspace file switching off the write guard on .git
+
+## FP-2026-11-25-01 | skills/icm-log/SKILL.md
+- Status: approved 2026-11-25 (owner directive in chat: fix the collide, no skipping)
+- Kind: edit
+- Hole: the ledger was one file and every close was an append to its last line. A workspace with one agent never noticed. A workspace with many agents, each closing through its own pull request, had every second pull request conflict on that line, and the close was the step agents dropped to get a clean merge. Nothing in the toolkit gave a close another place to live.
+- Evidence: MOMENTRIX-BRAIN main on 2026-11-25, Brisbane date: 27 first parent merges, 5 touched `_log/LOOP-LEDGER.md` and 3 touched `_log/journal/`, counted with git log on that repo. Its `shared/AGENT-LINK/SESSION-PROTOCOL.md` already carries the workaround line "If two open PRs append to the same file, keep both blocks when you resolve it". Six open pull requests there each added the same new log file on six different days and could not all merge.
+- Rung: 3 (one new optional folder, read by the one script that reads the ledger)
+- Where: scripts/icm-loop.sh, icm.defaults.json `log.closes`, spec/CLI-CONTRACT.md 3.6 and 13.2, BUILD-CONTRACT.md PATHS, skills/icm-log/SKILL.md, README.md
+- Smallest edit: `log.closes` names a folder. A close file is a regular file under it named `YYYY-MM-DD-<who>-<what>.md` with the same line shapes. `icm-loop.sh` reads the ledger first, then every close file in name order, as one record, for `--index` and `--starve`. It never writes to the folder, never follows a link and never reads a file whose name does not start with a date. A workspace with no folder reads byte for byte as before.
+- Test that proves it: tests/run-tests.sh, the loop section, the fixture "loop closes". Two close files by two agents are one record, a sev 3 miss in a close file is a hole on its rule book, a README, an undated name and a link are not read, the ledger is byte identical after the run, and a `log.closes` of `../outside` exits 2 naming the key.
+- Would have prevented: closes dropped to dodge a merge conflict

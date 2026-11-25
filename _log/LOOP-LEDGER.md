@@ -96,3 +96,10 @@ Everything below this heading is the record. Append here. Never edit above it ex
 | 2026-10-27 | T3 | two independent review failures | fresh builder repair and independent PASS |  |
 | 2026-10-27 | Bug | icm-links | 2 | scripts/icm-check.sh Markdown-only extraction and incomplete target normalization | 0 | 2 | 0/0 | 0 | hunt wiki links and residual URL forms | https://github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP/pull/23 |
 | 2026-10-27 | Bug | icm-path-budgets | 2 | scripts/icm_lib.sh emitted-field validation and AWK numeric conversion | 0 | 2 | 0/0 | 0 | hunt path budgets and config refusals | https://github.com/MOMENTRIXMARKETING/MOMENTRIX-ICM-KAP/pull/23 |
+| 2026-11-25 | Miss | 3 | skills/icm-log/SKILL.md | every close was an append to the last line of one ledger file, so with many agents each closing through a pull request the second one conflicted and the close was the step that got dropped | a closes folder, one new file per pull request, read with the ledger as one record |
+| 2026-11-25 | Patched | skills/icm-log/SKILL.md | FP-2026-11-25-01 |
+| 2026-11-25 | Patched | scripts/icm-loop.sh | FP-2026-11-25-01 |
+| 2026-11-25 | Patched | spec/CLI-CONTRACT.md | FP-2026-11-25-01 |
+| 2026-11-25 | Patched | BUILD-CONTRACT.md | FP-2026-11-25-01 |
+| 2026-11-25 | Use | icm-log | skills/icm-log/SKILL.md | closes folder, one close file per pull request | ok | 1 |
+| 2026-11-25 | closes folder: one close file per pull request, read with the ledger as one record | 2 | customer result | 1 | 0/0/0/0 | 0 | none | scripts/icm-loop.sh |
