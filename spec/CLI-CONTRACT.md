@@ -464,7 +464,7 @@ four.** One mode flag per invocation; two is a usage error, exit 2. No mode flag
 
 | Flag | Meaning |
 |---|---|
-| `--index` | Read `log.ledger`, walk the tree for `skills/*/SKILL.md`, `_config/*.md` and every non-root `CONTEXT.md`, write `log.skill_index`, print it. The only mode that writes, and it writes that one file, atomically. |
+| `--index` | Read `log.ledger` and every close file under `log.closes`, walk the tree for `skills/*/SKILL.md`, `_config/*.md` and every non-root `CONTEXT.md`, write `log.skill_index`, print it. The only mode that writes, and it writes that one file, atomically. |
 | `--starve` | Print the starvation check for the `loop.starve_days` window and stop. Writes nothing. |
 | `--block` | Print `icm_body_session_close` between `<!-- ICM-LOOP:START -->` and `<!-- ICM-LOOP:END -->` and stop. Needs no target. The only way the block leaves the toolkit. |
 | `--today DATE` | Count windows back from `DATE`. For tests and replays. Refused unless it is a calendar date. |
@@ -472,12 +472,22 @@ four.** One mode flag per invocation; two is a usage error, exit 2. No mode flag
 Exit: 0 clean. 1 at least one index row carries a verdict other than `ok` or `unlogged`, or the
 window is starved. 2 refused: no ledger at `log.ledger`, bad target, usage error, a glob entry in
 `icm.defaults.json` outside its alphabet, an `icm.defaults.json` it cannot read or that is not
-valid JSON.
+valid JSON, a `log.closes` that is empty, absolute or steps out of the workspace.
 
 **The line shapes it reads** are the ones `skills/icm-log/SKILL.md` and out-of-the-loop's
 `references/ledger.md` define. It selects on the literal in column two: `Miss`, `Use`,
 `Patched`. Any other line whose column one is a date counts as work done. It never redefines a
 shape and a line in a private shape is silently not counted, which is the enforcement.
+
+**The closes folder.** `log.closes` names a folder of close files. A close file is a regular
+file under it whose name starts with a date, `YYYY-MM-DD-<who>-<what>.md`, holding the same
+line shapes and any prose beside them. `--index` and `--starve` read the ledger first, then
+every close file in name order, as one record, and the index says how many it read. A file
+whose name does not start with a date is not read, a link is never followed, and no mode
+writes to the folder. It exists for a workspace more than one agent writes to through pull
+requests: two pull requests that append to one ledger file both change its last line and the
+second one conflicts, and two that each add their own file never touch the same path. A
+workspace with no such folder reads exactly as it did before.
 
 **The verdict words. This is the complete list. There are no others.** `rewrite`, `hole`,
 `ghost`, `uncovered`, `archive`, `check-write-back`, `unlogged`, `ok`. Each is a count over the
@@ -1206,6 +1216,7 @@ back.
 | config is data | Three workspace `excluded_globs` entries, two that break out of quoting and one holding `$(...)`, each make check, plan, loop, apply and rollback exit 2 naming the key, and no payload runs. An entry split by an escaped newline and a `never_write` entry outside the alphabet are refused the same way. A wildcard entry still prunes, an entry spelled `-delete` deletes nothing, a target named `build` and an entry `.*` still walk the tree, and no file under `scripts/` calls `eval`. Run from a cwd holding a matching name, the plan survey still drops `.*` and `drafts*` folders, and a `never_write` entry `IDENT?TY.md` refuses `IDENTITY.md`. |
 | CI and line endings | `.github/workflows/ci.yml` runs on every push and pull request with a read-only token and three jobs: ubuntu with dash as `sh`, macos with the BSD userland, and ubuntu with every busybox applet first on `PATH`. Each job runs `sh -n`, and `dash -n` where dash exists, on every script and example shell body, then `sh tests/run-tests.sh`, then `python3 tests/test_check_evidence.py` when python3 3.10 or newer exists, then the checker on the repo. The workflow holds no tab. `.gitattributes` holds `* text=auto eol=lf` and `*.pdf binary`, and `git check-attr` reads both back when git exists. Run as root, the two unlistable-target tests are skipped with a note line, never failed, so the harness can reach FAIL 0 as root. |
 | defaults merge | A workspace holding the 1.0.0 `icm.defaults.json` verbatim runs every mode of every script with exit 0 or 1, reads `log.skill_index` and `loop.starve_days` from the toolkit, and keeps its own lists whole. A stub toolkit beside it proves the toolkit layer through real scripts: the loop writes the index where the toolkit's newer key says, and the check reports the toolkit's version, never the workspace copy's. A workspace list replaces the toolkit list whole, an empty one included, and the walk follows it. Against a second stub toolkit holding only stub protected keys, a workspace cannot remove a `secrets` or `archive` list entry, cannot add a `checks.warn_first` id, cannot set a scalar under a protected key, and a committed `share.dest` or `who` is ignored with a warn line; against the real toolkit a workspace `checks.warn_first` id is never added. Run as a normal user, an unreadable workspace `icm.defaults.json` exits 2 naming the file. A workspace `icm.defaults.json` that is not valid JSON (a bare word, empty, cut off, text after its last brace, a missing or trailing comma) exits 2 naming the file and the line of its first fault, and so does a toolkit file cut off, with or without a workspace file; valid JSON of every value shape still loads. An `asset_extensions` entry `*` is a word, never a glob on the cwd. Section 3.0 names every key in the four lists in `scripts/icm_lib.sh`. |
+| closes folder | A fixture with a ledger and a `log.closes` folder holding two close files by two agents, a README, a file with no date in its name and a link out of the folder: `--starve` counts both close files in the window, `--index` prints the Closes line, calls the sev 3 miss in a close file a hole on its rule book, never reads the README, the undated name or the link, and leaves the ledger byte identical. A workspace `log.closes` of `../outside` exits 2 naming the key. A workspace with no folder prints no Closes line. |
 
 ### 13.3 The scaffold adapter rule
 

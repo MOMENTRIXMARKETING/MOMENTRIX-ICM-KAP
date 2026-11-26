@@ -54,6 +54,18 @@ A ledger the toolkit installed already has every section. A ledger created by th
 
 ---
 
+### When the workspace has a closes folder
+
+If `_log/closes/` exists (the path is `log.closes` in `icm.defaults.json`), more than one agent closes here through pull requests. Do not append to the ledger file. Write every line of this close, same shapes and same order, into one new file:
+
+```sh
+f="_log/closes/$(date +%Y-%m-%d)-<who>-<what>.md"
+[ -e "$f" ] && { echo "pick another name, $f exists"; exit 1; }
+printf '%s\n' "<each line of this close>" > "$f"
+```
+
+`<who>` is the agent or bot, `<what>` is the task in a few words, lowercase with dashes. One file per close, never edited after it merges. `icm-loop.sh` reads the folder and the ledger as one record. Two pull requests that each add a file never collide. Two that append to one file do, and that collision is why closes got skipped.
+
 ## Mode: miss
 
 Ten seconds. Four answers. One line. Then stop.

@@ -245,6 +245,17 @@ something nothing on disk holds, the Session Close does not create it: it writes
 kind `new` at the path [`spec/placement.md`](spec/placement.md) gives it, and a human names the
 id that creates it. That is what locks a learning away where it lives.
 
+### Many agents, one record
+
+One ledger file works while one agent writes at a time. Put several agents on one repo, each
+closing through its own pull request, and every close appends to the same last line of the same
+file, so the second pull request conflicts and the close is the first thing an agent drops.
+The fix is a folder. Make `_log/closes/` and each agent writes its close as one new file,
+`YYYY-MM-DD-<who>-<what>.md`, holding the same miss, use and task lines. Two new files never
+collide. `scripts/icm-loop.sh` reads the ledger and then every close file in name order as one
+record, so the index, the starvation check and the forge see all of it. Nothing changes for a
+workspace that has no such folder.
+
 ### The skill index
 
 `_log/SKILL-INDEX.md` is the librarian: one row per skill, job card and rule book on disk, with

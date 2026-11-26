@@ -64,7 +64,8 @@
     "runlog": "_log/LOOP-RUNLOG-<task>.md",
     "wiki_log": "wiki/log.md",
     "forge_proposals": "_log/FORGE-PROPOSALS.md",
-    "skill_index": "_log/SKILL-INDEX.md"
+    "skill_index": "_log/SKILL-INDEX.md",
+    "closes": "_log/closes"
   },
   "loop": {
     "note": "Read by icm-loop.sh. Days are calendar days back from today. Sev thresholds decide when the index calls a hole.",

@@ -2,9 +2,10 @@
 # icm-loop.sh - the librarian for the loop.
 #
 # Three jobs, all mechanical, none of them judgment:
-#   --index   read _log/LOOP-LEDGER.md and the workspace, write _log/SKILL-INDEX.md:
-#             one row per skill, job card and rule book, with use counts, open
-#             misses, recurrences and a verdict word from the kill rules.
+#   --index   read _log/LOOP-LEDGER.md, every close file under _log/closes and
+#             the workspace, write _log/SKILL-INDEX.md: one row per skill, job
+#             card and rule book, with use counts, open misses, recurrences
+#             and a verdict word from the kill rules.
 #   --starve  the starvation check alone: real work in the window and not one
 #             miss line means the write back is not firing.
 #   --block   print the Session Close block between markers, for a host that is
@@ -19,6 +20,15 @@
 # index a model would, which is the point: the loop must not depend on which
 # agent is over the top of it.
 #
+# The closes folder is how many agents write at once without a collision. Two
+# pull requests that append to the same ledger file both change its last line,
+# and the second one conflicts. Two pull requests that each add their own file
+# never touch the same path. So an agent that closes through a pull request
+# writes its lines into one new file under log.closes, named
+# YYYY-MM-DD-<who>-<what>.md, and this script reads the ledger first and then
+# every such file in name order, as one record. The ledger file stays the
+# record of everything written before the folder existed.
+#
 # POSIX sh only. No bashisms. No python required.
 
 set -e
@@ -32,7 +42,8 @@ Compiles the skill index from the ledger, or checks it for starvation, or
 prints the Session Close block. target-dir defaults to the current directory.
 With no mode flag, --index runs.
 
-  --index         read _log/LOOP-LEDGER.md, write _log/SKILL-INDEX.md, print it
+  --index         read _log/LOOP-LEDGER.md and every close file under
+                  _log/closes, write _log/SKILL-INDEX.md, print it
   --starve        starvation check only, nothing written
   --block         print the Session Close block between its markers, nothing written
   --today DATE    count windows back from DATE instead of today (tests, replays)
@@ -119,12 +130,41 @@ SEV2_N=$(icm_json_num "$ICM_DEFAULTS" loop.hole_sev2_count 2)
 RECUR_N=$(icm_json_num "$ICM_DEFAULTS" loop.recurrence_rewrite_count 2)
 CWB_N=$(icm_json_num "$ICM_DEFAULTS" loop.check_write_back_uses 3)
 
+CLOSES=$(icm_json_get "$ICM_DEFAULTS" log.closes 2>/dev/null) || CLOSES="_log/closes"
+# Config is data. The value names a folder inside the workspace and nothing
+# else: no absolute path, no parent step, no empty string.
+case "$CLOSES" in
+    ""|/*|..|../*|*/..|*/../*)
+        icm_die "key log.closes must name a folder inside the workspace, got: $CLOSES" ;;
+esac
+
 LEDGER_FILE="$TARGET/$LEDGER"
 [ -f "$LEDGER_FILE" ] || icm_die "no ledger at $LEDGER. nothing to index. run: sh \"\$ICM_HOME/scripts/icm-plan.sh\" then icm-apply.sh, or /icm-log miss"
 
 icm_tmp_init
 DISK="$ICM_TMPDIR/loop-disk.$$"
 ROWS="$ICM_TMPDIR/loop-rows.$$"
+RECORD="$ICM_TMPDIR/loop-record.$$"
+CLOSELIST="$ICM_TMPDIR/loop-closes.$$"
+
+# -------------------------------------------------------------- the record ---
+# The ledger first, then every close file in name order. A close file is a
+# regular file under log.closes whose name starts with a date, so a README in
+# that folder is never read as a record and a link is never followed. The
+# name carries the date, so name order is time order.
+cat "$LEDGER_FILE" > "$RECORD"
+NCLOSE=0
+: > "$CLOSELIST"
+if [ -d "$TARGET/$CLOSES" ]; then
+    find "$TARGET/$CLOSES" -type f \
+        -name '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*.md' \
+        | LC_ALL=C sort > "$CLOSELIST"
+    while IFS= read -r _cl_f; do
+        printf '\n' >> "$RECORD"
+        cat "$_cl_f" >> "$RECORD"
+        NCLOSE=$((NCLOSE + 1))
+    done < "$CLOSELIST"
+fi
 
 # --------------------------------------------------------------- the walk ---
 # What is on disk that the loop can hold to account. Three kinds, by path shape.
@@ -166,7 +206,7 @@ awk -F '|' \
     -v today="$TODAY" -v starve="$STARVE_DAYS" -v recent="$RECENT_DAYS" \
     -v archive="$ARCHIVE_DAYS" -v sev3n="$SEV3_N" -v sev2n="$SEV2_N" \
     -v recurn="$RECUR_N" -v cwbn="$CWB_N" -v disk="$DISK" -v mode="$MODE" -v ledger="$LEDGER" \
-    -v target="$TARGET" -v icmhome="$ICM_HOME" '
+    -v target="$TARGET" -v icmhome="$ICM_HOME" -v nclose="$NCLOSE" -v closes="$CLOSES" '
 function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
 function isdate(s,   y, m, d, dim) {
     if (s !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/) return 0
@@ -270,6 +310,7 @@ END {
     printf "Compiled by icm-loop.sh on %s from `%s`. Overwritten every run. Do not edit: the ledger is the record, this is the count.\n\n", today, ledger
     if (first == "") printf "Ledger: no dated lines yet.\n\n"
     else printf "Ledger: first line %s, %d days old, %d dated lines (%d task or call, %d use, %d miss).\n\n", first, ledger_age, nlines, ntask, nuse, nmiss
+    if (nclose + 0 > 0) printf "Closes: %d close files under `%s` are counted in the lines above, read after the ledger in name order.\n\n", nclose, closes
     printf "## Starvation\n\n"
     if (first == "") printf "Unknown. Nothing dated in the ledger.\n\n"
     else if (starved) { printf "STARVED. %d task or use lines and 0 miss lines in the last %d days. The Session Close is not firing. Reinstall it before touching a rule book.\n\n", work_win, starve; waiting = 1 }
@@ -325,7 +366,7 @@ END {
     printf "| unlogged | On disk, no use and no miss yet, ledger younger than %d days | Nothing yet. Young, not dead |\n", archive
     printf "| ok | None of the above | Nothing |\n"
     exit waiting
-}' "$LEDGER_FILE" > "$ROWS" && RC=0 || RC=$?
+}' "$RECORD" > "$ROWS" && RC=0 || RC=$?
 
 if [ "$RC" -gt 1 ]; then
     cat "$ROWS" >&2

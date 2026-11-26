@@ -1907,6 +1907,49 @@ assert_rc "two modes at once is a usage error" 2
 run "$SCRIPTS/icm-loop.sh" --today 2026-13-40 "$LP"
 assert_rc "a malformed --today date is refused" 2
 
+# One close file per pull request. Two agents that each add their own file
+# never write the same path, so their pull requests never collide, and the
+# librarian reads the folder and the ledger as one record.
+CLS=$(fixture "loop closes")
+run "$SCRIPTS/icm-plan.sh" --quiet "$CLS"
+run "$SCRIPTS/icm-apply.sh" "$CLS"
+run "$SCRIPTS/icm-loop.sh" --today 2026-09-06 "$CLS"
+assert_not_out "a workspace with no closes folder prints no Closes line" "Closes:"
+mkdir -p "$CLS/_log/closes" "$CLS/ghosts"
+printf '| 2026-09-05 | Use | icm-loop | skills/icm-loop/SKILL.md | outreach day | ok | 0 |\n' > "$CLS/_log/closes/2026-09-05-grok-outreach-day.md"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-09-06 "$CLS"
+assert_rc "a use line in a close file and no miss anywhere is starved, exit 1" 1
+assert_out "the starvation check counts the close file as work" "1 task or use lines, 0 miss lines"
+cat > "$CLS/_log/closes/2026-09-05-claude-sales-brief.md" <<'CLOSE_EOF'
+# close, claude, sales brief
+
+Journal: what was done, the decisions and the open items sit here as prose.
+
+| 2026-09-05 | sales brief | 2 | cash | 1 | 0/1/0/0 | 0 | none | out.md |
+| 2026-09-05 | Miss | 3 | _config/voice.md | wrong price said in a brief | cite the price rule |
+CLOSE_EOF
+printf '| 2026-09-05 | Miss | 3 | ghosts/readme-line.md | a README is not a record | none |\n' > "$CLS/_log/closes/README.md"
+printf '| 2026-09-05 | Miss | 3 | ghosts/undated-name.md | a name with no date is not a close | none |\n' > "$CLS/_log/closes/notes.md"
+printf '| 2026-09-05 | Miss | 3 | ghosts/linked.md | a link is never followed | none |\n' > "$CLS/ghosts/outside.md"
+ln -s "$CLS/ghosts/outside.md" "$CLS/_log/closes/2026-09-05-link-outside.md"
+cp "$CLS/_log/LOOP-LEDGER.md" "$CLS.ledger.before"
+run "$SCRIPTS/icm-loop.sh" --starve --today 2026-09-06 "$CLS"
+assert_rc "a miss in a second close file feeds the same window, exit 0" 0
+assert_out "two close files by two agents are one record" "2 task or use lines, 1 miss lines"
+run "$SCRIPTS/icm-loop.sh" --today 2026-09-06 "$CLS"
+assert_rc "a sev 3 miss in a close file is a verdict waiting, exit 1" 1
+assert_out "the index says how many close files it read" 'Closes: 2 close files under `_log/closes`'
+assert_out "a sev 3 miss in a close file is a hole on its rule book" '`_config/voice.md` | - | - | - | 1 | 3 | 0 | - | hole |'
+assert_not_out "a README in the closes folder is never read as a record" "ghosts/readme-line.md"
+assert_not_out "a file whose name does not start with a date is not a close" "ghosts/undated-name.md"
+assert_not_out "a link in the closes folder is never followed" "ghosts/linked.md"
+assert_same "the librarian never writes to the ledger while reading closes" "$CLS/_log/LOOP-LEDGER.md" "$CLS.ledger.before"
+printf '{ "log": { "closes": "../outside" } }\n' > "$CLS/icm.defaults.json"
+run "$SCRIPTS/icm-loop.sh" --today 2026-09-06 "$CLS"
+assert_rc "a closes folder outside the workspace is refused, exit 2" 2
+assert_out "the refusal names the key" "key log.closes"
+rm -f "$CLS/icm.defaults.json"
+
 # ------------------------------------------------ the 2026-10 defect hunt --
 # Each block below is a defect reproduced on ee91520 and fixed on the same
 # branch. The fixture is the reproduction; the assertion is the contract line.

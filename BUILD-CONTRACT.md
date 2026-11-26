@@ -53,6 +53,7 @@ The logger never judges. The forge never edits. The human holds the only pen tha
 
 ## PATHS
 - `_log/LOOP-LEDGER.md` — append-only ledger. Task, call and weekly review shapes: `references/ledger.md` of out-of-the-loop. Miss, use and patched shapes: `skills/icm-log/SKILL.md`. Every line appends under `## Lines`.
+- `_log/closes/`: one close file per pull request, `YYYY-MM-DD-<who>-<what>.md`, same line shapes as the ledger. `scripts/icm-loop.sh` reads the ledger, then every close file in name order, as one record. For a workspace more than one agent writes to: two appends to one file collide, two new files never do. The path is `log.closes` in `icm.defaults.json`.
 - `_log/FORGE-PROPOSALS.md` — what the forge proposes, awaiting approval. Kinds: edit, new, archive, rewrite.
 - `_log/SKILL-INDEX.md` — compiled by `scripts/icm-loop.sh` from the ledger, overwritten every run, never hand edited.
 - `CONTEXT.md` `## Session Close` — the write back obligation. Layer 1, every harness, one body in `icm_lib.sh`, printed by `icm-loop.sh --block`. Placement of a new learning: `spec/placement.md`.
